@@ -3,7 +3,6 @@ const express = require('express');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
-const VerifyProxySecret = require('./middlewares/VerifyProxySecret');
 const { getClientIp } = require('./utils/ClientIp');
 const app = express();
 
@@ -92,9 +91,7 @@ if (!isProduction) {
   const apiTarget = new URL(process.env.API_PROXY_TARGET || 'http://127.0.0.1:3000');
   app.use('/api', (req, res) => {
     const headers = { ...req.headers, host: apiTarget.host };
-    if (process.env.PROXY_SECRET_HEADER) {
-      headers['x-proxy-secret'] = process.env.PROXY_SECRET_HEADER;
-    }
+    delete headers['x-proxy-secret'];
     const proxyReq = http.request(
       {
         hostname: apiTarget.hostname,
@@ -119,7 +116,6 @@ if (!isProduction) {
 
 app.use(express.json());
 app.use(helmet(helmetOptions));
-app.use(VerifyProxySecret);
 app.use(globalLimiter);
 app.disable('x-powered-by');
 
@@ -189,8 +185,5 @@ app.listen(PORT, () => {
   if (!isProduction) {
     const target = process.env.API_PROXY_TARGET || 'http://127.0.0.1:3000';
     console.log(`Proxy /api -> ${target}`);
-    if (!process.env.PROXY_SECRET_HEADER) {
-      console.warn('PROXY_SECRET_HEADER no está definido; el API local puede responder 403');
-    }
   }
 });
