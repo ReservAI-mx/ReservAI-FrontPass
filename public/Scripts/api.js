@@ -33,19 +33,20 @@ export function requireAdminSession() {
 }
 
 export async function apiFetch(path, options = {}) {
-  const headers = { ...(options.headers || {}) };
-  const isForm = typeof FormData !== 'undefined' && options.body instanceof FormData;
-  if (options.body && !isForm && !headers['Content-Type']) {
+  const { redirectOn418 = true, ...fetchOptions } = options;
+  const headers = { ...(fetchOptions.headers || {}) };
+  const isForm = typeof FormData !== 'undefined' && fetchOptions.body instanceof FormData;
+  if (fetchOptions.body && !isForm && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
+    ...fetchOptions,
     credentials: 'include',
     headers,
   });
 
-  if (res.status === 418) {
+  if (res.status === 418 && redirectOn418) {
     goLogin();
     throw new Error('Session expired');
   }

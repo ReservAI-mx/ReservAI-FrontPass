@@ -1,5 +1,6 @@
 import SessionStorageManager from "./AppStorage.js";
 import { apiJson } from "./api.js";
+import { setButtonLoading, shakeElement } from "./buttonLoading.js";
 
 function downloadRecovery(documentObj, filename) {
   const blob = new Blob([JSON.stringify(documentObj, null, 2)], { type: 'application/json' });
@@ -99,9 +100,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const code = Array.from(inputs).map(i => i.value).join('');
         if (code.length !== 6 || !/^\d{6}$/.test(code)) {
             showError("Código incorrecto, inténtalo de nuevo.");
+            shakeElement(document.querySelector('.code-inputs'));
             return;
         }
 
+        setButtonLoading(verifyBtn, true, "Verificando...");
         try {
             const { ok, data } = await apiJson("/twofa", {
                 method: "POST",
@@ -110,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!ok) {
                 showError(data.error || data.message || "Código incorrecto");
+                shakeElement(document.querySelector('.code-inputs'));
                 return;
             }
 
@@ -125,6 +129,10 @@ document.addEventListener("DOMContentLoaded", () => {
             goHome();
         } catch (err) {
             showError(err.message || "Error al verificar");
+        } finally {
+            if (document.body.contains(verifyBtn)) {
+              setButtonLoading(verifyBtn, false);
+            }
         }
       });
     }
@@ -144,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const form = new FormData();
         form.append('backup_file', file);
+        setButtonLoading(recoverySubmit, true, "Subiendo...");
         try {
           const { apiFetch } = await import('./api.js');
           const res = await apiFetch('/twofa/disable', { method: 'POST', body: form });
@@ -156,6 +165,10 @@ document.addEventListener("DOMContentLoaded", () => {
           window.location.href = '/QR';
         } catch (err) {
           showError(err.message || "Error al subir el documento");
+        } finally {
+          if (document.body.contains(recoverySubmit)) {
+            setButtonLoading(recoverySubmit, false);
+          }
         }
       });
     }

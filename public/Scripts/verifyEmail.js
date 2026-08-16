@@ -1,4 +1,5 @@
 import { apiFetch } from "./api.js";
+import { setButtonLoading } from "./buttonLoading.js";
 
 function showMessage(message, type = 'info', duration = 3000) {
   const container = document.getElementById('messageContainer');
@@ -28,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (resendBtn) {
     resendBtn.addEventListener("click", async () => {
+      setButtonLoading(resendBtn, true, "Reenviando...");
       try {
         const response = await apiFetch("/verification", {
           method: "GET",
@@ -43,6 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (err) {
         showMessage("Error al reenviar el correo: " + err.message, 'error');
+      } finally {
+        setButtonLoading(resendBtn, false);
       }
     });
   }

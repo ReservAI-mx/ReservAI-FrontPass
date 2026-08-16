@@ -38,7 +38,11 @@ body {
     background: var(--text-light);
     padding: 12px;
     border-radius: 12px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 244px;
+    min-height: 244px;
     margin-bottom: 20px;
 }
 
@@ -64,4 +68,17 @@ body {
     cursor: pointer;
     font-size: 1rem;
     margin-top: 20px;
+}
+
+.qr-fade-in {
+    animation: cardEnter 0.45s ease-out;
+}
+
+.qr-code .btn-spinner {
+    width: 36px;
+    height: 36px;
+    border-width: 3px;
+    border-color: rgba(9, 131, 214, 0.25);
+    border-top-color: #0983d6;
+    margin: 92px;
 }

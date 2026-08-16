@@ -1,4 +1,5 @@
 import { apiJson, requireAdminSession } from './api.js';
+import { setButtonLoading, shakeElement } from './buttonLoading.js';
 
 if (!requireAdminSession()) {
   /* redirect already triggered */
@@ -46,14 +47,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!email) {
       showError(emailInput, 'El correo es necesario');
+      shakeElement(emailInput);
       return;
     }
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
       showError(emailInput, 'Correo electrónico inválido');
+      shakeElement(emailInput);
       return;
     }
 
+    setButtonLoading(registerBtn, true, 'Enviando...');
     try {
       const { ok, data } = await apiJson('/invitations', {
         method: 'POST',
@@ -61,12 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!ok) {
         showError(emailInput, data.error || data.message || 'No se pudo enviar la invitación');
+        shakeElement(emailInput);
         return;
       }
       showMessage('Invitación enviada', 'success', 4000);
       emailInput.value = '';
     } catch (err) {
       showError(emailInput, err.message || 'Error al enviar la invitación');
+      shakeElement(emailInput);
+    } finally {
+      setButtonLoading(registerBtn, false);
     }
   });
 });

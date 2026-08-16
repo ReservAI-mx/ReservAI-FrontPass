@@ -1,5 +1,6 @@
 import SessionStorageManager from './AppStorage.js';
 import { apiJson } from './api.js';
+import { setButtonLoading, shakeElement } from './buttonLoading.js';
 
 function roleFromQuery() {
   const role = new URLSearchParams(window.location.search).get('role');
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordInput = document.getElementById('password');
   const confirmInput = document.getElementById('confirmPassword');
   const errorEl = document.getElementById('formError');
+  const submitBtn = form.querySelector('button[type="submit"]');
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -23,10 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (name.length < 2) {
       errorEl.textContent = 'El nombre es necesario';
+      shakeElement(nameInput);
       return;
     }
     if (password !== confirm_password) {
       errorEl.textContent = 'Las contraseñas no coinciden';
+      shakeElement(confirmInput);
       return;
     }
 
@@ -34,29 +38,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const attempts = preferred ? [preferred] : ['client', 'admin'];
     let lastError = 'No se pudo crear la cuenta';
 
-    for (const role of attempts) {
-      const { ok, status, data } = await apiJson(`/invitations/${role}`, {
-        method: 'POST',
-        body: { name, password, confirm_password },
-      });
-      if (ok) {
-        SessionStorageManager.saveSession({
-          account_type: data.data?.role || role,
-          account_name: data.data?.email || name,
-          verified: false,
-          twofaenabled: false,
-          token_type: 'email_sender',
+    setButtonLoading(submitBtn, true, 'Creando cuenta...');
+    try {
+      for (const role of attempts) {
+        const { ok, status, data } = await apiJson(`/invitations/${role}`, {
+          method: 'POST',
+          body: { name, password, confirm_password },
         });
-        window.location.href = '/verify_email';
-        return;
+        if (ok) {
+          SessionStorageManager.saveSession({
+            account_type: data.data?.role || role,
+            account_name: data.data?.email || name,
+            verified: false,
+            twofaenabled: false,
+            token_type: 'email_sender',
+          });
+          window.location.href = '/verify_email';
+          return;
+        }
+        if (status === 403 && data.error === 'Invitation role mismatch') {
+          lastError = data.error;
+          continue;
+        }
+        lastError = data.error || data.message || lastError;
+        break;
       }
-      if (status === 403 && data.error === 'Invitation role mismatch') {
-        lastError = data.error;
-        continue;
+      errorEl.textContent = lastError;
+      shakeElement(form);
+    } finally {
+      if (document.body.contains(submitBtn)) {
+        setButtonLoading(submitBtn, false);
       }
-      lastError = data.error || data.message || lastError;
-      break;
     }
-    errorEl.textContent = lastError;
   });
 });
