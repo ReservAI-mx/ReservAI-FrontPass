@@ -28,6 +28,12 @@
     <p id="twofa-error" class="twofa-error"></p> 
 
     <button class="btn-verify">Verificar</button>
+    <p class="recovery-link"><button type="button" id="lostAuthenticatorBtn" class="link-btn">Perdí el autenticador</button></p>
+    <div id="recoveryPanel" class="recovery-panel" hidden>
+      <p>Sube el documento de recuperación que descargaste al activar 2FA.</p>
+      <input type="file" id="recoveryFile" accept="application/json,.json">
+      <button type="button" id="recoverySubmit" class="btn-verify">Desactivar 2FA</button>
+    </div>
   </div>
 
   <script type="module" src="static/Scripts/twofa.js"></script>

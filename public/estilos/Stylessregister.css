@@ -103,6 +103,16 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+.terms {
+  color: var(--text-gray);
+  font-size: 0.9rem;
+  margin: 0.75rem 0;
+}
+
+.terms a {
+  color: var(--primary-color);
+}
+
 /* CONTENEDORES DE LOGIN/REGISTER*/
 .login-container {
   display: flex;

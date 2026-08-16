@@ -1,73 +1,26 @@
-import SessionStorageManager from "../../AppStorage.js";
-
-const session = SessionStorageManager.getSession();
-
-const BASE_URL = "https://passmanager.reservai.com.mx/api";
-
-// Utilidad para detectar UUID v4
-function isUUID(str) {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-}
+import { apiFetch, apiJson } from '../../api.js';
 
 export async function fetchAccountById(accountId, page = 1, search = '') {
-    const token = SessionStorageManager.getSession()?.access_token;
-    const params = new URLSearchParams();
-    params.append('page', page);
-    if (search) params.append('search', search);
-
-    const response = await fetch(
-        `${BASE_URL}/a/${encodeURIComponent(accountId)}?${params.toString()}`,
-        {
-            headers: { Authorization: token }
-        }
-    );
-    if (response.status === 418) {
-        window.location.href = '/login';
-        return; // Detén la ejecución
-    }
-    if (!response.ok) throw new Error('No se pudo obtener la cuenta');
-    const result = await response.json();
-    return result;
+    const params = new URLSearchParams({ page: String(page) });
+    if (search) params.set('search', search);
+    const { ok, data } = await apiJson(`/a/${encodeURIComponent(accountId)}?${params.toString()}`);
+    if (!ok) throw new Error('No se pudo obtener la cuenta');
+    return data;
 }
-export async function fetchAccounts({ page = 1, search = "" }) {
-    const token = SessionStorageManager.getSession()?.access_token;
-    if (!token) throw new Error("No hay sesión de administrador");
 
-    let url;
-    url = `${BASE_URL}/a?page=${page}&search=${encodeURIComponent(search)}`;
-
-    const response = await fetch(url, {
-        method: "GET",
-        headers: {
-            "Authorization": token
-        }
-    });
-
-    if (response.status === 418) {
-        window.location.href = '/login';
-        return; // Detén la ejecución
-    }
-
-    
-
-    if (!response.ok) throw new Error(await response.text());
-    const result = await response.json();
-    return result;
+export async function fetchAccounts({ page = 1, search = '' }) {
+    const params = new URLSearchParams({ page: String(page) });
+    if (search) params.set('search', search);
+    const { ok, status, data } = await apiJson(`/a?${params.toString()}`);
+    if (!ok) throw new Error(`Error ${status}`);
+    return data;
 }
 
 export async function deleteAccount(accountId) {
-    const token = SessionStorageManager.getSession()?.access_token;
-
-    const response = await fetch(`${BASE_URL}/account/${encodeURIComponent(accountId)}`, {
-        method: "DELETE",
-        headers: {
-            "Authorization": token
-        }
+    const response = await apiFetch(`/account/${encodeURIComponent(accountId)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
     });
-    if (response.status === 418) {
-        window.location.href = '/login';
-        return; // Detén la ejecución
-    }
     if (!response.ok) throw new Error(await response.text());
-    return await response.json();
+    return response.json().catch(() => ({}));
 }

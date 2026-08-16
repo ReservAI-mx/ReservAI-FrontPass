@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReservAI - Aceptar invitación</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/Styles.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <div class="logo">
+        <img src="/static/Images/ReservAiLogo.png" alt="ReservAI Logo">
+        <h1>ReservAI</h1>
+      </div>
+      <h2>Crear tu cuenta</h2>
+      <form id="acceptForm">
+        <div class="input-group">
+          <input type="text" id="name" placeholder="Nombre" autocomplete="name">
+        </div>
+        <div class="input-group">
+          <input type="password" id="password" placeholder="Contraseña" autocomplete="new-password">
+        </div>
+        <div class="input-group">
+          <input type="password" id="confirmPassword" placeholder="Confirmar contraseña" autocomplete="new-password">
+        </div>
+        <p class="terms">Mínimo 12 caracteres, mayúscula, minúscula, número y símbolo.</p>
+        <p id="formError" class="error"></p>
+        <button type="submit" class="loginbtn">Crear cuenta</button>
+      </form>
+    </div>
+  </div>
+  <script type="module" src="/static/Scripts/acceptInvitation.js"></script>
+</body>
+</html>

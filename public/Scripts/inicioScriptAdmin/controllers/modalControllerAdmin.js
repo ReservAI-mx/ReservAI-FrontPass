@@ -1,6 +1,7 @@
 import {createPasswordForAccount as createPasswordAdmin, fetchPasswordById, updatePasswordAttribute, deletePassword} from '../services/adminPasswordService.js';
 import { showMessage } from '../service/uiHelpersAdmin.js';
 import { showDeleteConfirmModal } from '../service/uiHelpersAdmin.js';
+import SessionStorageManager from '../../AppStorage.js';
 
 
 export function setupAdminModals({ addBtn, createModal, viewModal, fields, listEl, passwords, renderList, getSelectedAccountId }) {
@@ -440,7 +441,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", function(e) {
             e.preventDefault();
-            sessionStorage.clear();
+            SessionStorageManager.clearSession();
             window.location.href = "/login";
         });
     }

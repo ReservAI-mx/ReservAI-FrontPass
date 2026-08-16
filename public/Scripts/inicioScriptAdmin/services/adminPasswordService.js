@@ -1,92 +1,38 @@
-import SessionStorageManager from "../../AppStorage.js";
-import Password from "../../../models/passwordsAdmin.js";
-
-const BASE_URL = "https://passmanager.reservai.com.mx/api";
+import { apiFetch, apiJson } from '../../api.js';
+import Password from '../../../models/passwordsAdmin.js';
 
 export async function fetchPasswordById(accountId, passwordId) {
-    const token = SessionStorageManager.getSession()?.access_token;
-    if (!token) throw new Error("No hay sesión activa");
-    const url = `${BASE_URL}/a/${encodeURIComponent(accountId)}/${encodeURIComponent(passwordId)}`;
-    const response = await fetch(url, {
-        method: "GET",
-        headers: {
-            "Authorization": token
-        }
-    });
-    if (response.status === 418) {
-      window.location.href = '/login';
-      return;
-    }
-    if (!response.ok) throw new Error(await response.text());
-    const result = await response.json();
-    return new Password(result.data); // <-- ¡Aquí el cambio!
+    const url = `/a/${encodeURIComponent(accountId)}/${encodeURIComponent(passwordId)}`;
+    const { ok, data } = await apiJson(url);
+    if (!ok) throw new Error(data.error || 'No se pudo obtener la contraseña');
+    return new Password(data.data);
 }
 
-export async function createPasswordForAccount({accountId, name, password, description, updateablebyclient, visibility}) {
-  const token = SessionStorageManager.getSession()?.access_token;
-  const body = {
-    name,
-    password,
-    description,
-    updateablebyclient,
-    visibility
-  };
-
-  const url = `${BASE_URL}/a/${encodeURIComponent(accountId)}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": token
-    },
-    body: JSON.stringify(body)
-  });
-  if (response.status === 418) {
-    window.location.href = '/login';
-    return; // Detén la ejecución
-  }
-  if (!response.ok) throw new Error(await response.text());
-  return await response.json();
+export async function createPasswordForAccount({ accountId, name, password, description, updateablebyclient, visibility }) {
+    const { ok, data } = await apiJson(`/a/${encodeURIComponent(accountId)}`, {
+        method: 'POST',
+        body: { name, password, description, updateablebyclient, visibility },
+    });
+    if (!ok) throw new Error(data.error || data.message || 'Error al crear contraseña');
+    return data;
 }
 
 export async function updatePasswordAttribute(accountId, passwordId, attribute, value) {
-  const token = SessionStorageManager.getSession()?.access_token;
-  
-  const url = `${BASE_URL}/a/${encodeURIComponent(accountId)}/${encodeURIComponent(passwordId)}?attribute=${encodeURIComponent(attribute)}`;
-  const body = { value };
-  const response = await fetch(url, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": token
-    },
-    body: JSON.stringify(body)
-  });
-  if (response.status === 418) {
-    window.location.href = '/login';
-    return; // Detén la ejecución
-  }
-  if (!response.ok) {
-  const errorText = await response.text();
-  throw new Error(errorText);
+    const url = `/a/${encodeURIComponent(accountId)}/${encodeURIComponent(passwordId)}?attribute=${encodeURIComponent(attribute)}`;
+    const { ok, data } = await apiJson(url, {
+        method: 'PUT',
+        body: { value },
+    });
+    if (!ok) throw new Error(data.error || data.message || 'Error al actualizar');
+    return data;
 }
-  return await response.json();
-}
-
 
 export async function deletePassword(accountId, passwordId) {
-  const token = SessionStorageManager.getSession()?.access_token;
-  const url = `${BASE_URL}/a/${encodeURIComponent(accountId)}/${encodeURIComponent(passwordId)}`;
-  const response = await fetch(url, {
-    method: "DELETE",
-    headers: {
-      "Authorization": token
-    }
-  });
-  if (response.status === 418) {
-    window.location.href = '/login';
-    return; // Detén la ejecución
-  }
-  if (!response.ok) throw new Error(await response.text());
-  return true;
+    const url = `/a/${encodeURIComponent(accountId)}/${encodeURIComponent(passwordId)}`;
+    const response = await apiFetch(url, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) throw new Error(await response.text());
+    return true;
 }

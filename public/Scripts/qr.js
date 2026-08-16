@@ -1,38 +1,23 @@
-import SessionStorageManager from "./AppStorage.js";
-
+import { apiFetch, requireUiSession } from "./api.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  if (!requireUiSession()) return;
+
   const qrCodeDiv = document.querySelector(".qr-code");
   const qrMessage = document.querySelector(".qr-message");
   const nextBtn = document.getElementById('nextBtn');
-  const token = SessionStorageManager.getSession().access_token;
-  const BASE_URL = "https://passmanager.reservai.com.mx/api";
 
-  // Configurar event listener para el botón "Siguiente"
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
       window.location.href = "/twofa";
     });
   }
 
-  if (!token) {
-    qrMessage.textContent = "No hay sesión activa. Inicia sesión de nuevo.";
-    return;
-  }
-
   try {
-    const response = await fetch(`${BASE_URL}/twofa`, {
+    const response = await apiFetch("/twofa", {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": token
-      }
+      headers: { "Content-Type": "application/json" },
     });
-
-    if (response.status === 418) {
-      window.location.href = '/login';
-      return; 
-    }
 
     if (!response.ok) {
       throw new Error("No se pudo obtener el QR. Intenta más tarde.");
@@ -52,7 +37,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       qrMessage.textContent = "No se recibió el QR. Contacta soporte.";
     }
   } catch (err) {
-
     qrMessage.textContent = "Error: " + err.message;
   }
 });
