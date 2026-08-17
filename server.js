@@ -4,13 +4,19 @@ const path = require('path');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const { getClientIp } = require('./utils/ClientIp');
+const VerifyProxySecret = require('./middlewares/VerifyProxySecret');
 const app = express();
 
 // Puerto configurable desde argumento o por defecto 3000
 const PORT = process.argv[2] || 3000;
 
-const isProduction_ = process.argv[3] || process.env.NODE_ENV || 'dev';
+const isProduction_ =
+  process.argv[3] || process.env.STAGE || process.env.NODE_ENV || 'dev';
 let isProduction = isProduction_ === 'production';
+if (isProduction) {
+  process.env.NODE_ENV = 'production';
+  process.env.STAGE = 'production';
+}
 
 // Importar router principal (ajusta ruta si es diferente)
 const router = require('./public/Scripts/router');
@@ -87,11 +93,23 @@ const assetsLimiter = rateLimit({
 // ============================
 // MIDDLEWARES
 // ============================
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+app.use(VerifyProxySecret);
+
 if (!isProduction) {
   const apiTarget = new URL(process.env.API_PROXY_TARGET || 'http://127.0.0.1:3000');
   app.use('/api', (req, res) => {
     const headers = { ...req.headers, host: apiTarget.host };
     delete headers['x-proxy-secret'];
+    if (process.env.PROXY_SECRET_HEADER) {
+      headers['x-proxy-secret'] = process.env.PROXY_SECRET_HEADER;
+    }
     const proxyReq = http.request(
       {
         hostname: apiTarget.hostname,
