@@ -46,10 +46,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   emailInput.addEventListener('input', clearError);
 
+  // --- Switch de tipo de cuenta ---
+  const accountType = document.getElementById('accountType');
+  const labelClient = document.getElementById('labelClient');
+  const labelAdmin = document.getElementById('labelAdmin');
+  const roleHint = document.getElementById('roleHint');
+
+  const HINTS = {
+    client: 'Ve y usa sus propias contraseñas',
+    admin: 'Administra cuentas y las contraseñas de todas',
+  };
+
   function rolSeleccionado() {
-    const marcado = form.querySelector('input[name="role"]:checked');
-    return marcado ? marcado.value : 'client';
+    return accountType.checked ? 'admin' : 'client';
   }
+
+  function pintarRol() {
+    const rol = rolSeleccionado();
+    labelClient.classList.toggle('is-active', rol === 'client');
+    labelAdmin.classList.toggle('is-active', rol === 'admin');
+    roleHint.textContent = HINTS[rol];
+  }
+
+  accountType.addEventListener('change', pintarRol);
+  // Los rótulos también cambian el switch, para no obligar a atinarle.
+  labelClient.addEventListener('click', () => { accountType.checked = false; pintarRol(); });
+  labelAdmin.addEventListener('click', () => { accountType.checked = true; pintarRol(); });
+  pintarRol();
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

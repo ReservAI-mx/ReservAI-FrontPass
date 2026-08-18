@@ -32,23 +32,19 @@
         </div>
         <p class="field-error" id="emailError" role="alert"></p>
 
-        <fieldset class="role-picker">
-          <legend>Tipo de cuenta</legend>
-          <label class="role-option">
-            <input type="radio" name="role" value="client" checked>
-            <span class="role-option__body">
-              <span class="role-option__name">Cliente</span>
-              <span class="role-option__hint">Ve y usa sus propias contraseñas</span>
-            </span>
-          </label>
-          <label class="role-option">
-            <input type="radio" name="role" value="admin">
-            <span class="role-option__body">
-              <span class="role-option__name">Admin</span>
-              <span class="role-option__hint">Administra cuentas y sus contraseñas</span>
-            </span>
-          </label>
-        </fieldset>
+        <div class="account-type">
+          <span class="account-type__title">Tipo de cuenta</span>
+          <div class="account-type__control">
+            <span class="account-type__side is-active" id="labelClient">Cliente</span>
+            <label class="switch">
+              <input type="checkbox" id="accountType" role="switch"
+                     aria-label="Cambiar entre cuenta cliente y admin">
+              <span class="slider"></span>
+            </label>
+            <span class="account-type__side" id="labelAdmin">Admin</span>
+          </div>
+          <p class="account-type__hint" id="roleHint">Ve y usa sus propias contraseñas</p>
+        </div>
 
         <button type="submit" id="registerBtn" class="btn">Enviar invitación</button>
       </form>

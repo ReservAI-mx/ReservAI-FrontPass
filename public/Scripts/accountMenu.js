@@ -12,9 +12,12 @@ export function setupAccountMenu(session) {
     nombreEl.textContent = session.account_name;
   }
 
-  // Facturación es solo para cuentas cliente: un admin no tiene suscripción.
+  // Facturación se oculta solo para admin. Se compara contra 'admin' y no
+  // contra 'client' para que un backend que responda "cliente" o "CLIENT"
+  // no deje al usuario sin acceso a su facturación.
   if (billingLink) {
-    billingLink.hidden = session?.account_type !== 'client';
+    const rol = String(session?.account_type || '').trim().toLowerCase();
+    billingLink.hidden = rol === 'admin';
   }
 
   if (!profile || !btn) return;
