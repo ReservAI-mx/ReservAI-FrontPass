@@ -1,13 +1,16 @@
 import { requireUiSession } from '../api.js';
+import SessionStorageManager from '../AppStorage.js';
+import { setupAccountMenu } from '../accountMenu.js';
 import { setupPasswordList } from './controllers/passwordListController.js';
 import { setupModals } from './controllers/modalController.js';
 import { setupChangePassword } from '../changePassword.js';
 
-if (!requireUiSession()) {
-  /* redirect already triggered */
-}
+const session = requireUiSession();
 
 document.addEventListener('DOMContentLoaded', async () => {
+    if (!session) return; // requireUiSession ya redirigió
+
+    setupAccountMenu(session || SessionStorageManager.getSession());
     setupChangePassword();
 
     const elements = {

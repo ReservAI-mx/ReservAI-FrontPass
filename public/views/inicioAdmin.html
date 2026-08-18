@@ -18,12 +18,43 @@
     </div>
     <a href="/register" id="registerBtn" class="register-btn">Invitar</a>
     <div class="profile">
-      <button class="profile-btn" aria-haspopup="true" aria-expanded="false">
-        <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="profile-icon" alt="Perfil">
+      <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="Menú de cuenta">
+        <span class="profile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.5" r="3.75"/>
+            <path d="M4.5 20.25c0-3.6 3.36-6.25 7.5-6.25s7.5 2.65 7.5 6.25"/>
+          </svg>
+        </span>
       </button>
       <div class="dropdown" role="menu">
-        <a href="#" id="changePasswordLink">Cambiar contraseña</a>
-        <a href="#" id="logout">Cerrar sesión</a>
+        <p class="dropdown__account" id="accountName"></p>
+        <a href="/register" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="10" cy="8.5" r="3.5"/>
+            <path d="M3.75 19.5c0-3.3 2.8-5.75 6.25-5.75 1.05 0 2.04.22 2.9.62"/>
+            <path d="M17.25 14.5v5.5M14.5 17.25H20"/>
+          </svg>
+          Invitar usuario
+        </a>
+        <a href="#" id="changePasswordLink" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Cambiar contraseña
+        </a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+            <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+          </svg>
+          Cerrar sesión
+        </a>
       </div>
     </div>
   </nav>

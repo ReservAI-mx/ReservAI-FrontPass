@@ -1,13 +1,14 @@
 import { requireAdminSession } from "../api.js";
+import { setupAccountMenu } from "../accountMenu.js";
 import { setupAdminModals } from "./controllers/modalControllerAdmin.js";
 import { setupAdminSearch } from "./controllers/passwordListControllerAdmin.js";
 import { setupChangePassword } from "../changePassword.js";
 
-if (!requireAdminSession()) {
-  /* redirect already triggered */
-}
+const session = requireAdminSession();
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (!session) return; // requireAdminSession ya redirigió
+  setupAccountMenu(session);
   setupChangePassword();
   let selectedAccountId = null; // <-- Declaración global
 

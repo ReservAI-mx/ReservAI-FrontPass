@@ -1,11 +1,11 @@
 import { apiJson, requireAdminSession } from './api.js';
 import { setButtonLoading, shakeElement } from './buttonLoading.js';
 
-if (!requireAdminSession()) {
-  /* redirect already triggered */
-}
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-function showMessage(message, type = 'info', duration = 3000) {
+const session = requireAdminSession();
+
+function showMessage(message, type = 'info', duration = 3500) {
   const container = document.getElementById('messageContainer');
   if (!container) return;
   const messageEl = document.createElement('div');
@@ -20,42 +20,52 @@ function showMessage(message, type = 'info', duration = 3000) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const emailInput = document.getElementById('email');
-  const accountType = document.getElementById('accountType');
-  const accountLabel = document.getElementById('accountLabel');
-  const registerBtn = document.getElementById('registerBtn');
+  if (!session) return; // requireAdminSession ya redirigió
 
-  function showError(input, message) {
-    input.value = '';
-    input.placeholder = message;
-    input.classList.add('error-input');
+  const form = document.getElementById('inviteForm');
+  const emailInput = document.getElementById('email');
+  const emailError = document.getElementById('emailError');
+  const registerBtn = document.getElementById('registerBtn');
+  const grupo = emailInput.closest('.input-group');
+
+  /**
+   * Marca el campo sin vaciarlo: antes el error se metía en el placeholder
+   * y borraba el correo que el admin acababa de escribir.
+   */
+  function setError(message) {
+    grupo.classList.add('has-error');
+    emailError.textContent = message;
+    shakeElement(form);
+    emailInput.focus();
   }
 
-  emailInput.addEventListener('focus', () => {
-    emailInput.classList.remove('error-input');
-    emailInput.placeholder = 'Correo electrónico';
-  });
+  function clearError() {
+    grupo.classList.remove('has-error');
+    emailError.textContent = '';
+  }
 
-  accountType.addEventListener('change', () => {
-    accountLabel.textContent = accountType.checked ? 'Admin' : 'Cliente';
-  });
+  emailInput.addEventListener('input', clearError);
 
-  registerBtn.addEventListener('click', async () => {
-    emailInput.classList.remove('error-input');
+  function rolSeleccionado() {
+    const marcado = form.querySelector('input[name="role"]:checked');
+    return marcado ? marcado.value : 'client';
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    clearError();
+
     const email = emailInput.value.trim();
-    const role = accountType.checked ? 'admin' : 'client';
-
     if (!email) {
-      showError(emailInput, 'El correo es necesario');
-      shakeElement(emailInput);
+      setError('El correo es necesario');
       return;
     }
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email)) {
-      showError(emailInput, 'Correo electrónico inválido');
-      shakeElement(emailInput);
+    if (!EMAIL_RE.test(email)) {
+      setError('Ese correo no tiene un formato válido');
       return;
     }
+
+    const role = rolSeleccionado();
 
     setButtonLoading(registerBtn, true, 'Enviando...');
     try {
@@ -64,17 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
         body: { email, role },
       });
       if (!ok) {
-        showError(emailInput, data.error || data.message || 'No se pudo enviar la invitación');
-        shakeElement(emailInput);
+        setError(data.error || data.message || 'No se pudo enviar la invitación');
         return;
       }
-      showMessage('Invitación enviada', 'success', 4000);
+      const comoQue = role === 'admin' ? 'administrador' : 'cliente';
+      showMessage(`Invitación enviada a ${email} como ${comoQue}`, 'success', 4500);
       emailInput.value = '';
+      clearError();
+      emailInput.focus();
     } catch (err) {
-      showError(emailInput, err.message || 'Error al enviar la invitación');
-      shakeElement(emailInput);
+      setError(err.message || 'Error de red al enviar la invitación');
     } finally {
-      setButtonLoading(registerBtn, false);
+      if (document.body.contains(registerBtn)) {
+        setButtonLoading(registerBtn, false);
+      }
     }
   });
 });

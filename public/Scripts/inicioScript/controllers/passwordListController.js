@@ -6,8 +6,6 @@ export async function setupPasswordList(elements) {
     const { listEl, searchEl, prevBtn, nextBtn, pageInfo, totalEl } = elements;
     let currentPage = 1;
     let searchTimeout = null;
-    let pageSize = 5; 
-    let totalPages = 1;
 
 
  
@@ -19,11 +17,13 @@ export async function setupPasswordList(elements) {
         try {
             const { data: passwords = [], total = 0, next_page, current_page } = await fetchPasswords(page, search);
             currentPage = current_page || page;
-            pageSize = passwords.length > 0 ? passwords.length : pageSize;
-            totalPages = Math.max(1, Math.ceil(total / pageSize)); 
-
 
             renderList(passwords, listEl);
+
+            if (totalEl) {
+                totalEl.textContent = total === 1 ? '1 contraseña' : `${total} contraseñas`;
+                totalEl.hidden = total === 0;
+            }
 
             pageInfo.textContent = next_page ? `Página ${currentPage} `: `Página ${currentPage}`;
             prevBtn.disabled = currentPage <= 1;
@@ -62,7 +62,7 @@ export async function setupPasswordList(elements) {
         if (searchTimeout) clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             loadPage(1, searchEl.value);
-        }, 2000);
+        }, 350);
     });
 
     searchEl?.addEventListener('keydown', (e) => {

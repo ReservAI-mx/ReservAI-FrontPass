@@ -1,12 +1,7 @@
 import SessionStorageManager from "./AppStorage.js";
+import { apiFetch, requireUiSession } from "./api.js";
 
-const BASE_URL = "https://passmanager.reservai.com.mx/api";
-
-const session = SessionStorageManager.getSession();
-
-if (!session || !session.access_token) {
-    window.location.href = "/login";
-}
+requireUiSession();
 
 // Mapeo de iconos para diferentes planes
 const planIcons = {
@@ -86,23 +81,10 @@ function hideModal(modalId) {
 
 // Obtener links de pago desde el endpoint /links
 async function fetchPaymentLinks() {
-    const token = SessionStorageManager.getSession().access_token;
-    const url = `${BASE_URL}/billing/links`;
     try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token
-            }
-        });
+        const response = await apiFetch('/billing/links');
         const text = await response.text();
-        
-        if (response.status === 418) {
-            window.location.href = '/login';
-            return null;
-        }
-        
+
         let data;
         try {
             data = JSON.parse(text);
@@ -141,23 +123,10 @@ async function fetchPaymentLinks() {
 
 // Crear sesión del portal de facturación y redirigir al usuario
 export async function openStripeBillingPortal() {
-    const token = SessionStorageManager.getSession().access_token;
-    const url = `${BASE_URL}/billing/portal`;
     try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token
-            }
-        });
+        const response = await apiFetch('/billing/portal');
         const text = await response.text();
-        
-        if (response.status === 418) {
-            window.location.href = '/login';
-            return;
-        }
-        
+
         let data;
         try {
             data = JSON.parse(text);
@@ -210,24 +179,8 @@ export async function createStripeCustomer() {
         stripeLoadingText.classList.remove('success', 'error');
     }
     try {
-        const token = SessionStorageManager.getSession().access_token;
-        const url = `${BASE_URL}/billing/customer`;
-        const response = await fetch(
-            url,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                }
-            }
-        );
-        
-        if (response.status === 418) {
-            window.location.href = '/login';
-            return null;
-        }
-        
+        const response = await apiFetch('/billing/customer', { method: 'POST' });
+
         if (!response.ok) {
             const errorText = await response.text();
             let msg = '';
@@ -279,26 +232,7 @@ async function fetchSubscriptions(page = 1) {
     if (errorEl) errorEl.style.display = 'none';
     
     try {
-        const token = SessionStorageManager.getSession().access_token;
-        
-        
-        // Endpoint para obtener planes del usuario
-        const response = await fetch(
-            `${BASE_URL}/billing/status`,
-            {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                }
-            }
-        );
-
-
-        if (response.status === 418) {
-            window.location.href = '/login';
-            return;
-        }
+        const response = await apiFetch('/billing/status');
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -538,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", function(e) {
             e.preventDefault();
-            sessionStorage.clear();
+            SessionStorageManager.clearSession();
             window.location.href = "/login";
         });
     }

@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ReservAI - Invitar</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link rel="stylesheet" href="/static/estilos/Stylessregister.css">
   <link rel="stylesheet" href="/static/estilos/buttonLoading.css">
 </head>
@@ -13,28 +12,48 @@
   <div id="messageContainer" class="message-container"></div>
 
   <div class="login-container">
-    <div class="login-box">
+    <div class="login-box login-box--narrow">
       <div class="logo">
         <img src="/static/Images/ReservAiLogo.png" alt="ReservAI Logo">
         <h1>ReservAI</h1>
       </div>
 
       <h2>Invitar usuario</h2>
-      <p class="terms">Se enviará un correo con el enlace para crear la cuenta.</p>
+      <p class="form-intro">
+        Se enviará un correo con el enlace para crear la cuenta. El enlace
+        caduca, así que conviene avisarle a la persona.
+      </p>
 
-      <input type="email" id="email" placeholder="Correo electrónico">
+      <form id="inviteForm" novalidate>
+        <div class="input-group">
+          <input type="email" id="email" placeholder=" " autocomplete="email"
+                 autocapitalize="none" spellcheck="false">
+          <label for="email">Correo electrónico</label>
+        </div>
+        <p class="field-error" id="emailError" role="alert"></p>
 
-      <div class="account-type">
-        <label for="accountType">Tipo de cuenta</label>
-        <label class="switch">
-          <input type="checkbox" id="accountType">
-          <span class="slider"></span>
-        </label>
-        <span id="accountLabel">Cliente</span>
-      </div>
+        <fieldset class="role-picker">
+          <legend>Tipo de cuenta</legend>
+          <label class="role-option">
+            <input type="radio" name="role" value="client" checked>
+            <span class="role-option__body">
+              <span class="role-option__name">Cliente</span>
+              <span class="role-option__hint">Ve y usa sus propias contraseñas</span>
+            </span>
+          </label>
+          <label class="role-option">
+            <input type="radio" name="role" value="admin">
+            <span class="role-option__body">
+              <span class="role-option__name">Admin</span>
+              <span class="role-option__hint">Administra cuentas y sus contraseñas</span>
+            </span>
+          </label>
+        </fieldset>
 
-      <button id="registerBtn" class="btn">Enviar invitación</button>
-      <p class="terms"><a href="/inicioAdmin">Volver</a></p>
+        <button type="submit" id="registerBtn" class="btn">Enviar invitación</button>
+      </form>
+
+      <p class="terms"><a href="/inicioAdmin">Volver al panel</a></p>
     </div>
   </div>
   <script type="module" src="/static/Scripts/register.js"></script>
