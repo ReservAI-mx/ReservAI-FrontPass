@@ -1,72 +1,99 @@
 import LoginInfo from "../models/logininfo.js";
 import SessionStorageManager from "./AppStorage.js";
+import { shakeElement } from "./buttonLoading.js";
+
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("loginForm");
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
+  const emailError = document.getElementById('emailError');
+  const passwordError = document.getElementById('passwordError');
   const toggleBtn = document.getElementById("togglePasswordBtn");
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", togglePassword);
-  }
 
   if (!form) {
     console.error("No se encontró el formulario con id='loginForm'");
     return;
   }
 
-  function resetPlaceholders() {
-    emailInput.placeholder = "Correo electrónico";
-    passwordInput.placeholder = "Contraseña";
-    [emailInput, passwordInput].forEach(inp => {
-      inp.classList.remove("error-input");
+  const campos = [
+    { input: emailInput, error: emailError },
+    { input: passwordInput, error: passwordError },
+  ];
+
+  /**
+   * Marca el campo sin borrar lo que el usuario escribió: antes se vaciaba
+   * el input y el error iba en el placeholder, así que fallar la contraseña
+   * te obligaba a reescribir también el correo.
+   */
+  function setError(input, errorEl, message) {
+    input.classList.add('error-input');
+    const grupo = input.closest('.input-group');
+    if (grupo) grupo.classList.add('has-error');
+    if (errorEl) errorEl.textContent = message;
+  }
+
+  function clearErrors() {
+    campos.forEach(({ input, error }) => {
+      input.classList.remove('error-input');
+      const grupo = input.closest('.input-group');
+      if (grupo) grupo.classList.remove('has-error');
+      if (error) error.textContent = '';
     });
   }
 
-  function showError(input, message) {
-    input.value = "";
-    input.placeholder = message;
-    input.classList.add("error-input");
-  }
-
-  [emailInput, passwordInput].forEach(input => {
-    input.addEventListener('focus', () => {
+  campos.forEach(({ input, error }) => {
+    input.addEventListener('input', () => {
       input.classList.remove('error-input');
-      if (input === emailInput) input.placeholder = "Correo electrónico";
-      if (input === passwordInput) input.placeholder = "Contraseña";
+      const grupo = input.closest('.input-group');
+      if (grupo) grupo.classList.remove('has-error');
+      if (error) error.textContent = '';
     });
   });
 
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+      const visible = passwordInput.type === "text";
+      passwordInput.type = visible ? "password" : "text";
+      toggleBtn.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+      const icono = toggleBtn.querySelector('i');
+      if (icono) icono.className = visible ? 'fas fa-eye' : 'fas fa-eye-slash';
+      passwordInput.focus();
+    });
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    resetPlaceholders();
+    clearErrors();
 
     const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+    const password = passwordInput.value;
 
-    let valid = true;
+    let valido = true;
     if (!email) {
-      showError(emailInput, "El correo es necesario");
-      valid = false;
+      setError(emailInput, emailError, "El correo es necesario");
+      valido = false;
+    } else if (!EMAIL_RE.test(email)) {
+      setError(emailInput, emailError, "Ese correo no tiene un formato válido");
+      valido = false;
     }
     if (!password) {
-      showError(passwordInput, "La contraseña es necesaria");
-      valid = false;
+      setError(passwordInput, passwordError, "La contraseña es necesaria");
+      valido = false;
     }
-    if (!valid) return;
+    if (!valido) {
+      shakeElement(form);
+      (emailInput.classList.contains('error-input') ? emailInput : passwordInput).focus();
+      return;
+    }
 
     let loginInfo;
     try {
       loginInfo = new LoginInfo(email, password);
-    } catch (err) {
-      if (err.message.includes("Correo")) {
-        showError(emailInput, err.message);
-      } else if (err.message.includes("Contraseña")) {
-        showError(passwordInput, err.message);
-      } else {
-        showError(emailInput, "Correo o contraseña inválidos");
-        showError(passwordInput, "Correo o contraseña inválidos");
-      }
+    } catch {
+      setError(emailInput, emailError, "Correo o contraseña inválidos");
+      shakeElement(form);
       return;
     }
 
@@ -87,14 +114,15 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         window.location.href = "/twofa";
       }
-    } catch (err) {
-      showError(emailInput, "Correo o contraseña inválidos");
-      showError(passwordInput, "Correo o contraseña inválidos");
+    } catch {
+      // El backend no distingue cuál de los dos falló, a propósito.
+      setError(passwordInput, passwordError, "Correo o contraseña inválidos");
+      emailInput.classList.add('error-input');
+      const grupoEmail = emailInput.closest('.input-group');
+      if (grupoEmail) grupoEmail.classList.add('has-error');
+      shakeElement(form);
+      passwordInput.focus();
+      passwordInput.select();
     }
   });
-
-  function togglePassword() {
-    const passwordField = document.getElementById("password");
-    passwordField.type = passwordField.type === "password" ? "text" : "password";
-  }
 });
