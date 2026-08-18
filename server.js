@@ -145,18 +145,26 @@ app.disable('x-powered-by');
 // En desarrollo no se cachea: con maxAge '1d' el navegador se quedaba un día
 // entero con el CSS/JS viejo y los cambios no se veían sin recarga forzada.
 app.use('/static', express.static(path.join(__dirname, 'public'), {
-  maxAge: isProduction ? '1y' : 0,
+  maxAge: 0,
   etag: true,
   lastModified: true,
   setHeaders: isProduction ? (res, filePath) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+
+    // Los nombres de archivo no llevan hash ni versión, así que "immutable"
+    // con un año dejaba a los navegadores con el CSS/JS viejo para siempre:
+    // el HTML se actualizaba en cada deploy y los estáticos no. El ETag hace
+    // que la revalidación cueste un 304 vacío, no la descarga completa.
     if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'public, no-cache');
       res.setHeader('X-Robots-Tag', 'noindex, nofollow, nosnippet, noarchive');
       res.setHeader('Referrer-Policy', 'no-referrer');
+    } else {
+      // Imágenes y demás: una semana, pero revalidables.
+      res.setHeader('Cache-Control', 'public, max-age=604800, must-revalidate');
     }
   } : (res) => {
     // Desarrollo: revalidar siempre contra el servidor.
