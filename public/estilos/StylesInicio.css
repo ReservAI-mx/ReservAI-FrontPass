@@ -1300,3 +1300,388 @@ confirmDeleteModal{
   .password-item,
   .password-item::after { transition: none; }
 }
+
+/* ============================================================
+   Ajustes de capas, tarjetas y modales
+   ============================================================ */
+
+/* La barra superior y su menú deben quedar por encima del contenido:
+   el desplegable chocaba con el buscador y con el primer item. */
+.navbar {
+  position: relative;
+  z-index: 60;
+}
+
+.dropdown {
+  z-index: 70;
+}
+
+/* ---------- Tarjetas de la lista ---------- */
+
+.password-item {
+  flex-direction: row;
+  align-items: center;
+  height: auto;
+  min-height: 76px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.75rem;
+  border-radius: 14px;
+  border-left: none;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+/* Iniciales del nombre, para distinguir de un vistazo. */
+.password-item__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: rgba(9, 131, 214, 0.16);
+  border: 1px solid rgba(9, 131, 214, 0.35);
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.password-item__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.password-item__name {
+  font-size: 1.02rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.password-item__meta {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  transition: color 0.18s ease;
+}
+
+.password-item:hover {
+  background: rgba(9, 131, 214, 0.14);
+  border-color: var(--primary);
+  color: var(--text-light);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(9, 131, 214, 0.22);
+}
+
+.password-item:hover .password-item__avatar {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.password-item:hover .password-item__meta { color: rgba(255, 255, 255, 0.75); }
+
+/* ---------- Modal de ver contraseña ---------- */
+
+#viewModal .modal-content {
+  width: 640px;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75);
+}
+
+#viewModal .modal-header,
+#viewModal .modal-footer {
+  background: #000;
+}
+
+#viewModal .modal-body {
+  padding: 1.5rem 1.75rem;
+}
+
+/* Los campos internos necesitan separarse del negro puro. */
+#viewModal .password-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#viewModal .password-info > div {
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+#viewModal .password-info > div + div { margin-top: 0.75rem; }
+
+@media (max-width: 700px) {
+  #viewModal .modal-content { width: 100%; }
+  #viewModal .modal-body { padding: 1.1rem 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .password-item:hover { transform: none; }
+}
+
+/* ============================================================
+   Fondo negro en las tarjetas de contraseñas y de cuentas
+   ============================================================ */
+
+.password-item,
+.account-item {
+  background: #000;
+}
+
+/* ---------- Tarjeta de cuenta (lista de clientes en admin) ---------- */
+
+.account-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 76px;
+  padding: 1rem 1.15rem;
+  border-radius: 14px;
+  border-left: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  transition: background 0.18s ease, transform 0.12s ease,
+              border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.account-item__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: rgba(9, 131, 214, 0.16);
+  border: 1px solid rgba(9, 131, 214, 0.35);
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.account-item__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.account-item__name {
+  font-size: 1.02rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-item__email {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.18s ease;
+}
+
+.account-item::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.35;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.account-item:hover {
+  background: rgba(9, 131, 214, 0.14);
+  border-color: var(--primary);
+  color: var(--text-light);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(9, 131, 214, 0.22);
+}
+
+.account-item:hover .account-item__avatar {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.account-item:hover .account-item__email { color: rgba(255, 255, 255, 0.75); }
+.account-item:hover::after { opacity: 0.9; transform: rotate(-45deg) translate(2px, 2px); }
+
+.account-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* El estado vacío no debe verse como una tarjeta clicable. */
+.account-item--vacio {
+  justify-content: center;
+  color: var(--text-gray);
+  cursor: default;
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.account-item--vacio::after { content: none; }
+.account-item--vacio:hover { background: transparent; border-color: rgba(255,255,255,.08); transform: none; box-shadow: none; }
+
+/* ---------- Modales de admin en negro ---------- */
+
+#accountPasswordsModal .modal-content,
+#viewModal .modal-content {
+  background: #000;
+}
+
+#accountPasswordsModal .modal-content {
+  width: 720px;
+  max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-item:hover { transform: none; }
+}
+
+/* ============================================================
+   Botón de editar y botón flotante de agregar
+   ============================================================ */
+
+/* .edit-icon no tenía ni una regla: era un <span> suelto que no
+   se leía como algo en lo que se pueda hacer clic. */
+.edit-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-gray);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.edit-icon:hover {
+  color: #fff;
+  border-color: var(--primary);
+  background: rgba(9, 131, 214, 0.18);
+}
+
+.edit-icon:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.edit-icon i { font-size: 0.9rem; }
+
+/* Aviso de que los campos se pueden editar. */
+.edit-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-gray);
+}
+
+/* El campo en edición se distingue del resto. */
+.edit-input {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--primary);
+  background: #0b0b0b;
+  color: var(--text-light);
+  font-size: 0.98rem;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(9, 131, 214, 0.16);
+}
+
+/* ---------- Botón flotante ---------- */
+
+.fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  right: 1.75rem;
+  bottom: 1.75rem;
+  background: var(--primary);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 26px rgba(9, 131, 214, 0.4),
+              0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.fab svg {
+  width: 28px;
+  height: 28px;
+}
+
+.fab:hover {
+  background: #0a94f0;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 14px 32px rgba(9, 131, 214, 0.5),
+              0 6px 16px rgba(0, 0, 0, 0.55);
+}
+
+.fab:active { transform: translateY(0) scale(0.98); }
+
+.fab:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .fab { width: 58px; height: 58px; right: 1.1rem; bottom: 1.1rem; }
+  .fab svg { width: 24px; height: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fab:hover, .fab:active { transform: none; }
+}
+
+/* .modal-body es flex en fila y centrado: el aviso de edición se iba a un
+   lado de los campos en vez de quedar debajo. */
+#viewModal .modal-body {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.75rem;
+}
+
+#viewModal .password-details {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+#viewModal .edit-hint {
+  margin-top: 0;
+  padding-left: 0.25rem;
+}

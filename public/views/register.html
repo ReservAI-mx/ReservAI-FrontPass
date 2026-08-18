@@ -19,10 +19,7 @@
       </div>
 
       <h2>Invitar usuario</h2>
-      <p class="form-intro">
-        Se enviará un correo con el enlace para crear la cuenta. El enlace
-        caduca, así que conviene avisarle a la persona.
-      </p>
+      <p class="form-intro">Le enviaremos un enlace para crear su cuenta.</p>
 
       <form id="inviteForm" novalidate>
         <div class="input-group">
@@ -33,7 +30,6 @@
         <p class="field-error" id="emailError" role="alert"></p>
 
         <div class="account-type">
-          <span class="account-type__title">Tipo de cuenta</span>
           <div class="account-type__control">
             <span class="account-type__side is-active" id="labelClient">Cliente</span>
             <label class="switch">
@@ -43,7 +39,6 @@
             </label>
             <span class="account-type__side" id="labelAdmin">Admin</span>
           </div>
-          <p class="account-type__hint" id="roleHint">Ve y usa sus propias contraseñas</p>
         </div>
 
         <button type="submit" id="registerBtn" class="btn">Enviar invitación</button>

@@ -160,10 +160,25 @@ export function setupModals({ addBtn, createModal, viewModal, fields, listEl, pa
 
             modalBody.innerHTML = fullPass.toHTML();
 
+            // Un span con role="button" no dispara click con el teclado.
+            modalBody.querySelectorAll('.edit-icon').forEach((icono) => {
+                icono.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter' || ev.key === ' ') {
+                        ev.preventDefault();
+                        icono.click();
+                    }
+                });
+            });
+
             // Si NO es editable, quita los iconos de edición y no asigna listeners
             if (!fullPass.updateableByClient) {
                 modalBody.querySelectorAll('.edit-icon').forEach(icon => icon.remove());
             } else {
+                const aviso = document.createElement('p');
+                aviso.className = 'edit-hint';
+                aviso.textContent = 'Toca el lápiz de cada campo para editarlo.';
+                modalBody.appendChild(aviso);
+
                 // Editar nombre
                 const nameDiv = modalBody.querySelector('.password-name');
                 const nameSpan = nameDiv?.querySelector('.editable-name');

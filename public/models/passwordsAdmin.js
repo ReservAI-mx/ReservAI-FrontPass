@@ -54,14 +54,14 @@ export default class Password {
             <div class="password-info">
                 <div class="password-name">
                     <strong>Nombre:</strong> <span class="editable-name">${safeName}</span>
-                    <span class="edit-icon" title="Editar nombre"> <i class="fas fa-pen-to-square"></i></span>
+                    <span class="edit-icon" role="button" tabindex="0" title="Editar nombre"> <i class="fas fa-pen-to-square"></i></span>
                 </div>
                 <div class="password-field">
                     <div class="password-value-container">
                         <strong>Contraseña:</strong>
                         <div class="password-display">
                             <div class="password-text" data-password="${safePasswordAttr}">*************</div>
-                            <span class="edit-icon" title="Editar contraseña"><i class="fas fa-pen-to-square"></i></span>
+                            <span class="edit-icon" role="button" tabindex="0" title="Editar contraseña"><i class="fas fa-pen-to-square"></i></span>
                             <div class="password-actions">
                                 <button class="toggle-password-btn" type="button" title="Mostrar contraseña">
                                     <i class="fas fa-eye eye-icon"></i>
@@ -75,7 +75,7 @@ export default class Password {
                 </div>
                 <div class="password-description">
                     <strong>Descripción:</strong> <span class="editable-description">${safeDescription}</span>
-                     <span class="edit-icon" title="Editar descripción"><i class="fas fa-pen-to-square"></i></span>
+                     <span class="edit-icon" role="button" tabindex="0" title="Editar descripción"><i class="fas fa-pen-to-square"></i></span>
                 </div>
             </div>
         </div>
