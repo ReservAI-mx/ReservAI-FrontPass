@@ -4,6 +4,8 @@
   --bg-card: #1A1A1A;
   --text-light: #FFFFFF;
   --text-gray: #A0A0A0;
+  --ok: #4ade80;
+  --danger: #ff6b6b;
 }
 
 * {
@@ -90,7 +92,7 @@ h2 {
 }
 
 .input-group {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.95rem;
   position: relative;
   background: var(--bg-card);
   border-radius: 10px;
@@ -413,8 +415,8 @@ input:-webkit-autofill:active {
 /* ---------- Errores por campo ---------- */
 
 .field-error {
-  min-height: 1.15rem;
-  margin: 0 0 0.5rem 4px;
+  /* Se pega al campo de arriba y recupera el espacio que este ya aportó. */
+  margin: -0.6rem 0 0.7rem 4px;
   font-size: 0.82rem;
   font-weight: 500;
   color: #ff6b6b;
@@ -512,4 +514,183 @@ input:-webkit-autofill:active {
   .login-box .terms { animation: none; }
   .shake { animation: none; }
   .loginbtn:hover { transform: none; }
+}
+
+/* ============================================================
+   Recuperar y restablecer contraseña
+   ============================================================ */
+
+.form-intro {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-gray);
+  margin-bottom: 1.75rem;
+}
+
+.form-message {
+  min-height: 1.2rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.form-message.is-ok    { color: #4ade80; }
+.form-message.is-error { color: #ff6b6b; }
+
+/* ---------- Reglas de la contraseña ---------- */
+
+.password-rules {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.25rem;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.password-rules li {
+  position: relative;
+  padding-left: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-gray);
+  transition: color 0.2s ease;
+}
+
+/* Círculo vacío que se convierte en palomita al cumplirse la regla. */
+.password-rules li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.35em;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+/* Sin ::after: la palomita va como fondo del propio círculo, así queda
+   centrada sola en vez de depender de un rotate(45deg) calibrado a mano. */
+
+.password-rules li.cumplida {
+  color: var(--text-light);
+}
+
+.password-rules li.cumplida::before {
+  border-color: var(--ok);
+  background: var(--ok)
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.6 6.3 4.9 8.6 9.4 3.7' fill='none' stroke='%230b1710' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+    center / 9px 9px no-repeat;
+}
+
+/* Las páginas de recuperación reciben la misma entrada escalonada. */
+.login-box .form-intro,
+.login-box .password-rules,
+.login-box .form-message {
+  animation: loginRise 0.5s ease-out both;
+}
+
+.login-box .form-intro     { animation-delay: 0.16s; }
+.login-box .input-group:nth-of-type(3) { animation-delay: 0.34s; }
+.login-box .password-rules { animation-delay: 0.40s; }
+.login-box .form-message   { animation-delay: 0.46s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .login-box .form-intro,
+  .login-box .password-rules,
+  .login-box .form-message { animation: none; }
+}
+
+/* ============================================================
+   Tarjeta angosta: formularios de más de dos campos se veían
+   estirados en los 700px pensados para el login.
+   ============================================================ */
+
+.login-box--narrow {
+  max-width: 440px;
+  padding: 2rem 1.75rem 1.5rem;
+}
+
+.login-box--narrow h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.login-box--narrow .form-intro {
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Campos más bajos: con tres apilados, 70px cada uno alargaba la tarjeta. */
+.login-box--narrow .input-group input {
+  height: 58px;
+  padding: 22px 14px 8px;
+}
+
+.login-box--narrow .input-group label {
+  left: 14px;
+  font-size: 0.95rem;
+}
+
+.login-box--narrow .input-group input:focus + label,
+.login-box--narrow .input-group input:not(:placeholder-shown) + label,
+.login-box--narrow .input-group input:-webkit-autofill + label {
+  top: 9px;
+  font-size: 0.7rem;
+}
+
+.login-box--narrow .loginbtn {
+  height: 56px;
+  font-size: 1.05rem;
+  border-radius: 10px;
+}
+
+/* Los huecos de error reservaban una línea cada uno aunque estuvieran
+   vacíos: cuatro campos eran ~60px de aire muerto. */
+.field-error:empty {
+  display: none;
+}
+
+/* ---------- Separador con etiqueta ---------- */
+
+.form-sep {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 1rem;
+  color: var(--text-gray);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.form-sep::before,
+.form-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------- Reglas en dos columnas parejas ---------- */
+
+.login-box--narrow .password-rules {
+  gap: 0.5rem 1.1rem;
+  margin: 0.85rem 0 0.35rem;
+}
+
+.login-box--narrow .password-rules li {
+  font-size: 0.8rem;
+  padding-left: 1.35rem;
+}
+
+@media (max-width: 480px) {
+  .login-box--narrow {
+    padding: 1.5rem 1.25rem 1.25rem;
+  }
+  .login-box--narrow .password-rules {
+    gap: 0.45rem 0.9rem;
+  }
 }
