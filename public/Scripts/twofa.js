@@ -3,6 +3,7 @@ import { apiFetch, apiJson } from "./api.js";
 import { setButtonLoading, shakeElement } from "./buttonLoading.js";
 
 const MAX_RECOVERY_SIZE = 1024 * 1024; // 1 MB: el documento son unos cuantos KB.
+const VERIFIED_HOLD_MS = 1100; // Cuánto se queda la palomita antes de continuar.
 const PROGRESS_ANIM_MS = 1200; // Duración de la barra. Es puramente visual.
 
 /**
@@ -53,6 +54,85 @@ const ICON_SHIELD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const ICON_FILE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a1.75 1.75 0 0 0-1.75 1.75v14.5A1.75 1.75 0 0 0 7 21h10a1.75 1.75 0 0 0 1.75-1.75V7.75L14 3Z"/><path d="M13.75 3.25V8h4.75"/></svg>`;
 const ICON_DOWNLOAD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4.5 19.5h15"/></svg>`;
 const ICON_CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"/></svg>`;
+
+const FIELD_SELECTORS = ['.instruction', '.code-inputs', '.twofa-error', '.btn-verify', '.recovery-link'];
+const FIELDS_ANIM_MS = 340;
+
+function verifyContainer() {
+  return document.querySelector('.verify-container');
+}
+
+function fieldEls() {
+  const c = verifyContainer();
+  if (!c) return [];
+  return FIELD_SELECTORS.map((sel) => c.querySelector(sel)).filter(Boolean);
+}
+
+/** Saca los campos con animación y luego los marca hidden. */
+function hideFields() {
+  const els = fieldEls();
+  els.forEach((el) => {
+    el.classList.remove('twofa-entering');
+    el.classList.add('twofa-leaving');
+  });
+  return new Promise((resolve) => setTimeout(() => {
+    els.forEach((el) => {
+      el.classList.remove('twofa-leaving');
+      el.hidden = true;
+    });
+    resolve();
+  }, FIELDS_ANIM_MS));
+}
+
+/** Los regresa con la animación inversa (camino de error). */
+function showFields() {
+  const els = fieldEls();
+  els.forEach((el) => {
+    el.hidden = false;
+    el.classList.add('twofa-entering');
+  });
+  return new Promise((resolve) => setTimeout(() => {
+    els.forEach((el) => el.classList.remove('twofa-entering'));
+    resolve();
+  }, FIELDS_ANIM_MS));
+}
+
+/** Relleno mientras el servidor contesta, para que la tarjeta no quede vacía. */
+function showPendingState() {
+  const c = verifyContainer();
+  if (!c) return null;
+  const box = document.createElement('div');
+  box.className = 'twofa-pending';
+  box.setAttribute('role', 'status');
+  box.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><p>Verificando código...</p>';
+  c.appendChild(box);
+  return box;
+}
+
+/** Monta la confirmación verde y deja un respiro para que se vea. */
+function showVerifiedState() {
+  const c = verifyContainer();
+  if (!c) return Promise.resolve();
+
+  const panel = c.querySelector('.recovery-panel');
+  if (panel) panel.hidden = true;
+
+  const box = document.createElement('div');
+  box.className = 'twofa-success';
+  box.setAttribute('role', 'status');
+  box.innerHTML = `
+    <div class="twofa-success__badge">
+      <svg class="twofa-success__check" viewBox="0 0 52 52" aria-hidden="true">
+        <path d="M14 27l8 8 16-18"/>
+      </svg>
+    </div>
+    <h2 class="twofa-success__title">Verificado correctamente</h2>
+    <p class="twofa-success__text">Entrando a tu cuenta...</p>
+  `;
+  c.appendChild(box);
+
+  return new Promise((resolve) => setTimeout(resolve, VERIFIED_HOLD_MS));
+}
 
 function showRecoveryGate(data) {
   const filename = data.recovery_filename || 'totp-recovery.json';
@@ -168,15 +248,76 @@ document.addEventListener("DOMContentLoaded", () => {
                 inputs[idx + 1].focus();
             }
         });
+        // Mover el foco selecciona el dígito, así al teclear se reemplaza.
+        const irA = (destino) => {
+            const el = inputs[destino];
+            if (!el) return;
+            el.focus();
+            el.select();
+        };
+
+        input.addEventListener('click', () => input.select());
+
         input.addEventListener('keydown', (e) => {
-            if (e.key === "Backspace" && !input.value && idx > 0) {
-                inputs[idx - 1].focus();
-            }
-            if (e.key === "Enter" && verifyBtn) {
-                verifyBtn.click();
+            switch (e.key) {
+                case 'ArrowLeft':
+                    if (idx > 0) { e.preventDefault(); irA(idx - 1); }
+                    return;
+                case 'ArrowRight':
+                    if (idx < inputs.length - 1) { e.preventDefault(); irA(idx + 1); }
+                    return;
+                case 'Home':
+                    e.preventDefault();
+                    irA(0);
+                    return;
+                case 'End':
+                    e.preventDefault();
+                    irA(inputs.length - 1);
+                    return;
+                case 'Backspace':
+                    // Con la casilla vacía, retrocede; si no, deja que borre.
+                    if (!input.value && idx > 0) { e.preventDefault(); irA(idx - 1); }
+                    return;
+                case 'Delete':
+                    e.preventDefault();
+                    input.value = '';
+                    refreshFilled();
+                    return;
+                case 'Enter':
+                    if (verifyBtn) verifyBtn.click();
+                    return;
+                default:
+                    return;
             }
         });
     });
+
+    // Marca visualmente los dígitos ya escritos.
+    function refreshFilled() {
+        inputs.forEach((input) => {
+            input.classList.toggle('filled', input.value.trim() !== '');
+        });
+    }
+    inputs.forEach((input) => input.addEventListener('input', refreshFilled));
+    refreshFilled();
+
+    // Pegar el código completo reparte los dígitos en las 6 casillas.
+    inputs.forEach((input, idx) => {
+        input.addEventListener('paste', (e) => {
+            const texto = (e.clipboardData || window.clipboardData).getData('text') || '';
+            const digitos = texto.replace(/[^0-9]/g, '');
+            if (!digitos) return;
+            e.preventDefault();
+            for (let k = 0; k < digitos.length && idx + k < inputs.length; k++) {
+                inputs[idx + k].value = digitos[k];
+            }
+            refreshFilled();
+            const ultimo = Math.min(idx + digitos.length, inputs.length - 1);
+            inputs[ultimo].focus();
+            if (errorDiv) errorDiv.textContent = '';
+        });
+    });
+
 
     function showError(message) {
         inputs.forEach(input => {
@@ -191,42 +332,50 @@ document.addEventListener("DOMContentLoaded", () => {
       verifyBtn.addEventListener('click', async () => {
         if (errorDiv) errorDiv.textContent = "";
         const code = Array.from(inputs).map(i => i.value).join('');
-        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+        if (code.length !== 6 || !/^[0-9]{6}$/.test(code)) {
             showError("Código incorrecto, inténtalo de nuevo.");
             shakeElement(document.querySelector('.code-inputs'));
             return;
         }
 
-        setButtonLoading(verifyBtn, true, "Verificando...");
+        // La petición sale ya; los campos se van mientras tanto.
+        const request = apiJson("/twofa", { method: "POST", body: { code } });
+        await hideFields();
+        const pending = showPendingState();
+
+        let ok = false;
+        let data = {};
+        let fallo = null;
         try {
-            const { ok, data } = await apiJson("/twofa", {
-                method: "POST",
-                body: { code },
-            });
-
-            if (!ok) {
-                showError(data.error || data.message || "Código incorrecto");
-                shakeElement(document.querySelector('.code-inputs'));
-                return;
-            }
-
-            SessionStorageManager.saveSession({
-                token_type: data.token_type || 'access',
-                twofaenabled: true,
-            });
-
-            if (data.recovery_download_required && data.recovery_document) {
-                showRecoveryGate(data);
-                return;
-            }
-            goHome();
+            ({ ok, data } = await request);
         } catch (err) {
-            showError(err.message || "Error al verificar");
-        } finally {
-            if (document.body.contains(verifyBtn)) {
-              setButtonLoading(verifyBtn, false);
-            }
+            fallo = err;
         }
+        if (pending) pending.remove();
+
+        if (fallo || !ok) {
+            // Error: los campos regresan y se puede reintentar.
+            await showFields();
+            showError(
+                fallo ? (fallo.message || "Error al verificar")
+                      : (data.error || data.message || "Código incorrecto")
+            );
+            shakeElement(document.querySelector('.code-inputs'));
+            return;
+        }
+
+        SessionStorageManager.saveSession({
+            token_type: data.token_type || 'access',
+            twofaenabled: true,
+        });
+
+        await showVerifiedState();
+
+        if (data.recovery_download_required && data.recovery_document) {
+            showRecoveryGate(data);
+            return;
+        }
+        goHome();
       });
     }
 
