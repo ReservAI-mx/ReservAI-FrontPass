@@ -142,8 +142,12 @@ app.disable('x-powered-by');
 // ============================
 
 // Servir archivos estáticos desde /public (tanto en desarrollo como en producción)
+// En desarrollo no se cachea: con maxAge '1d' el navegador se quedaba un día
+// entero con el CSS/JS viejo y los cambios no se veían sin recarga forzada.
 app.use('/static', express.static(path.join(__dirname, 'public'), {
-  maxAge: isProduction ? '1y' : '1d',
+  maxAge: isProduction ? '1y' : 0,
+  etag: true,
+  lastModified: true,
   setHeaders: isProduction ? (res, filePath) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -154,12 +158,18 @@ app.use('/static', express.static(path.join(__dirname, 'public'), {
       res.setHeader('X-Robots-Tag', 'noindex, nofollow, nosnippet, noarchive');
       res.setHeader('Referrer-Policy', 'no-referrer');
     }
-  } : undefined
+  } : (res) => {
+    // Desarrollo: revalidar siempre contra el servidor.
+    res.setHeader('Cache-Control', 'no-cache');
+  }
 }));
 
 // En desarrollo también servir desde raíz
 if (!isProduction) {
-  app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1d' }));
+  app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: 0,
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+  }));
 }
 
 // ============================

@@ -31,9 +31,35 @@
     <button class="btn-verify">Verificar</button>
     <p class="recovery-link"><button type="button" id="lostAuthenticatorBtn" class="link-btn">Perdí el autenticador</button></p>
     <div id="recoveryPanel" class="recovery-panel" hidden>
-      <p>Sube el documento de recuperación que descargaste al activar 2FA.</p>
-      <input type="file" id="recoveryFile" accept="application/json,.json">
-      <button type="button" id="recoverySubmit" class="btn-verify">Desactivar 2FA</button>
+      <p class="recovery-panel__intro">
+        Sube el documento de recuperación que descargaste al activar 2FA.
+      </p>
+
+      <label class="dropzone" id="recoveryDropzone" for="recoveryFile">
+        <input type="file" id="recoveryFile" class="dropzone__input"
+               accept="application/json,.json">
+        <span class="dropzone__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 16.5V4.5"/>
+            <path d="m7.5 9 4.5-4.5L16.5 9"/>
+            <path d="M4.5 15.75v2.5a1.75 1.75 0 0 0 1.75 1.75h11.5a1.75 1.75 0 0 0 1.75-1.75v-2.5"/>
+          </svg>
+        </span>
+        <span class="dropzone__title">Arrastra el archivo o haz clic para elegirlo</span>
+        <span class="dropzone__hint">Documento de recuperación .json</span>
+        <span class="dropzone__file" id="recoveryFileName"></span>
+      </label>
+
+      <p class="recovery-panel__error" id="recoveryError" role="alert"></p>
+
+      <button type="button" id="recoverySubmit" class="upload-btn" disabled>
+        <span class="upload-btn__bar" id="recoveryProgressBar"></span>
+        <span class="upload-btn__content">
+          <span class="upload-btn__icon" id="recoverySubmitIcon"></span>
+          <span class="upload-btn__label" id="recoverySubmitLabel">Desactivar 2FA</span>
+        </span>
+      </button>
     </div>
   </div>
 
