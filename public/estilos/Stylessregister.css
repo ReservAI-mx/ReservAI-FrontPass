@@ -414,17 +414,17 @@ input:checked + .slider:before {
 }
 
 .login-box--narrow {
-  max-width: 460px;
-  padding: 2rem 1.75rem 1.5rem;
+  max-width: 600px;
+  padding: 2.75rem 2.5rem 2.25rem;
 }
 
-.login-box--narrow h2 { font-size: 1.6rem; margin-bottom: 0.75rem; }
+.login-box--narrow h2 { font-size: 2rem; margin-bottom: 0.85rem; }
 
 .form-intro {
-  font-size: 0.9rem;
+  font-size: 1rem;
   line-height: 1.55;
   color: var(--text-gray);
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 /* ---------- Campo con etiqueta flotante ---------- */
@@ -441,17 +441,17 @@ input:checked + .slider:before {
 
 .input-group input[type="email"] {
   width: 100%;
-  height: 58px;
+  height: 70px;
   margin: 0;
-  padding: 22px 14px 8px;
+  padding: 27px 18px 10px;
   border: none;
   background: transparent;
-  font-size: 1rem;
+  font-size: 1.08rem;
 }
 
 .input-group label {
   position: absolute;
-  left: 14px;
+  left: 18px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-gray);
@@ -464,9 +464,9 @@ input:checked + .slider:before {
 .input-group input:focus + label,
 .input-group input:not(:placeholder-shown) + label,
 .input-group input:-webkit-autofill + label {
-  top: 9px;
+  top: 12px;
   transform: none;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   color: var(--primary-color);
 }
@@ -492,9 +492,9 @@ input:checked + .slider:before {
 .field-error:empty { display: none; }
 
 .btn {
-  height: 56px;
-  font-size: 1.05rem;
-  border-radius: 10px;
+  height: 64px;
+  font-size: 1.15rem;
+  border-radius: 12px;
   transition: background 0.25s ease, transform 0.15s ease;
 }
 
@@ -507,8 +507,11 @@ input:checked + .slider:before {
   outline-offset: 3px;
 }
 
-@media (max-width: 480px) {
-  .login-box--narrow { padding: 1.5rem 1.25rem 1.25rem; }
+@media (max-width: 640px) {
+  .login-box--narrow { padding: 1.75rem 1.35rem 1.5rem; }
+  .login-box--narrow h2 { font-size: 1.55rem; }
+  .input-group input[type="email"] { height: 60px; font-size: 1rem; }
+  .btn { height: 56px; font-size: 1.05rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -524,7 +527,7 @@ input:checked + .slider:before {
 .account-type {
   display: flex;
   justify-content: center;
-  margin: 1.4rem 0 0.25rem;
+  margin: 2rem 0 0.5rem;
 }
 
 .account-type__title {
@@ -542,7 +545,7 @@ input:checked + .slider:before {
 }
 
 .account-type__side {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-gray);
   transition: color 0.2s ease;
