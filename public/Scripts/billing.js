@@ -1,6 +1,13 @@
 import SessionStorageManager from "./AppStorage.js";
 import { apiFetch, requireUiSession } from "./api.js";
 
+// El backend exige estas cabeceras en /billing/links y /billing/portal.
+// apiFetch solo pone Content-Type cuando hay body, y estas son peticiones GET.
+const BILLING_HEADERS = {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+};
+
 requireUiSession();
 
 // Mapeo de iconos para diferentes planes
@@ -82,7 +89,7 @@ function hideModal(modalId) {
 // Obtener links de pago desde el endpoint /links
 async function fetchPaymentLinks() {
     try {
-        const response = await apiFetch('/billing/links');
+        const response = await apiFetch('/billing/links', { headers: BILLING_HEADERS });
         const text = await response.text();
 
         let data;
@@ -124,7 +131,7 @@ async function fetchPaymentLinks() {
 // Crear sesión del portal de facturación y redirigir al usuario
 export async function openStripeBillingPortal() {
     try {
-        const response = await apiFetch('/billing/portal');
+        const response = await apiFetch('/billing/portal', { headers: BILLING_HEADERS });
         const text = await response.text();
 
         let data;
