@@ -894,12 +894,52 @@ body.recovery-gate-open {
   animation: twofaFieldsIn 0.3s ease-out both;
 }
 
-.twofa-pending .btn-spinner {
-  width: 2rem;
-  height: 2rem;
-  border-width: 3px;
-  border-color: rgba(9, 131, 214, 0.25);
-  border-top-color: var(--primary);
+/* Seis barras con el mismo ritmo que las casillas del código: la onda las
+   recorre de izquierda a derecha, como si el servidor las fuera leyendo. */
+.twofa-pending__bars {
+  display: flex;
+  gap: 10px;
+  height: 34px;
+  align-items: center;
+}
+
+.twofa-pending__bars span {
+  width: 10px;
+  height: 32px;
+  border-radius: 5px;
+  background: var(--primary);
+  opacity: 0.2;
+  transform: scaleY(0.65);
+  animation: twofaScan 1.15s ease-in-out infinite;
+}
+
+.twofa-pending__bars span:nth-child(1) { animation-delay: 0s; }
+.twofa-pending__bars span:nth-child(2) { animation-delay: 0.09s; }
+.twofa-pending__bars span:nth-child(3) { animation-delay: 0.18s; }
+.twofa-pending__bars span:nth-child(4) { animation-delay: 0.27s; }
+.twofa-pending__bars span:nth-child(5) { animation-delay: 0.36s; }
+.twofa-pending__bars span:nth-child(6) { animation-delay: 0.45s; }
+
+@keyframes twofaScan {
+  0%, 70%, 100% { opacity: 0.2; transform: scaleY(0.65); box-shadow: none; }
+  35%           { opacity: 1;   transform: scaleY(1);
+                  box-shadow: 0 0 14px rgba(9, 131, 214, 0.55); }
+}
+
+.twofa-pending__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-gray);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twofa-pending__bars span {
+    animation: none;
+    opacity: 0.55;
+    transform: scaleY(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

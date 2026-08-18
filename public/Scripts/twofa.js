@@ -104,7 +104,11 @@ function showPendingState() {
   const box = document.createElement('div');
   box.className = 'twofa-pending';
   box.setAttribute('role', 'status');
-  box.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><p>Verificando código...</p>';
+  box.innerHTML =
+    '<div class="twofa-pending__bars" aria-hidden="true">' +
+      '<span></span><span></span><span></span><span></span><span></span><span></span>' +
+    '</div>' +
+    '<p class="twofa-pending__label">Verificando código</p>';
   c.appendChild(box);
   return box;
 }
