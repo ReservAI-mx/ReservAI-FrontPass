@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ReservAI - Crear Cuenta</title>
+  <title>ReservAI - Invitar</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link rel="stylesheet" href="/static/estilos/Stylessregister.css">
+  <link rel="stylesheet" href="/static/estilos/buttonLoading.css">
 </head>
 <body>
-  <!-- Contenedor de mensajes -->
   <div id="messageContainer" class="message-container"></div>
-  
+
   <div class="login-container">
     <div class="login-box">
       <div class="logo">
@@ -20,20 +19,10 @@
         <h1>ReservAI</h1>
       </div>
 
-      <h2>Crear Cuenta</h2>
+      <h2>Invitar usuario</h2>
+      <p class="terms">Se enviará un correo con el enlace para crear la cuenta.</p>
 
-      <input type="text" id="name" placeholder="Nombre">
       <input type="email" id="email" placeholder="Correo electrónico">
-
-      <div class="password-field">
-        <input type="password" id="password" placeholder="Contraseña">
-        <button type="button"  id="togglePassword"><i class="fas fa-eye"></i></button>
-      </div>
-
-      <div class="password-field">
-        <input type="password" id="confirmPassword" placeholder="Confirmar contraseña">
-        <button type="button"  id="toggleConfirmPassword"><i class="fas fa-eye"></i></button>
-      </div>
 
       <div class="account-type">
         <label for="accountType">Tipo de cuenta</label>
@@ -41,13 +30,13 @@
           <input type="checkbox" id="accountType">
           <span class="slider"></span>
         </label>
-        <span id="accountLabel">Usuario</span>
+        <span id="accountLabel">Cliente</span>
       </div>
 
-      <button id="registerBtn" class="btn">Registrarse</button>
+      <button id="registerBtn" class="btn">Enviar invitación</button>
+      <p class="terms"><a href="/inicioAdmin">Volver</a></p>
     </div>
   </div>
-  <script type="module"  src="/static/Scripts/AppStorage.js"></script>
   <script type="module" src="/static/Scripts/register.js"></script>
 </body>
 </html>

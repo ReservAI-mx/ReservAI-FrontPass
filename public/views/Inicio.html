@@ -23,7 +23,7 @@
         <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="profile-icon" alt="Perfil">
       </button>
       <div class="dropdown" role="menu">
-        <a href="#" id="billingLink">Billing</a>
+        <a href="#" id="changePasswordLink">Cambiar contraseña</a>
         <a href="#" id="logout">Cerrar sesión</a>
       </div>
     </div>
@@ -102,6 +102,24 @@
     </div>
 
 
+
+  <div id="changePasswordModal" class="modalcreate">
+    <div class="modal-content2">
+      <div class="modal-header2">
+        <span class="closecreate" data-close="changePasswordModal" aria-label="Cerrar">&times;</span>
+        <h2>Cambiar contraseña</h2>
+      </div>
+      <form id="changePasswordForm">
+        <input type="password" id="currentPassword" placeholder="Contraseña actual" autocomplete="current-password">
+        <input type="password" id="newPassword" placeholder="Nueva contraseña" autocomplete="new-password">
+        <input type="password" id="confirmNewPassword" placeholder="Confirmar nueva contraseña" autocomplete="new-password">
+        <p class="error-message" id="changePasswordError"></p>
+        <div class="modal-actions2">
+          <button type="submit" class="close-btn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script type="module" src="/static/Scripts/inicioScript/Inicio.js"></script>
 </body>

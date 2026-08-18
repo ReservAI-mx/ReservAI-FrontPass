@@ -1,28 +1,14 @@
-import SessionStorageManager from '../AppStorage.js';
+import { requireUiSession } from '../api.js';
 import { setupPasswordList } from './controllers/passwordListController.js';
 import { setupModals } from './controllers/modalController.js';
+import { setupChangePassword } from '../changePassword.js';
 
-const session = SessionStorageManager.getSession();
-if (!session || !session.access_token) {
-    window.location.href = "/login";
+if (!requireUiSession()) {
+  /* redirect already triggered */
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const token = SessionStorageManager.getSession()?.access_token;
-    if (!token) {
-        alert("No hay sesión activa. Inicia sesión de nuevo.");
-        window.location.href = "/";
-        return;
-    }
-
-    // Navegar a Billing
-    const billingLink = document.getElementById("billingLink");
-    if (billingLink) {
-        billingLink.addEventListener("click", function(e) {
-            e.preventDefault();
-            window.location.href = "/billing";
-        });
-    }
+    setupChangePassword();
 
     const elements = {
         listEl: document.getElementById('password-list'),
@@ -33,9 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         totalEl: document.getElementById('totalPasswords'),
     };
 
-    const {reload } = await setupPasswordList(elements);
+    const { reload } = await setupPasswordList(elements);
 
-        setupModals({
+    setupModals({
         addBtn: document.getElementById('addPasswordBtn'),
         createModal: document.getElementById('createModal'),
         viewModal: document.getElementById('viewModal'),
@@ -47,6 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             savePasswordBtn: document.getElementById('savePasswordBtn'),
         },
         listEl: elements.listEl,
-        renderList: reload // Si necesitas recargar la lista después de editar/eliminar
+        renderList: reload
     });
 });

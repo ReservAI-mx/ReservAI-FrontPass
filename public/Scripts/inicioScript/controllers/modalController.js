@@ -1,5 +1,6 @@
 import { createPassword as createPasswordService, fetchPasswordById, updatePasswordAttribute } from '../services/passwordService.js';
 import { showError, showMessage } from '../service/uiHelpers.js';
+import SessionStorageManager from '../../AppStorage.js';
 
 export function setupModals({ addBtn, createModal, viewModal, fields, listEl, passwords, renderList }) {
     const { createName, createPassword: createPasswordInput, createDescription, confirmPassword, savePasswordBtn } = fields;
@@ -62,7 +63,7 @@ export function setupModals({ addBtn, createModal, viewModal, fields, listEl, pa
     if (logoutBtn) {
         logoutBtn.addEventListener("click", function(e) {
             e.preventDefault();
-            sessionStorage.clear();
+            SessionStorageManager.clearSession();
             window.location.href = "/login";
         });
     }

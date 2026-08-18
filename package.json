@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "start": "node server.js 3000",
+    "local": "node server.js 3002"
+  },
   "dependencies": {
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",

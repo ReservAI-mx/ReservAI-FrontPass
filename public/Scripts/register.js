@@ -1,25 +1,18 @@
-import SessionStorageManager from "./AppStorage.js";
+import { apiJson, requireAdminSession } from './api.js';
+import { setButtonLoading, shakeElement } from './buttonLoading.js';
 
-const session = SessionStorageManager.getSession();
-
-const BASE_URL = "https://passmanager.reservai.com.mx/api";
-
-if (!session || !session.access_token) {
-    window.location.href = "/login";
+if (!requireAdminSession()) {
+  /* redirect already triggered */
 }
 
-// Función para mostrar mensajes en la interfaz
 function showMessage(message, type = 'info', duration = 3000) {
   const container = document.getElementById('messageContainer');
   if (!container) return;
-
   const messageEl = document.createElement('div');
   messageEl.className = `message message-${type}`;
   messageEl.textContent = message;
   messageEl.style.animation = 'slideIn 0.3s ease-in-out';
-
   container.appendChild(messageEl);
-
   setTimeout(() => {
     messageEl.style.animation = 'slideOut 0.3s ease-in-out';
     setTimeout(() => messageEl.remove(), 300);
@@ -27,163 +20,61 @@ function showMessage(message, type = 'info', duration = 3000) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const nameInput = document.getElementById('name');
   const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
-  const confirmPasswordInput = document.getElementById('confirmPassword');
   const accountType = document.getElementById('accountType');
   const accountLabel = document.getElementById('accountLabel');
   const registerBtn = document.getElementById('registerBtn');
 
-  function resetPlaceholders() {
-    nameInput.placeholder = "Nombre";
-    emailInput.placeholder = "Correo electrónico";
-    passwordInput.placeholder = "Contraseña";
-    confirmPasswordInput.placeholder = "Confirmar contraseña";
-    [nameInput, emailInput, passwordInput, confirmPasswordInput].forEach(inp => {
-      inp.classList.remove("error-input");
-    });
-  }
-
   function showError(input, message) {
-    input.value = "";
+    input.value = '';
     input.placeholder = message;
-    input.classList.add("error-input");
+    input.classList.add('error-input');
   }
 
-  [nameInput, emailInput, passwordInput, confirmPasswordInput].forEach(input => {
-    input.addEventListener('focus', () => {
-      input.classList.remove('error-input');
-      if (input === emailInput) input.placeholder = "Correo electrónico";
-      if (input === passwordInput) input.placeholder = "Contraseña";
-      if (input === nameInput) input.placeholder = "Nombre";
-      if (input === confirmPasswordInput) input.placeholder = "Confirmar contraseña";
-    });
+  emailInput.addEventListener('focus', () => {
+    emailInput.classList.remove('error-input');
+    emailInput.placeholder = 'Correo electrónico';
   });
 
-  // Cambiar etiqueta de tipo de cuenta
-  accountType.addEventListener("change", () => {
-    accountLabel.textContent = accountType.checked ? "Admin" : "Usuario";
+  accountType.addEventListener('change', () => {
+    accountLabel.textContent = accountType.checked ? 'Admin' : 'Cliente';
   });
 
-  // Mostrar/ocultar contraseña
-  document.getElementById('togglePassword').addEventListener('click', () => {
-    passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-  });
-  document.getElementById('toggleConfirmPassword').addEventListener('click', () => {
-    confirmPasswordInput.type = confirmPasswordInput.type === "password" ? "text" : "password";
-  });
-
-  // Registrar
-  registerBtn.addEventListener("click", async () => {
-    resetPlaceholders();
-
-    const name = nameInput.value.trim();
+  registerBtn.addEventListener('click', async () => {
+    emailInput.classList.remove('error-input');
     const email = emailInput.value.trim();
-    const pass = passwordInput.value;
-    const confirm = confirmPasswordInput.value;
-    const type = accountType.checked ? "admin" : "cliente";
+    const role = accountType.checked ? 'admin' : 'client';
 
-    let valid = true;
-
-    if (!name) {
-      showError(nameInput, "El nombre es necesario");
-      valid = false;
-    }
     if (!email) {
-      showError(emailInput, "El correo es necesario");
-      valid = false;
+      showError(emailInput, 'El correo es necesario');
+      shakeElement(emailInput);
+      return;
     }
-    if (!pass) {
-      showError(passwordInput, "La contraseña es necesaria");
-      valid = false;
-    }
-    if (!confirm) {
-      showError(confirmPasswordInput, "Confirma tu contraseña");
-      valid = false;
-    }
-    if (pass !== confirm ) {
-      showError(confirmPasswordInput, "Las contraseñas no coinciden");
-      showError(passwordInput, "Las contraseñas no coinciden");
-      valid = false;
-    }
-    if (!valid) return;
-
-    // Validación básica de email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
-      showError(emailInput, "Correo electrónico inválido");
+      showError(emailInput, 'Correo electrónico inválido');
+      shakeElement(emailInput);
       return;
     }
 
-    // --- Token de admin desde SessionStorage ---
-    const adminToken = SessionStorageManager.getSession()?.access_token;
-    const typeOfAccount = SessionStorageManager.getSession()?.account_type;
-    if (typeOfAccount !== "admin") {
-      showError(emailInput, "No tienes permisos para crear cuentas");
-      showError(passwordInput, "No tienes permisos para crear cuentas");
-      showError(confirmPasswordInput, "No tienes permisos para crear cuentas");
-      showError(nameInput, "No tienes permisos para crear cuentas");
-      return;
-    }
-
+    setButtonLoading(registerBtn, true, 'Enviando...');
     try {
-      const response = await fetch(`${BASE_URL}/account`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": adminToken
-        },
-        body: JSON.stringify({
-          email: email,
-          password: pass,
-          name: name,
-          type: type
-        })
+      const { ok, data } = await apiJson('/invitations', {
+        method: 'POST',
+        body: { email, role },
       });
-        let result;
-          try {
-            result = await response.json();
-          } catch {
-            // Si no es JSON, probablemente es HTML de error
-            result = { error: "El servidor respondió con un error inesperado." };
-          }
-
-          if (response.status === 418) {
-            window.location.href = '/login';
-            return; 
-          }
-         
-
-          if (!response.ok) {
-            const errorMsg = (result.error || result.message || "Error al registrar").toLowerCase();
-            
-            // Si el error contiene "name", mostrarlo en el campo name
-            if (errorMsg.includes('name')) {
-              showError(nameInput, result.error || result.message || "Error al registrar");
-            } 
-            // Si el error contiene "password", mostrarlo en el campo password
-            else if (errorMsg.includes('password')) {
-              showError(passwordInput, result.error || result.message || "Error al registrar");
-              showError(confirmPasswordInput, result.error || result.message || "Error al registrar");
-            } 
-            // Si el error contiene "email", mostrarlo en el campo email
-            else if (errorMsg.includes('email')) {
-              showError(emailInput, result.error || result.message || "Error al registrar");
-            }
-            // Otros errores en email por defecto
-            else {
-              showError(emailInput, result.error || result.message || "Error al registrar");
-            }
-            return;
-          }
-
-          showMessage("Cuenta creada con éxito", 'success', 4000);
-          setTimeout(() => {
-            window.location.href = "/login";
-          }, 1500);
-        } catch (err) {
-          showError(emailInput, "Error: " + err.message);
-        }
+      if (!ok) {
+        showError(emailInput, data.error || data.message || 'No se pudo enviar la invitación');
+        shakeElement(emailInput);
+        return;
+      }
+      showMessage('Invitación enviada', 'success', 4000);
+      emailInput.value = '';
+    } catch (err) {
+      showError(emailInput, err.message || 'Error al enviar la invitación');
+      shakeElement(emailInput);
+    } finally {
+      setButtonLoading(registerBtn, false);
+    }
   });
 });

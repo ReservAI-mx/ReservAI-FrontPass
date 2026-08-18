@@ -36,28 +36,15 @@ export default class LoginInfo {
         };
     }
 
-    // POST al endpoint /account
     async login() {
-        const BASE_URL = "https://passmanager.reservai.com.mx/api";
-        const endpointUrl = `${BASE_URL}/account`; 
-        try {
-            const response = await fetch(endpointUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(this.toJSON())
-            });
-
-            if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            return data; 
-        } catch (error) {
-            console.error("Error en login:", error);
-            throw error;
+        const { apiJson } = await import('../Scripts/api.js');
+        const { ok, status, data } = await apiJson('/account', {
+            method: 'POST',
+            body: this.toJSON(),
+        });
+        if (!ok) {
+            throw new Error(`Error ${status}: ${data.error || data.message || 'login failed'}`);
         }
+        return data;
     }
 }

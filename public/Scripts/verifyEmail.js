@@ -1,9 +1,6 @@
-import SessionStorageManager from "./AppStorage.js";
+import { apiFetch } from "./api.js";
+import { setButtonLoading } from "./buttonLoading.js";
 
-const session = SessionStorageManager.getSession();
-const BASE_URL = "https://passmanager.reservai.com.mx/api";
-
-// Función para mostrar mensajes en la interfaz
 function showMessage(message, type = 'info', duration = 3000) {
   const container = document.getElementById('messageContainer');
   if (!container) return;
@@ -12,7 +9,6 @@ function showMessage(message, type = 'info', duration = 3000) {
   messageEl.className = `message message-${type}`;
   messageEl.textContent = message;
   messageEl.style.animation = 'slideIn 0.3s ease-in-out';
-
   container.appendChild(messageEl);
 
   setTimeout(() => {
@@ -25,25 +21,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const verifyBtn = document.querySelector(".verifybtn");
   const resendBtn = document.querySelector(".resendbtn");
 
-  const token = SessionStorageManager.getSession().access_token;
-
   if (verifyBtn) {
     verifyBtn.addEventListener("click", () => {
       window.location.href = "/login";
     });
   }
 
-  //Reenviar email
   if (resendBtn) {
     resendBtn.addEventListener("click", async () => {
+      setButtonLoading(resendBtn, true, "Reenviando...");
       try {
-        const response = await fetch(`${BASE_URL}/verification`, {
+        const response = await apiFetch("/verification", {
           method: "GET",
-          headers: {
-            "Authorization": token,
-          },
+          headers: { "X-Requested-With": "XMLHttpRequest" },
         });
-
         let data;
         try { data = await response.json(); } catch { data = {}; }
 
@@ -54,6 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (err) {
         showMessage("Error al reenviar el correo: " + err.message, 'error');
+      } finally {
+        setButtonLoading(resendBtn, false);
       }
     });
   }

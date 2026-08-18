@@ -1,10 +1,14 @@
-import SessionStorageManager from "../AppStorage.js";
+import { requireAdminSession } from "../api.js";
 import { setupAdminModals } from "./controllers/modalControllerAdmin.js";
 import { setupAdminSearch } from "./controllers/passwordListControllerAdmin.js";
+import { setupChangePassword } from "../changePassword.js";
 
-const session = SessionStorageManager.getSession();
+if (!requireAdminSession()) {
+  /* redirect already triggered */
+}
 
 document.addEventListener("DOMContentLoaded", () => {
+  setupChangePassword();
   let selectedAccountId = null; // <-- Declaración global
 
   const addBtn = document.getElementById('addPasswordBtn');

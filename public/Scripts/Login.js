@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
     input.classList.add("error-input");
   }
 
-  // Quitar error al enfocar el input
   [emailInput, passwordInput].forEach(input => {
     input.addEventListener('focus', () => {
       input.classList.remove('error-input');
@@ -46,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = passwordInput.value.trim();
 
     let valid = true;
-
     if (!email) {
       showError(emailInput, "El correo es necesario");
       valid = false;
@@ -55,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
       showError(passwordInput, "La contraseña es necesaria");
       valid = false;
     }
-    
     if (!valid) return;
 
     let loginInfo;
@@ -67,59 +64,37 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if (err.message.includes("Contraseña")) {
         showError(passwordInput, err.message);
       } else {
-        const match = err.message.match(/\d+/);
-        const code = match ? parseInt(match[0]) : null;
-        if (code >= 400 && code < 500) {
-          showError(emailInput, "Correo o contraseña inválidos");
-          showError(passwordInput, "Correo o contraseña inválidos");
-          return;
-        }
+        showError(emailInput, "Correo o contraseña inválidos");
+        showError(passwordInput, "Correo o contraseña inválidos");
       }
       return;
     }
 
     try {
-      
       const data = await loginInfo.login();
-
       SessionStorageManager.saveSession({
-        access_token: data.token, // Siempre guarda el token recibido
-        token_type: data.token_type, // Guarda también el tipo de token
+        token_type: data.token_type,
         account_type: data.account_type,
-        account_name: email
+        account_name: email,
+        verified: data.verified,
+        twofaenabled: data.twofaenabled,
       });
 
-
-  
-      if(data.verified === false){
+      if (data.verified === false) {
         window.location.href = "/verify_email";
-      }else if (data.verified === true && data.twofaenabled === false){
+      } else if (data.verified === true && data.twofaenabled === false) {
         window.location.href = "/QR";
-      }else if (data.verified === true && data.twofaenabled === true){
+      } else {
         window.location.href = "/twofa";
       }
-   
-
     } catch (err) {
-      const match = err.message.match(/\d+/);
-      const code = match ? parseInt(match[0]) : null;
-      if (code >= 400 && code < 500) {
-        showError(emailInput, "Correo o contraseña inválidos");
-        showError(passwordInput, "Correo o contraseña inválidos");
-        return;
-      }
+      showError(emailInput, "Correo o contraseña inválidos");
+      showError(passwordInput, "Correo o contraseña inválidos");
     }
   });
-  
-  // Toggle de mostrar/ocultar contraseña
+
   function togglePassword() {
     const passwordField = document.getElementById("password");
     passwordField.type = passwordField.type === "password" ? "text" : "password";
   }
 });
-
-// Toggle de mostrar/ocultar contraseña
-function togglePassword() {
-  const passwordField = document.getElementById("password");
-  passwordField.type = passwordField.type === "password" ? "text" : "password";
-}

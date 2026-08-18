@@ -15,5 +15,16 @@ primary_region = "dfw"
   size = "shared-cpu-1x"
   memory = "256mb"
 
+# PROXY_SECRET_HEADER se configura como secret de Fly (mismo valor que el gateway):
+#   fly secrets set PROXY_SECRET_HEADER="..." -a passmanager-front
+
 [env]
   PORT = "3002"
+  STAGE = "production"
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "15s"
+  method = "GET"
+  path = "/health"
+  timeout = "2s"

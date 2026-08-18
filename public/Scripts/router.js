@@ -24,4 +24,7 @@ router.get('/inicioAdmin', (req, res) => res.sendFile(path.resolve(__dirname +�
 router.get('/404', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/404.html")));
 router.get('/terms', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/terms.html")));
 router.get('/billing', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/billing.html")));
+router.get('/accept-invitation', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/accept-invitation.html")));
+router.get('/forgot-password', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/forgot-password.html")));
+router.get('/reset-password', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/reset-password.html")));
 module.exports = router;
