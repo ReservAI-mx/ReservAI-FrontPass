@@ -82,16 +82,21 @@
         <!-- Las tarjetas de suscripción se cargarán dinámicamente aquí -->
       </div>
     </div>
-  </main>
-    
 
-    <!-- FAB para agregar suscripción -->
-    <button class="fab" id="addSubscriptionBtn" aria-label="Agregar suscripciones">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-             stroke-linecap="round" aria-hidden="true">
+    <!-- Va dentro del flujo, así baja conforme aparecen las tarjetas -->
+    <button class="add-subscription" id="addSubscriptionBtn">
+      <span class="add-subscription__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round">
           <path d="M12 5.5v13M5.5 12h13"/>
         </svg>
-      </button>
+      </span>
+      <span class="add-subscription__texto">
+        <span class="add-subscription__titulo">Agregar suscripción</span>
+        <span class="add-subscription__hint">Elige un plan y completa el pago</span>
+      </span>
+    </button>
+  </main>
 
     <!-- Modal de advertencia -->
 

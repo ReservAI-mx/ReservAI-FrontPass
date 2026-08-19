@@ -971,3 +971,100 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .fab:hover, .fab:active, .volver:hover { transform: none; }
 }
+
+/* ============================================================
+   Agregar suscripción
+   Antes era un círculo fijo en la esquina. Ahora vive en el flujo,
+   centrado bajo las tarjetas, así baja solo conforme aparecen.
+   ============================================================ */
+
+.add-subscription {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  width: 100%;
+  max-width: 560px;
+  min-height: 104px;
+  margin: 2rem auto 3rem;
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
+  border: 2px dashed rgba(9, 131, 214, 0.45);
+  background: rgba(9, 131, 214, 0.07);
+  color: var(--text-light);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease, border-color 0.2s ease,
+              transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.add-subscription__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(9, 131, 214, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.add-subscription__icon svg { width: 32px; height: 32px; }
+
+.add-subscription__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.add-subscription__titulo {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.add-subscription__hint {
+  font-size: 0.95rem;
+  color: var(--text-gray);
+}
+
+.add-subscription:hover {
+  background: rgba(9, 131, 214, 0.14);
+  border-color: var(--primary);
+  border-style: solid;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(9, 131, 214, 0.22);
+}
+
+.add-subscription:hover .add-subscription__icon {
+  transform: scale(1.06);
+  box-shadow: 0 12px 26px rgba(9, 131, 214, 0.5);
+}
+
+.add-subscription:active { transform: translateY(0); }
+
+.add-subscription:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}
+
+@media (max-width: 560px) {
+  .add-subscription {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.9rem;
+    min-height: 0;
+    padding: 1.75rem 1.25rem;
+    margin: 1.5rem auto 2.5rem;
+  }
+  .add-subscription__texto { align-items: center; }
+  .add-subscription__titulo { font-size: 1.15rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .add-subscription:hover,
+  .add-subscription:active { transform: none; }
+  .add-subscription:hover .add-subscription__icon { transform: none; }
+}
