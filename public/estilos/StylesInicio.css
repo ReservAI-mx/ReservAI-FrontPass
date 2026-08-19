@@ -1924,3 +1924,92 @@ confirmDeleteModal{
   min-width: 0;
   word-break: break-word;
 }
+
+/* ============================================================
+   Botones del pie del modal de ver contraseña
+   Eran dos rectángulos de 10x15px de padding y radio 6, iguales
+   entre sí salvo el color. Ahora tienen alto propio, ícono y
+   una jerarquía clara entre cerrar y eliminar.
+   ============================================================ */
+
+#viewModal .modal-footer {
+  gap: 1rem;
+  padding: 1.15rem 1.75rem 1.35rem;
+}
+
+#viewModal .modal-footer .close-btn,
+#viewModal .delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 50px;
+  min-width: 148px;
+  margin: 0;
+  padding: 0 1.6rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease,
+              color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+#viewModal .modal-footer .close-btn svg,
+#viewModal .delete-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+#viewModal .modal-footer .close-btn {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(9, 131, 214, 0.28);
+}
+
+#viewModal .modal-footer .close-btn:hover {
+  background: #0a94f0;
+  border-color: #0a94f0;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(9, 131, 214, 0.38);
+}
+
+/* Eliminar arranca discreto y solo se enciende al apuntarlo:
+   es destructivo y está junto al botón que se usa siempre. */
+#viewModal .delete-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  color: #ff8484;
+  box-shadow: none;
+}
+
+#viewModal .delete-btn:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.35);
+}
+
+#viewModal .modal-footer .close-btn:active,
+#viewModal .delete-btn:active { transform: translateY(0); }
+
+#viewModal .modal-footer .close-btn:focus-visible,
+#viewModal .delete-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  #viewModal .modal-footer { flex-direction: column-reverse; }
+  #viewModal .modal-footer .close-btn,
+  #viewModal .delete-btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #viewModal .modal-footer .close-btn:hover,
+  #viewModal .delete-btn:hover { transform: none; }
+}
