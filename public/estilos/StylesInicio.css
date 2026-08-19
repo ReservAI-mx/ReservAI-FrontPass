@@ -1808,6 +1808,25 @@ confirmDeleteModal{
 }
 
 .checkbox-field2 + .checkbox-field2 { margin-top: 0.6rem; }
-.checkbox-field2:last-of-type { margin-bottom: 0.5rem; }
+.checkbox-field2:last-of-type { margin-bottom: 1rem; }
 
 .checkbox-field2 label { width: 100%; }
+
+/* El switch a la derecha con space-between dejaba un hueco enorme entre la
+   etiqueta y el control, y los dos se leían sueltos. Van al inicio de la
+   fila: los switches quedan en columna y los textos arrancan todos igual. */
+.checkbox-field2 label {
+  justify-content: flex-start;
+  gap: 0.9rem;
+  padding: 0.8rem 1rem;
+}
+
+.checkbox-field2 input[type="checkbox"] { order: 0; }
+.checkbox-field2 span { order: 1; line-height: 1.35; }
+
+/* .modal-body tiene flex:1, así que en pantallas bajas se encogía y, con
+   overflow visible, recortaba la descripción. Que tome su alto natural y
+   deje el scroll a .modal-content, que ya tiene max-height + overflow-y. */
+#viewModal .modal-body {
+  flex: 0 0 auto;
+}
