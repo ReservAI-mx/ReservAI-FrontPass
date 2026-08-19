@@ -186,7 +186,12 @@ export async function createStripeCustomer() {
         stripeLoadingText.classList.remove('success', 'error');
     }
     try {
-        const response = await apiFetch('/billing/customer', { method: 'POST' });
+        // Sin Content-Type el backend responde 415: es un POST sin body, así
+        // que apiFetch no lo añade solo.
+        const response = await apiFetch('/billing/customer', {
+            method: 'POST',
+            headers: BILLING_HEADERS,
+        });
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -239,7 +244,7 @@ async function fetchSubscriptions(page = 1) {
     if (errorEl) errorEl.style.display = 'none';
     
     try {
-        const response = await apiFetch('/billing/status');
+        const response = await apiFetch('/billing/status', { headers: BILLING_HEADERS });
 
         if (!response.ok) {
             const errorText = await response.text();
