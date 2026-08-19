@@ -1830,3 +1830,81 @@ confirmDeleteModal{
 #viewModal .modal-body {
   flex: 0 0 auto;
 }
+
+/* ============================================================
+   Ajustes finos del modal de ver contraseña
+   ============================================================ */
+
+/* 1) La perilla se centra sola con translateY en vez de depender de que
+   (alto - alto_perilla) / 2 dé exacto. Antes bastaba un padding heredado
+   de ".modal-content input" para descuadrarla. */
+.checkbox-field2 input[type="checkbox"] {
+  padding: 0;
+}
+
+.checkbox-field2 input[type="checkbox"]::before {
+  top: 50%;
+  transform: translate(0, -50%);
+}
+
+.checkbox-field2 input[type="checkbox"]:checked::before {
+  transform: translate(24px, -50%);
+}
+
+/* 2) Editar, ver y copiar: mismo tamaño y pegados a la derecha de su fila. */
+#viewModal .edit-icon,
+#viewModal .toggle-password-btn,
+#viewModal .copy-password-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+#viewModal .password-name,
+#viewModal .password-description {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* El lápiz de nombre y descripción se va al extremo derecho. */
+#viewModal .password-name .edit-icon,
+#viewModal .password-description .edit-icon {
+  margin-left: auto;
+}
+
+/* En la contraseña, el texto empuja al grupo de botones a la derecha. */
+#viewModal .password-text {
+  margin-right: auto;
+}
+
+#viewModal .password-display .edit-icon { margin-left: 0; }
+#viewModal .password-actions { gap: 0.5rem; }
+
+/* 3) Espacio entre el último permiso y el pie.
+   ".checkbox-field2:last-of-type" nunca aplicaba: :last-of-type mira el tipo
+   de elemento (div), y .modal-footer también es un div y va después. */
+.checkbox-field2 {
+  margin: 0 1.75rem 0.65rem;
+}
+
+#viewModal .modal-footer {
+  margin-top: 0.85rem;
+}
+
+/* Hay dos reglas .password-field y la segunda lo declara display:flex, así
+   que .password-value-container quedaba como flex item encogido al contenido
+   y los botones no alcanzaban el borde derecho. */
+#viewModal .password-value-container {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Sin borde, para que la perilla del switch no dependa de él. */
+.checkbox-field2 input[type="checkbox"] {
+  border: none;
+}
