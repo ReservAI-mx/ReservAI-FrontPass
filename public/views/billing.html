@@ -17,7 +17,8 @@
     </div>
 
     <div class="profile">
-      <button class="profile-btn" aria-haspopup="true" aria-expanded="false">
+      <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="Menú de cuenta">
         <span class="profile-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round">
@@ -27,14 +28,37 @@
         </span>
       </button>
       <div class="dropdown" role="menu">
-        <a href="#" id="inicioLink">Inicio</a>
-        <a href="#" id="logout">Cerrar sesión</a>
+        <p class="dropdown__account" id="accountName"></p>
+        <a href="/inicio" id="inicioLink" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Mis contraseñas
+        </a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+            <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+          </svg>
+          Cerrar sesión
+        </a>
       </div>
     </div>
   </nav>
 
   <!-- Main -->
   <main class="container">
+    <a class="volver" href="/inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14.5 6.5 9 12l5.5 5.5"/>
+      </svg>
+      Volver a mis contraseñas
+    </a>
+
     <div class="billing-header">
       <div class="billing-info">
         <h1>Resumen de Pagos</h1>

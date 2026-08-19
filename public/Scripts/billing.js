@@ -1,5 +1,6 @@
 import SessionStorageManager from "./AppStorage.js";
 import { apiFetch, requireUiSession } from "./api.js";
+import { setupAccountMenu } from "./accountMenu.js";
 
 // El backend exige estas cabeceras en /billing/links y /billing/portal.
 // apiFetch solo pone Content-Type cuando hay body, y estas son peticiones GET.
@@ -8,7 +9,7 @@ const BILLING_HEADERS = {
     'X-Requested-With': 'XMLHttpRequest',
 };
 
-requireUiSession();
+const session = requireUiSession();
 
 // Mapeo de iconos para diferentes planes
 const planIcons = {
@@ -479,6 +480,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+    setupAccountMenu(session || {});
+
     // Logout
     const logoutBtn = document.getElementById("logout");
     if (logoutBtn) {
@@ -486,15 +489,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             SessionStorageManager.clearSession();
             window.location.href = "/login";
-        });
-    }
-
-    // Navegar a Inicio
-    const inicioLink = document.getElementById("inicioLink");
-    if (inicioLink) {
-        inicioLink.addEventListener("click", function(e) {
-            e.preventDefault();
-            window.location.href = "/inicio";
         });
     }
 
