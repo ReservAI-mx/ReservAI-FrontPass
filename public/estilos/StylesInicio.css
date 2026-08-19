@@ -1908,3 +1908,17 @@ confirmDeleteModal{
 .checkbox-field2 input[type="checkbox"] {
   border: none;
 }
+
+/* La descripción se lee mejor con el valor debajo de su etiqueta, como en
+   la contraseña, en vez de a la derecha como en el nombre. El <strong>
+   ocupa toda la fila y obliga al salto. */
+#viewModal .password-description > strong {
+  flex: 0 0 100%;
+  margin-bottom: 0.35rem;
+}
+
+#viewModal .password-description .editable-description {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
