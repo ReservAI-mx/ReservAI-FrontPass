@@ -414,17 +414,17 @@ input:checked + .slider:before {
 }
 
 .login-box--narrow {
-  max-width: 600px;
-  padding: 2.75rem 2.5rem 2.25rem;
+  max-width: 680px;
+  padding: 3rem 3rem 2.5rem;
 }
 
-.login-box--narrow h2 { font-size: 2rem; margin-bottom: 0.85rem; }
+.login-box--narrow h2 { font-size: 2.4rem; margin-bottom: 0.75rem; }
 
 .form-intro {
-  font-size: 1rem;
-  line-height: 1.55;
+  font-size: 1.05rem;
+  line-height: 1.5;
   color: var(--text-gray);
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
 }
 
 /* ---------- Campo con etiqueta flotante ---------- */
@@ -441,17 +441,17 @@ input:checked + .slider:before {
 
 .input-group input[type="email"] {
   width: 100%;
-  height: 70px;
+  height: 78px;
   margin: 0;
-  padding: 27px 18px 10px;
+  padding: 31px 20px 12px;
   border: none;
   background: transparent;
-  font-size: 1.08rem;
+  font-size: 1.15rem;
 }
 
 .input-group label {
   position: absolute;
-  left: 18px;
+  left: 20px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-gray);
@@ -464,9 +464,9 @@ input:checked + .slider:before {
 .input-group input:focus + label,
 .input-group input:not(:placeholder-shown) + label,
 .input-group input:-webkit-autofill + label {
-  top: 12px;
+  top: 14px;
   transform: none;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   letter-spacing: 0.04em;
   color: var(--primary-color);
 }
@@ -492,9 +492,10 @@ input:checked + .slider:before {
 .field-error:empty { display: none; }
 
 .btn {
-  height: 64px;
-  font-size: 1.15rem;
-  border-radius: 12px;
+  height: 72px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 14px;
   transition: background 0.25s ease, transform 0.15s ease;
 }
 
@@ -507,11 +508,12 @@ input:checked + .slider:before {
   outline-offset: 3px;
 }
 
-@media (max-width: 640px) {
-  .login-box--narrow { padding: 1.75rem 1.35rem 1.5rem; }
-  .login-box--narrow h2 { font-size: 1.55rem; }
-  .input-group input[type="email"] { height: 60px; font-size: 1rem; }
-  .btn { height: 56px; font-size: 1.05rem; }
+@media (max-width: 720px) {
+  .login-box--narrow { padding: 1.9rem 1.4rem 1.6rem; }
+  .login-box--narrow h2 { font-size: 1.7rem; }
+  .input-group input[type="email"] { height: 64px; padding: 27px 16px 10px; font-size: 1rem; }
+  .btn { height: 60px; font-size: 1.08rem; }
+  .account-type__side { font-size: 1.05rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -527,7 +529,7 @@ input:checked + .slider:before {
 .account-type {
   display: flex;
   justify-content: center;
-  margin: 2rem 0 0.5rem;
+  margin: 1.75rem 0 0.5rem;
 }
 
 .account-type__title {
@@ -541,11 +543,11 @@ input:checked + .slider:before {
 .account-type__control {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 1.1rem;
 }
 
 .account-type__side {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-gray);
   transition: color 0.2s ease;
@@ -564,8 +566,8 @@ input:checked + .slider:before {
 .switch {
   position: relative;
   display: inline-block;
-  width: 56px;
-  height: 30px;
+  width: 64px;
+  height: 34px;
   margin: 0;
   flex-shrink: 0;
 }
@@ -593,10 +595,11 @@ input:checked + .slider:before {
 .slider::before {
   content: '';
   position: absolute;
-  top: 3px;
+  top: 50%;
   left: 3px;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
@@ -609,7 +612,7 @@ input:checked + .slider:before {
 }
 
 .switch input:checked + .slider::before {
-  transform: translateX(26px);
+  transform: translate(30px, -50%);
 }
 
 .switch input:focus-visible + .slider {
@@ -622,4 +625,15 @@ input:checked + .slider:before {
 @media (prefers-reduced-motion: reduce) {
   .slider,
   .slider::before { transition: none; }
+}
+
+/* La cabecera se veía pequeña frente a la tarjeta ya ampliada. */
+.login-box--narrow .logo { gap: 0.6rem; margin-bottom: 1.25rem; }
+.login-box--narrow .logo img { width: 64px; height: 64px; margin-right: 4px; }
+.login-box--narrow .logo h1 { font-size: 2.4rem; }
+.login-box--narrow .terms { font-size: 1rem; margin-top: 1.5rem; }
+
+@media (max-width: 720px) {
+  .login-box--narrow .logo img { width: 48px; height: 48px; }
+  .login-box--narrow .logo h1 { font-size: 1.8rem; }
 }

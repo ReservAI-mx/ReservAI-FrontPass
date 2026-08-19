@@ -1808,6 +1808,341 @@ confirmDeleteModal{
 }
 
 .checkbox-field2 + .checkbox-field2 { margin-top: 0.6rem; }
-.checkbox-field2:last-of-type { margin-bottom: 0.5rem; }
+.checkbox-field2:last-of-type { margin-bottom: 1rem; }
 
 .checkbox-field2 label { width: 100%; }
+
+/* El switch a la derecha con space-between dejaba un hueco enorme entre la
+   etiqueta y el control, y los dos se leían sueltos. Van al inicio de la
+   fila: los switches quedan en columna y los textos arrancan todos igual. */
+.checkbox-field2 label {
+  justify-content: flex-start;
+  gap: 0.9rem;
+  padding: 0.8rem 1rem;
+}
+
+.checkbox-field2 input[type="checkbox"] { order: 0; }
+.checkbox-field2 span { order: 1; line-height: 1.35; }
+
+/* .modal-body tiene flex:1, así que en pantallas bajas se encogía y, con
+   overflow visible, recortaba la descripción. Que tome su alto natural y
+   deje el scroll a .modal-content, que ya tiene max-height + overflow-y. */
+#viewModal .modal-body {
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+   Ajustes finos del modal de ver contraseña
+   ============================================================ */
+
+/* 1) La perilla se centra sola con translateY en vez de depender de que
+   (alto - alto_perilla) / 2 dé exacto. Antes bastaba un padding heredado
+   de ".modal-content input" para descuadrarla. */
+.checkbox-field2 input[type="checkbox"] {
+  padding: 0;
+}
+
+.checkbox-field2 input[type="checkbox"]::before {
+  top: 50%;
+  transform: translate(0, -50%);
+}
+
+.checkbox-field2 input[type="checkbox"]:checked::before {
+  transform: translate(24px, -50%);
+}
+
+/* 2) Editar, ver y copiar: mismo tamaño y pegados a la derecha de su fila. */
+#viewModal .edit-icon,
+#viewModal .toggle-password-btn,
+#viewModal .copy-password-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+#viewModal .password-name,
+#viewModal .password-description {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* El lápiz de nombre y descripción se va al extremo derecho. */
+#viewModal .password-name .edit-icon,
+#viewModal .password-description .edit-icon {
+  margin-left: auto;
+}
+
+/* En la contraseña, el texto empuja al grupo de botones a la derecha. */
+#viewModal .password-text {
+  margin-right: auto;
+}
+
+#viewModal .password-display .edit-icon { margin-left: 0; }
+#viewModal .password-actions { gap: 0.5rem; }
+
+/* 3) Espacio entre el último permiso y el pie.
+   ".checkbox-field2:last-of-type" nunca aplicaba: :last-of-type mira el tipo
+   de elemento (div), y .modal-footer también es un div y va después. */
+.checkbox-field2 {
+  margin: 0 1.75rem 0.65rem;
+}
+
+#viewModal .modal-footer {
+  margin-top: 0.85rem;
+}
+
+/* Hay dos reglas .password-field y la segunda lo declara display:flex, así
+   que .password-value-container quedaba como flex item encogido al contenido
+   y los botones no alcanzaban el borde derecho. */
+#viewModal .password-value-container {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Sin borde, para que la perilla del switch no dependa de él. */
+.checkbox-field2 input[type="checkbox"] {
+  border: none;
+}
+
+/* Nombre y descripción llevan el valor debajo de su etiqueta, igual que la
+   contraseña, en vez de a la derecha. El <strong> ocupa toda la fila y
+   obliga al salto. */
+#viewModal .password-name > strong,
+#viewModal .password-description > strong {
+  flex: 0 0 100%;
+  margin-bottom: 0.35rem;
+}
+
+#viewModal .password-name .editable-name,
+#viewModal .password-description .editable-description {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* ============================================================
+   Botones del pie del modal de ver contraseña
+   Eran dos rectángulos de 10x15px de padding y radio 6, iguales
+   entre sí salvo el color. Ahora tienen alto propio, ícono y
+   una jerarquía clara entre cerrar y eliminar.
+   ============================================================ */
+
+#viewModal .modal-footer {
+  gap: 1rem;
+  padding: 1.15rem 1.75rem 1.35rem;
+}
+
+#viewModal .modal-footer .close-btn,
+#viewModal .delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 50px;
+  min-width: 148px;
+  margin: 0;
+  padding: 0 1.6rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease,
+              color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+#viewModal .modal-footer .close-btn svg,
+#viewModal .delete-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+#viewModal .modal-footer .close-btn {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(9, 131, 214, 0.28);
+}
+
+#viewModal .modal-footer .close-btn:hover {
+  background: #0a94f0;
+  border-color: #0a94f0;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(9, 131, 214, 0.38);
+}
+
+/* Eliminar arranca discreto y solo se enciende al apuntarlo:
+   es destructivo y está junto al botón que se usa siempre. */
+#viewModal .delete-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  color: #ff8484;
+  box-shadow: none;
+}
+
+#viewModal .delete-btn:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.35);
+}
+
+#viewModal .modal-footer .close-btn:active,
+#viewModal .delete-btn:active { transform: translateY(0); }
+
+#viewModal .modal-footer .close-btn:focus-visible,
+#viewModal .delete-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  #viewModal .modal-footer { flex-direction: column-reverse; }
+  #viewModal .modal-footer .close-btn,
+  #viewModal .delete-btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #viewModal .modal-footer .close-btn:hover,
+  #viewModal .delete-btn:hover { transform: none; }
+}
+
+/* ============================================================
+   Listas más grandes: cuentas y contraseñas, en cliente y admin
+   ============================================================ */
+
+.password-item,
+.account-item {
+  min-height: 92px;
+  gap: 1rem;
+  padding: 1.15rem 1.4rem;
+  margin-bottom: 0.9rem;
+  border-radius: 16px;
+}
+
+.password-item__avatar,
+.account-item__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  font-size: 1.05rem;
+}
+
+.password-item__name,
+.account-item__name {
+  font-size: 1.15rem;
+}
+
+.password-item__meta,
+.account-item__meta {
+  font-size: 0.88rem;
+}
+
+.password-item::after,
+.account-item::after {
+  width: 10px;
+  height: 10px;
+  border-right-width: 2.5px;
+  border-bottom-width: 2.5px;
+}
+
+/* Buscadores al mismo tono que las tarjetas. */
+.search-field #search,
+#account-search,
+#search2 {
+  padding: 1rem 1rem 1rem 2.75rem;
+  font-size: 1.02rem;
+  border-radius: 10px;
+}
+
+#account-search,
+#search2 {
+  padding-left: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#account-search:focus,
+#search2:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(9, 131, 214, 0.15);
+}
+
+.search-field__icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Paginación acorde al tamaño nuevo. */
+.pagination,
+.pagination2 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  font-size: 1.02rem;
+}
+
+.pagination button,
+.pagination2 button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+}
+
+.pagination button svg,
+.pagination2 button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pagination button:hover:not(:disabled),
+.pagination2 button:hover:not(:disabled) {
+  background: #0a94f0;
+  transform: translateY(-1px);
+}
+
+.pagination button:disabled,
+.pagination2 button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pagination button:focus-visible,
+.pagination2 button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .password-item,
+  .account-item { min-height: 80px; padding: 1rem 1.1rem; gap: 0.85rem; }
+  .password-item__avatar,
+  .account-item__avatar { width: 44px; height: 44px; }
+  .password-item__name,
+  .account-item__name { font-size: 1.05rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pagination button:hover,
+  .pagination2 button:hover { transform: none; }
+}
