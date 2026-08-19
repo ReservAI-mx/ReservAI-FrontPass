@@ -1909,14 +1909,16 @@ confirmDeleteModal{
   border: none;
 }
 
-/* La descripción se lee mejor con el valor debajo de su etiqueta, como en
-   la contraseña, en vez de a la derecha como en el nombre. El <strong>
-   ocupa toda la fila y obliga al salto. */
+/* Nombre y descripción llevan el valor debajo de su etiqueta, igual que la
+   contraseña, en vez de a la derecha. El <strong> ocupa toda la fila y
+   obliga al salto. */
+#viewModal .password-name > strong,
 #viewModal .password-description > strong {
   flex: 0 0 100%;
   margin-bottom: 0.35rem;
 }
 
+#viewModal .password-name .editable-name,
 #viewModal .password-description .editable-description {
   flex: 1;
   min-width: 0;
