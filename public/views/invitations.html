@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReservAI - Invitaciones</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
+  <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
+</head>
+<body>
+  <div id="messageContainer" class="message-container"></div>
+
+  <nav class="navbar">
+    <div class="logo">
+      <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
+      <span class="logo-text">ReservAI Admin</span>
+    </div>
+
+    <div class="profile">
+      <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="Menú de cuenta">
+        <span class="profile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.5" r="3.75"/>
+            <path d="M4.5 20.25c0-3.6 3.36-6.25 7.5-6.25s7.5 2.65 7.5 6.25"/>
+          </svg>
+        </span>
+      </button>
+      <div class="dropdown" role="menu">
+        <p class="dropdown__account" id="accountName"></p>
+        <a href="/inicioAdmin" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Gestión de cuentas
+        </a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+            <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+          </svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <a class="volver" href="/inicioAdmin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14.5 6.5 9 12l5.5 5.5"/>
+      </svg>
+      Volver a cuentas
+    </a>
+
+    <div class="page-head">
+      <h2>Invitaciones</h2>
+      <span class="count-badge" id="totalInvitaciones" hidden></span>
+    </div>
+
+    <!-- Resumen por estado -->
+    <div class="resumen" id="resumen" hidden>
+      <button type="button" class="resumen__card" data-filtro="todas" aria-pressed="true">
+        <span class="resumen__num" id="numTodas">0</span>
+        <span class="resumen__label">En esta página</span>
+      </button>
+      <button type="button" class="resumen__card resumen__card--pending" data-filtro="pending" aria-pressed="false">
+        <span class="resumen__num" id="numPending">0</span>
+        <span class="resumen__label">Pendientes</span>
+      </button>
+      <button type="button" class="resumen__card resumen__card--accepted" data-filtro="accepted" aria-pressed="false">
+        <span class="resumen__num" id="numAccepted">0</span>
+        <span class="resumen__label">Aceptadas</span>
+      </button>
+      <button type="button" class="resumen__card resumen__card--expired" data-filtro="expired" aria-pressed="false">
+        <span class="resumen__num" id="numExpired">0</span>
+        <span class="resumen__label">Vencidas</span>
+      </button>
+      <button type="button" class="resumen__card resumen__card--revoked" data-filtro="revoked" aria-pressed="false">
+        <span class="resumen__num" id="numRevoked">0</span>
+        <span class="resumen__label">Revocadas</span>
+      </button>
+    </div>
+
+    <div class="search-field">
+      <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+      </svg>
+      <input id="search" type="text" placeholder="Buscar por correo..." aria-label="Buscar invitaciones">
+    </div>
+
+    <p class="lista-error" id="listaError" role="alert"></p>
+
+    <ul id="invitation-list" class="invitation-list" aria-live="polite"></ul>
+
+    <div class="pagination" id="pagination" hidden>
+      <button id="prev" type="button" aria-label="Página anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.5 6.5 9 12l5.5 5.5"/>
+        </svg>
+      </button>
+      <span id="page-info">Página 1</span>
+      <button id="next" type="button" aria-label="Página siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 6.5 15 12l-5.5 5.5"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Nueva invitación, en el flujo bajo la lista -->
+    <button class="add-invitation" id="nuevaInvitacionBtn">
+      <span class="add-invitation__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round">
+          <path d="M12 5.5v13M5.5 12h13"/>
+        </svg>
+      </span>
+      <span class="add-invitation__texto">
+        <span class="add-invitation__titulo">Nueva invitación</span>
+        <span class="add-invitation__hint">Envía un enlace para crear una cuenta</span>
+      </span>
+    </button>
+  </main>
+
+  <!-- Modal: crear invitación -->
+  <div class="modal" id="crearModal">
+    <div class="modal-content modal-content--new">
+      <div class="modal-header">
+        <h2>Nueva invitación</h2>
+        <button class="modal-close" type="button" data-cerrar="crearModal" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="crearForm" novalidate>
+          <div class="input-group">
+            <input type="email" id="nuevoEmail" placeholder=" " autocomplete="email"
+                   autocapitalize="none" spellcheck="false">
+            <label for="nuevoEmail">Correo electrónico</label>
+          </div>
+          <p class="field-error" id="nuevoEmailError" role="alert"></p>
+
+          <div class="account-type">
+            <div class="account-type__control">
+              <span class="account-type__side is-active" id="labelClient">Cliente</span>
+              <label class="switch">
+                <input type="checkbox" id="nuevoRol" role="switch"
+                       aria-label="Cambiar entre cuenta cliente y admin">
+                <span class="slider"></span>
+              </label>
+              <span class="account-type__side" id="labelAdmin">Admin</span>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="close-btn" data-cerrar="crearModal">Cancelar</button>
+        <button type="submit" form="crearForm" class="enviar-btn" id="enviarInvitacionBtn">
+          Enviar invitación
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: confirmar revocación -->
+  <div class="modal" id="revocarModal">
+    <div class="modal-content modal-content--new">
+      <div class="modal-header">
+        <h2>Revocar invitación</h2>
+        <button class="modal-close" type="button" data-cerrar="revocarModal" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="revocar-texto">
+          El enlace enviado a <strong id="revocarEmail"></strong> dejará de funcionar.
+          La invitación no se borra: queda marcada como revocada.
+        </p>
+        <p class="field-error" id="revocarError" role="alert"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="close-btn" data-cerrar="revocarModal">Cancelar</button>
+        <button type="button" class="delete-btn" id="confirmarRevocarBtn">Revocar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/Scripts/invitationsScript/invitations.js"></script>
+</body>
+</html>
