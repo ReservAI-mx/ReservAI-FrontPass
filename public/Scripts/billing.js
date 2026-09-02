@@ -69,6 +69,12 @@ function getStatusBadge(status, cancelAtPeriodEnd = false) {
     
     if (statusLower === 'active' || statusLower === 'activo') {
         return { class: 'status-active', text: 'Activo' };
+    } else if (statusLower === 'ready_for_subscription') {
+        return { class: 'status-pending', text: 'Lista para activar' };
+    } else if (statusLower === 'pending_provision') {
+        return { class: 'status-pending', text: 'En provision' };
+    } else if (statusLower === 'unpaid') {
+        return { class: 'status-inactive', text: 'Impago' };
     } else if (statusLower === 'inactive' || statusLower === 'inactivo') {
         return { class: 'status-inactive', text: 'Inactivo' };
     } else if (statusLower === 'pending' || statusLower === 'pendiente') {
@@ -87,10 +93,18 @@ function hideModal(modalId) {
     if (modal) modal.style.display = 'none';
 }
 
+function setHasCustomer(ok) {
+    const fab = document.getElementById('addSubscriptionBtn');
+    const manage = document.getElementById('manageBillingBtn');
+    if (fab) fab.style.display = ok ? '' : 'none';
+    if (manage) manage.style.display = ok ? '' : 'none';
+}
+
 // Obtener links de pago desde el endpoint /links
-async function fetchPaymentLinks() {
+async function fetchPaymentLinks(subdomain) {
     try {
-        const response = await apiFetch('/billing/links', { headers: BILLING_HEADERS });
+        const qs = new URLSearchParams({ subdomain });
+        const response = await apiFetch(`/billing/links?${qs}`, { headers: BILLING_HEADERS });
         const text = await response.text();
 
         let data;
@@ -201,8 +215,12 @@ export async function createStripeCustomer() {
                 msg = 'El customer ya existe para esta cuenta';
             } else if (response.status === 400) {
                 msg = 'La cuenta no existe en la base de datos';
-            } else if (response.status === 403) {
+            } else if (response.status === 403 && (errorText.includes('not a client') || errorText.includes('Account is not a client'))) {
                 msg = 'La cuenta no es de tipo cliente';
+            } else if (response.status === 403 && errorText.includes('CSRF')) {
+                msg = 'Origen no permitido (CORS/CSRF). Revisa CORS_ORIGIN.';
+            } else if (response.status === 403) {
+                msg = 'Acceso denegado (403)';
             } else if (response.status === 418) {
                 msg = 'No se envió el token';
             } else if (response.status === 500) {
@@ -236,16 +254,40 @@ export async function createStripeCustomer() {
         throw err;
     }
 }
-async function fetchSubscriptions(page = 1) {
+async function activateSetup(technicalInfoId) {
+    try {
+        const response = await apiFetch('/billing/activate', {
+            method: 'POST',
+            headers: BILLING_HEADERS,
+            body: JSON.stringify({ technical_info_id: technicalInfoId }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 200 && data.url) {
+            window.open(data.url, '_blank');
+            return;
+        }
+        if (response.status === 409) {
+            showError('Esta sucursal aún no se puede activar.');
+            return;
+        }
+        showError(data.error || 'No se pudo crear el checkout mensual.');
+    } catch (err) {
+        showError('No se pudo activar: ' + (err.message || err));
+    }
+}
+
+async function fetchSetups(page = 1) {
     const loadingEl = document.getElementById('billingLoading');
     const errorEl = document.getElementById('billingError');
     const cardsContainer = document.getElementById('billingCardsContainer');
     if (cardsContainer) cardsContainer.innerHTML = '';
     if (loadingEl) loadingEl.style.display = 'block';
     if (errorEl) errorEl.style.display = 'none';
+    setHasCustomer(false);
     
     try {
-        const response = await apiFetch('/billing/status', { headers: BILLING_HEADERS });
+        const qs = new URLSearchParams({ page: String(page) });
+        const response = await apiFetch(`/billing/setup?${qs}`, { headers: BILLING_HEADERS });
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -263,48 +305,56 @@ async function fetchSubscriptions(page = 1) {
         }
 
         const data = await response.json();
-        
+        setHasCustomer(true);
 
-        let plans = data.data || data.subscriptions || [];
+        let setups = data.data || data.provisions || [];
 
-        // Renderizar tarjetas de suscripción
         if (!cardsContainer) return;
-        if (plans.length === 0) {
-            cardsContainer.innerHTML = '<div class="empty-message"><p>No tienes planes activos</p></div>';
+        if (setups.length === 0) {
+            cardsContainer.innerHTML = '<div class="empty-message"><p>Aún no tienes sucursales. Da de alta la primera.</p></div>';
         } else {
-            cardsContainer.innerHTML = plans.map(plan => {
-                const badge = getStatusBadge(plan.status, plan.cancel_at_period_end);
+            cardsContainer.innerHTML = setups.map(setup => {
+                const badge = getStatusBadge(setup.status);
                 let statusClass = 'card-status';
                 if (badge.class === 'status-inactive') statusClass += ' inactive';
                 if (badge.class === 'status-pending') statusClass += ' pending';
-                                const planName = escapeHtml(plan.plan_name || 'Plan');
-                                const planAmount = escapeHtml(plan.amount ?? '-');
-                                const badgeText = escapeHtml((badge.text || '').toUpperCase());
-                                const startDate = escapeHtml(formatDate(plan.current_period_start));
-                                const endDate = escapeHtml(formatDate(plan.current_period_end));
+                const subdomain = escapeHtml(setup.subdomain || '');
+                const planName = escapeHtml(setup.planned_plan || 'Plan');
+                const badgeText = escapeHtml((badge.text || '').toUpperCase());
+                const created = escapeHtml(formatDate(setup.created_at));
+                const id = escapeHtml(setup.id);
+                let action = '';
+                if (setup.status === 'ready_for_subscription') {
+                    action = `<button type="button" class="js-activate" data-id="${id}">Activar mensual</button>`;
+                } else if (setup.status === 'unpaid') {
+                    action = `<button type="button" class="js-portal">Actualizar pago</button>`;
+                }
                 return `
                 <div class="subscription-card">
                   <div class="card-header">
-                                        <span class="card-icon"><img src="${getPlanIcon(plan.plan_name)}" alt="${planName}" style="width: 32px; height: 32px; object-fit: contain;"></span>
+                    <span class="card-icon"><img src="${getPlanIcon(planName)}" alt="${planName}" style="width: 32px; height: 32px; object-fit: contain;"></span>
                     <div>
-                                            <div class="card-title">${planName}</div>
-                                            <div class="card-price">$${planAmount} / mes</div>
+                      <div class="card-title">${subdomain}.reservai.com.mx</div>
+                      <div class="card-price">${planName}</div>
                     </div>
                   </div>
-                                    <div class="${statusClass}">${badgeText}</div>
+                  <div class="${statusClass}">${badgeText}</div>
                   <div class="card-dates">
                     <div>
-                      <div class="card-date-label"><i class="fa-regular fa-calendar"></i> FECHA DE INICIO</div>
-                                            <div class="card-date-value">${startDate}</div>
-                    </div>
-                    <div>
-                      <div class="card-date-label"><i class="fa-regular fa-calendar"></i> FECHA DE FIN</div>
-                                            <div class="card-date-value">${endDate}</div>
+                      <div class="card-date-label"><i class="fa-regular fa-calendar"></i> ALTA</div>
+                      <div class="card-date-value">${created}</div>
                     </div>
                   </div>
+                  <div class="card-actions">${action}</div>
                 </div>
                 `;
             }).join('');
+            cardsContainer.querySelectorAll('.js-activate').forEach((btn) => {
+                btn.addEventListener('click', () => activateSetup(btn.dataset.id));
+            });
+            cardsContainer.querySelectorAll('.js-portal').forEach((btn) => {
+                btn.addEventListener('click', () => openStripeBillingPortal());
+            });
         }
         // Mostrar el contenedor de tarjetas cuando termina de cargar
         // (No es necesario mostrar/ocultar billingTable, ya no existe)
@@ -445,9 +495,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (warningContinueBtn) {
             warningContinueBtn.addEventListener('click', async () => {
+                const subdomainInput = document.getElementById('subdomainInput');
+                const subdomain = (subdomainInput && subdomainInput.value || '').trim().toLowerCase();
+                if (!subdomain) {
+                    showError('Escribe un subdominio para la sucursal.');
+                    return;
+                }
                 hideModal('warningModal');
-                // Obtener links de pago y mostrar modal de planes
-                paymentLinksCache = await fetchPaymentLinks();
+                paymentLinksCache = await fetchPaymentLinks(subdomain);
                 if (paymentLinksCache) {
                     showModal('planModal');
                 }
@@ -500,5 +555,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     // Cargar datos iniciales
-    fetchSubscriptions(1);
+    fetchSetups(1);
 });

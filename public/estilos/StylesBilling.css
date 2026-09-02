@@ -99,6 +99,20 @@ body {
   background: #3a2a1a;
   color: #ffc107;
 }
+.subscription-card .card-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+.subscription-card .card-actions button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--primary);
+  color: #fff;
+}
 .subscription-card .card-dates {
   display: flex;
   gap: 2.5rem;

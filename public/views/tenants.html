@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReservAI - Tenants</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
+</head>
+<body>
+  <div id="messageContainer" class="message-container"></div>
+
+  <nav class="navbar">
+    <div class="logo">
+      <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
+      <span class="logo-text">ReservAI Admin</span>
+    </div>
+    <div class="profile">
+      <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="Menú de cuenta">
+        <span class="profile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.5" r="3.75"/>
+            <path d="M4.5 20.25c0-3.6 3.36-6.25 7.5-6.25s7.5 2.65 7.5 6.25"/>
+          </svg>
+        </span>
+      </button>
+      <div class="dropdown" role="menu">
+        <p class="dropdown__account" id="accountName"></p>
+        <a href="/inicioAdmin" role="menuitem">Gestión de cuentas</a>
+        <a href="/invitations" role="menuitem">Invitaciones</a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">Cerrar sesión</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <a class="volver" href="/inicioAdmin">Volver a cuentas</a>
+    <div class="page-head">
+      <h2>Tenants</h2>
+    </div>
+    <div class="searchbar">
+      <input id="tenant-search" class="search" type="text" placeholder="Buscar slug, cuenta o correo..." aria-label="Buscar tenants">
+      <select id="tenant-status" class="search" style="max-width:220px">
+        <option value="all">Todos</option>
+        <option value="pending_provision">En provision</option>
+        <option value="ready_for_subscription">Lista para mensual</option>
+        <option value="active">Activo</option>
+        <option value="unpaid">Impago</option>
+      </select>
+    </div>
+    <div id="tenants-loading" style="display:none;text-align:center;color:#fff;margin:2em 0;">Cargando tenants...</div>
+    <div id="tenant-list"></div>
+    <div class="pagination2" id="tenant-pagination" style="display:none;">
+      <button type="button" id="prevTenant">Anterior</button>
+      <span id="pageinfoTenant"></span>
+      <button type="button" id="nextTenant">Siguiente</button>
+    </div>
+  </main>
+
+  <script type="module" src="/static/Scripts/tenants.js"></script>
+</body>
+</html>
