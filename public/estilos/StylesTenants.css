@@ -1,0 +1,445 @@
+/* ============================================================
+   Panel de tenants
+   Hereda navbar, menú de cuenta, buscador, chips, acciones y
+   paginación de StylesInicio.css + StylesInvitations.css;
+   aquí va solo lo propio de esta pantalla.
+   ============================================================ */
+
+/* Los tokens de estado no están en StylesInicio.css, y esta vista los
+   necesita para los chips y los filtros. */
+:root {
+  --ok: #4ade80;
+  --danger: #ff6b6b;
+  --warn: #fbbf24;
+}
+
+/* StylesInicio.css deja .container al 70%, pensado para una lista de una
+   sola columna. Aquí son cinco (subdominio, estado, plan, acciones) y a
+   1440px el subdominio se truncaba y la fecha caía a otro renglón. */
+.container {
+  width: min(94%, 1280px);
+}
+
+/* ---------- Filtros por estado ---------- */
+
+/* Reemplazan al <select>: los cinco estados caben en una fila y se ve
+   cuál está activo sin desplegar nada. */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-gray);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* El punto toma el color del estado que representa el filtro. */
+.filtro__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.filtro:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: var(--text-light);
+}
+
+/* El estado activo se marca con aria-pressed, no con una clase aparte. */
+.filtro[aria-pressed="true"] {
+  background: rgba(9, 131, 214, 0.16);
+  border-color: var(--primary);
+  color: var(--text-light);
+}
+
+.filtro:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Cada filtro pinta su punto del color del estado, también apagado. */
+.filtro--pending  .filtro__punto { background: var(--warn); }
+.filtro--ready    .filtro__punto { background: #7cc4f5; }
+.filtro--active   .filtro__punto { background: var(--ok); }
+.filtro--unpaid   .filtro__punto { background: #ff8484; }
+.filtro--todos    .filtro__punto { background: var(--text-gray); }
+
+/* ---------- Buscador ---------- */
+
+/* StylesInicio.css estiliza #search y #account-search por id; este input
+   tiene el suyo, así que la regla va por clase. */
+.search-field input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 2.75rem;
+  font-size: 1.02rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-dark);
+  color: var(--text-light);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-field input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(9, 131, 214, 0.15);
+}
+
+.search-field input::placeholder { color: var(--text-gray); }
+
+/* ---------- Tarjeta de tenant ---------- */
+
+.tenant-list { list-style: none; margin: 0; padding: 0; }
+
+.tenant-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 92px;
+  padding: 1.15rem 1.4rem;
+  margin-bottom: 0.9rem;
+  border-radius: 16px;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  color: var(--text-light);
+  transition: border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+}
+
+.tenant-item:hover {
+  border-color: rgba(9, 131, 214, 0.55);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(9, 131, 214, 0.18);
+}
+
+.tenant-item__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: rgba(9, 131, 214, 0.16);
+  border: 1px solid rgba(9, 131, 214, 0.35);
+  color: var(--primary);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.tenant-item__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+}
+
+/* El subdominio es un identificador DNS, no prosa: en monoespaciada se
+   distingue el guión del guión bajo y no se confunde 1 con l. */
+.tenant-item__subdomain {
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sin wrap: la cuenta se recorta con puntos suspensivos antes que empujar
+   la fecha a un segundo renglón y desigualar el alto de las tarjetas. */
+.tenant-item__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  color: var(--text-gray);
+  min-width: 0;
+}
+
+.tenant-item__meta > span:last-child { flex-shrink: 0; }
+
+.tenant-item__cuenta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Separador entre datos de la línea secundaria. */
+.tenant-item__sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+/* Estado y plan van en columnas de ancho fijo. Como ítems flexibles sueltos
+   cada fila los ponía en una x distinta según lo largo que fuera su chip, y
+   el estado es justo lo que se busca al recorrer la lista de arriba abajo. */
+.tenant-item__estado {
+  display: flex;
+  justify-content: flex-start;
+  width: 168px;
+  flex-shrink: 0;
+}
+
+.tenant-item__plan {
+  display: flex;
+  justify-content: flex-start;
+  width: 104px;
+  flex-shrink: 0;
+}
+
+.tenant-item__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  width: 342px;
+}
+
+/* Ancho fijo para que "Hash" y "Borrar" caigan en la misma x tengan o no
+   el botón de marcar lista a la izquierda. */
+.accion--lista { width: 126px; }
+.accion--hash  { width: 104px; justify-content: center; }
+.accion--borrar { width: 96px; }
+
+/* Ocupan el sitio del botón que esta fila no tiene. */
+.accion-hueco { flex-shrink: 0; }
+.accion-hueco--lista  { width: 126px; }
+.accion-hueco--borrar { width: 96px; }
+
+/* ---------- Chips de estado ---------- */
+
+/* .chip, .chip--pending y .chip--accepted vienen de StylesInvitations.css;
+   aquí solo el azul, que esta pantalla es la única que usa. */
+.chip--ready {
+  background: rgba(9, 131, 214, 0.16);
+  border: 1px solid rgba(9, 131, 214, 0.45);
+  color: #7cc4f5;
+}
+
+.chip--unpaid {
+  background: rgba(255, 107, 107, 0.14);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  color: #ff8484;
+}
+
+/* El plan es un dato, no un estado: gris para que no compita con el chip
+   de estado que está a su lado. */
+.chip--plan {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-gray);
+  text-transform: capitalize;
+}
+
+/* ---------- Acciones de la fila ---------- */
+
+/* .accion viene de StylesInvitations.css; faltaban las variantes de esta
+   pantalla. Solo una acción por fila es primaria. */
+.accion--lista {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: #fff;
+}
+
+.accion--lista:hover { background: #0a94f0; border-color: #0a94f0; }
+
+.accion--hash {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text-light);
+}
+
+.accion--hash:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.accion--hash svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.accion--borrar {
+  background: transparent;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  color: #ff8484;
+}
+
+.accion--borrar:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+
+/* ---------- Vacío, carga y error ---------- */
+
+.tenant-empty,
+.tenant-cargando {
+  list-style: none;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--text-gray);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+}
+
+.tenant-empty__titulo {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+/* Esqueletos: el alto es el de la tarjeta real, así la lista no salta
+   cuando llegan los datos. */
+.tenant-skeleton {
+  list-style: none;
+  min-height: 92px;
+  margin-bottom: 0.9rem;
+  border-radius: 16px;
+  background: linear-gradient(
+    100deg,
+    #000 30%,
+    rgba(255, 255, 255, 0.05) 50%,
+    #000 70%
+  );
+  background-size: 240% 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: tenantShimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes tenantShimmer {
+  from { background-position: 140% 0; }
+  to   { background-position: -40% 0; }
+}
+
+/* StylesInicio.css declara .pagination { display: flex }, que le gana al
+   display:none que el navegador da al atributo [hidden]: sin esto la
+   paginación seguía visible con la lista vacía. */
+.pagination[hidden] { display: none; }
+
+.lista-error {
+  min-height: 1.2rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ff6b6b;
+}
+
+.lista-error:empty { display: none; }
+
+/* ---------- Modal del hash ---------- */
+
+.hash-texto { line-height: 1.6; color: var(--text-gray); }
+.hash-texto strong { color: var(--text-light); }
+
+.hash-caja {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+/* El hash se rompe por caracter: es una cadena sin espacios y si no,
+   se sale de la caja. */
+.hash-valor {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  word-break: break-all;
+  user-select: all;
+}
+
+/* Oculto por defecto: es una credencial y el modal puede quedar abierto
+   frente a alguien más. */
+.hash-valor.is-hidden {
+  color: var(--text-gray);
+  letter-spacing: 0.18em;
+  user-select: none;
+}
+
+.hash-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-gray);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.hash-btn:hover {
+  color: #fff;
+  border-color: var(--primary);
+  background: rgba(9, 131, 214, 0.18);
+}
+
+.hash-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.hash-btn svg { width: 17px; height: 17px; }
+
+.hash-btn.is-ok { color: var(--ok); border-color: rgba(74, 222, 128, 0.5); }
+
+/* ---------- Angosto ---------- */
+
+/* Angosto: las columnas fijas no caben, la tarjeta se reparte en renglones
+   y los huecos de alineación dejan de tener sentido. */
+@media (max-width: 900px) {
+  .tenant-item { flex-wrap: wrap; gap: 0.75rem; }
+  .tenant-item__body { flex-basis: calc(100% - 68px); }
+  .tenant-item__estado,
+  .tenant-item__plan { width: auto; }
+  /* Con flex-wrap:nowrap los tres botones sumaban 342px irreducibles y la
+     página entera no bajaba de ~497px de ancho. Envolviendo, el mínimo pasa
+     a ser el botón más ancho. */
+  .tenant-item__acciones { width: 100%; flex-wrap: wrap; }
+  .accion { flex: 1 1 auto; min-width: 96px; justify-content: center; }
+  .accion--lista,
+  .accion--hash,
+  .accion--borrar { width: auto; }
+  .accion-hueco { display: none; }
+}
+
+@media (max-width: 560px) {
+  .filtros { gap: 0.45rem; }
+  .filtro { min-height: 36px; padding: 0 0.8rem; font-size: 0.85rem; }
+  .tenant-item__acciones { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenant-item:hover { transform: none; }
+  .tenant-skeleton { animation: none; }
+}

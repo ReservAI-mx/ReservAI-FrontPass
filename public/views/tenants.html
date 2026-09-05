@@ -7,6 +7,8 @@
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
   <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesTenants.css" />
+  <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
 </head>
 <body>
   <div id="messageContainer" class="message-container"></div>
@@ -29,36 +31,154 @@
       </button>
       <div class="dropdown" role="menu">
         <p class="dropdown__account" id="accountName"></p>
-        <a href="/inicioAdmin" role="menuitem">Gestión de cuentas</a>
-        <a href="/invitations" role="menuitem">Invitaciones</a>
-        <a href="#" id="logout" role="menuitem" class="dropdown__danger">Cerrar sesión</a>
+        <a href="/inicioAdmin" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Gestión de cuentas
+        </a>
+        <a href="/invitations" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/>
+            <path d="m3.5 7 8.5 6 8.5-6"/>
+          </svg>
+          Invitaciones
+        </a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+            <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+          </svg>
+          Cerrar sesión
+        </a>
       </div>
     </div>
   </nav>
 
   <main class="container">
-    <a class="volver" href="/inicioAdmin">Volver a cuentas</a>
+    <a class="volver" href="/inicioAdmin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14.5 6.5 9 12l5.5 5.5"/>
+      </svg>
+      Volver a cuentas
+    </a>
+
     <div class="page-head">
       <h2>Tenants</h2>
+      <span class="count-badge" id="totalTenants" hidden></span>
     </div>
-    <div class="searchbar">
-      <input id="tenant-search" class="search" type="text" placeholder="Buscar slug, cuenta o correo..." aria-label="Buscar tenants">
-      <select id="tenant-status" class="search" style="max-width:220px">
-        <option value="all">Todos</option>
-        <option value="pending_provision">En provision</option>
-        <option value="ready_for_subscription">Lista para mensual</option>
-        <option value="active">Activo</option>
-        <option value="unpaid">Impago</option>
-      </select>
+
+    <!-- Filtros por estado: reemplazan al <select> -->
+    <div class="filtros" role="group" aria-label="Filtrar por estado">
+      <button type="button" class="filtro filtro--todos" data-status="all" aria-pressed="true">
+        <span class="filtro__punto" aria-hidden="true"></span>Todos
+      </button>
+      <button type="button" class="filtro filtro--pending" data-status="pending_provision" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>En provisión
+      </button>
+      <button type="button" class="filtro filtro--ready" data-status="ready_for_subscription" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>Lista para mensual
+      </button>
+      <button type="button" class="filtro filtro--active" data-status="active" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>Activo
+      </button>
+      <button type="button" class="filtro filtro--unpaid" data-status="unpaid" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>Impago
+      </button>
     </div>
-    <div id="tenants-loading" style="display:none;text-align:center;color:#fff;margin:2em 0;">Cargando tenants...</div>
-    <div id="tenant-list"></div>
-    <div class="pagination2" id="tenant-pagination" style="display:none;">
-      <button type="button" id="prevTenant">Anterior</button>
-      <span id="pageinfoTenant"></span>
-      <button type="button" id="nextTenant">Siguiente</button>
+
+    <div class="search-field">
+      <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+      </svg>
+      <input id="tenant-search" type="text" placeholder="Buscar por subdominio, cuenta o correo..."
+             aria-label="Buscar tenants" autocapitalize="none" spellcheck="false">
+    </div>
+
+    <p class="lista-error" id="listaError" role="alert"></p>
+
+    <ul id="tenant-list" class="tenant-list" aria-live="polite"></ul>
+
+    <div class="pagination" id="tenant-pagination" hidden>
+      <button id="prevTenant" type="button" aria-label="Página anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.5 6.5 9 12l5.5 5.5"/>
+        </svg>
+      </button>
+      <span id="pageinfoTenant">Página 1</span>
+      <button id="nextTenant" type="button" aria-label="Página siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 6.5 15 12l-5.5 5.5"/>
+        </svg>
+      </button>
     </div>
   </main>
+
+  <!-- Modal: confirmar borrado -->
+  <div class="modal" id="borrarModal">
+    <div class="modal-content modal-content--new">
+      <div class="modal-header">
+        <h2>Borrar tenant</h2>
+        <button class="modal-close" type="button" data-cerrar="borrarModal" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="revocar-texto">
+          Se eliminará el tenant <strong id="borrarSubdomain"></strong> de
+          <strong id="borrarCuenta"></strong>. Esto no se puede deshacer.
+        </p>
+        <p class="field-error" id="borrarError" role="alert"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="close-btn" data-cerrar="borrarModal">Cancelar</button>
+        <button type="button" class="delete-btn" id="confirmarBorrarBtn">Borrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: hash inbound -->
+  <div class="modal" id="hashModal">
+    <div class="modal-content modal-content--new">
+      <div class="modal-header">
+        <h2>Hash inbound</h2>
+        <button class="modal-close" type="button" data-cerrar="hashModal" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="hash-texto">
+          Clave de entrada de <strong id="hashSubdomain"></strong>.
+          Trátala como una contraseña: quien la tenga puede escribirle al tenant.
+        </p>
+        <div class="hash-caja">
+          <span class="hash-valor is-hidden" id="hashValor"></span>
+          <button type="button" class="hash-btn" id="hashVerBtn" aria-label="Mostrar hash">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2.75 12S6 5.75 12 5.75 21.25 12 21.25 12 18 18.25 12 18.25 2.75 12 2.75 12Z"/>
+              <circle cx="12" cy="12" r="2.75"/>
+            </svg>
+          </button>
+          <button type="button" class="hash-btn" id="hashCopiarBtn" aria-label="Copiar hash">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="11.25" height="11.25" rx="2"/>
+              <path d="M15 6.25V5.75a2 2 0 0 0-2-2H5.75a2 2 0 0 0-2 2V13a2 2 0 0 0 2 2h.5"/>
+            </svg>
+          </button>
+        </div>
+        <p class="field-error" id="hashError" role="alert"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="close-btn" data-cerrar="hashModal">Cerrar</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/static/Scripts/tenants.js"></script>
 </body>
