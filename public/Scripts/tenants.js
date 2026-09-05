@@ -7,12 +7,12 @@ const session = requireAdminSession();
 const HEADERS = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
 const DEBOUNCE_MS = 350;
 
-/** Estados que devuelve el API, con su etiqueta y su chip de color. */
+/** Estados que devuelve el API, con su etiqueta y su modificador de color. */
 const ESTADOS = {
-  pending_provision:     { label: 'En provisión',       chip: 'chip--pending' },
-  ready_for_subscription:{ label: 'Lista para mensual', chip: 'chip--ready' },
-  active:                { label: 'Activo',             chip: 'chip--accepted' },
-  unpaid:                { label: 'Impago',             chip: 'chip--unpaid' },
+  pending_provision:     { label: 'En provisión',       mod: 'estado--pending' },
+  ready_for_subscription:{ label: 'Lista para mensual', mod: 'estado--ready' },
+  active:                { label: 'Activo',             mod: 'estado--active' },
+  unpaid:                { label: 'Impago',             mod: 'estado--unpaid' },
 };
 
 function escapeHtml(value) {
@@ -89,19 +89,27 @@ document.addEventListener('DOMContentLoaded', () => {
   function filaTenant(row) {
     const id = escapeHtml(row.id);
     const subdomain = escapeHtml(row.subdomain || 'sin-subdominio');
-    const estado = ESTADOS[row.status] || { label: row.status || 'desconocido', chip: 'chip--rol' };
+    const estado = ESTADOS[row.status] || { label: row.status || 'desconocido', mod: '' };
 
     const cuenta = row.account_name
       ? `<span class="tenant-item__cuenta">${escapeHtml(row.account_name)}</span>`
       : '<span class="tenant-item__cuenta">Sin cuenta</span>';
 
-    const fecha = formatFecha(row.created_at);
-    const fechaEl = fecha
-      ? `<span class="tenant-item__sep" aria-hidden="true"></span><span>${escapeHtml(fecha)}</span>`
+    // Plan y fecha son datos secundarios: van con la cuenta, no junto a los
+    // botones, donde se leían como un control más. Cada uno lleva su propio
+    // separador dentro para que al envolver no quede un "·" suelto al final
+    // del renglón.
+    const plan = row.planned_plan
+      ? `<span class="tenant-item__dato tenant-item__plan">
+           <span class="tenant-item__sep" aria-hidden="true"></span>${escapeHtml(row.planned_plan)}
+         </span>`
       : '';
 
-    const plan = row.planned_plan
-      ? `<span class="chip chip--plan">${escapeHtml(row.planned_plan)}</span>`
+    const fecha = formatFecha(row.created_at);
+    const fechaEl = fecha
+      ? `<span class="tenant-item__dato">
+           <span class="tenant-item__sep" aria-hidden="true"></span>${escapeHtml(fecha)}
+         </span>`
       : '';
 
     // Marcar lista y borrar solo aplican mientras está en provisión. Cuando no
@@ -123,13 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="tenant-item__subdomain">${subdomain}</span>
           <span class="tenant-item__meta">
             ${cuenta}
+            ${plan}
             ${fechaEl}
           </span>
         </span>
         <span class="tenant-item__estado">
-          <span class="chip ${estado.chip}">${escapeHtml(estado.label)}</span>
+          <span class="estado ${estado.mod}">
+            <span class="estado__punto" aria-hidden="true"></span>${escapeHtml(estado.label)}
+          </span>
         </span>
-        <span class="tenant-item__plan">${plan}</span>
         <span class="tenant-item__acciones">
           ${listaBtn}
           <button type="button" class="accion accion--hash js-hash" data-id="${id}" data-subdomain="${subdomain}">
@@ -263,18 +273,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (deleteBtn) {
-      borrarId = deleteBtn.dataset.id;
-      document.getElementById('borrarSubdomain').textContent = deleteBtn.dataset.subdomain;
-      document.getElementById('borrarCuenta').textContent = deleteBtn.dataset.cuenta;
-      document.getElementById('borrarError').textContent = '';
-      abrirModal('borrarModal');
+      abrirBorrar(deleteBtn);
     }
+  });
+
+  // ---------- Confirmación por escrito ----------
+
+  const borrarInput = document.getElementById('borrarConfirmInput');
+  const borrarErrorEl = document.getElementById('borrarError');
+  let borrarEsperado = '';
+
+  /** El botón solo se habilita con el subdominio exacto, ignorando mayúsculas. */
+  function validarBorrar() {
+    const coincide =
+      borrarInput.value.trim().toLowerCase() === borrarEsperado.toLowerCase();
+    confirmarBorrarBtn.disabled = !coincide;
+    return coincide;
+  }
+
+  function abrirBorrar(btn) {
+    borrarId = btn.dataset.id;
+    borrarEsperado = btn.dataset.subdomain;
+
+    document.getElementById('borrarSubdomain').textContent = borrarEsperado;
+    document.getElementById('borrarCuenta').textContent = btn.dataset.cuenta;
+    document.getElementById('borrarEsperado').textContent = borrarEsperado;
+    borrarErrorEl.textContent = '';
+
+    // Se vacía en cada apertura: si no, el texto de un tenant anterior dejaría
+    // el botón habilitado para otro distinto.
+    borrarInput.value = '';
+    confirmarBorrarBtn.disabled = true;
+
+    abrirModal('borrarModal');
+    borrarInput.focus();
+  }
+
+  borrarInput.addEventListener('input', () => {
+    validarBorrar();
+    borrarErrorEl.textContent = '';
+  });
+
+  borrarInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (validarBorrar()) confirmarBorrarBtn.click();
   });
 
   // ---------- Borrar ----------
 
   confirmarBorrarBtn.addEventListener('click', async () => {
-    if (!borrarId) return;
+    // Segunda comprobación: el botón deshabilitado no basta si algo lo
+    // habilitó por otro camino.
+    if (!borrarId || !validarBorrar()) return;
     const errorBorrar = document.getElementById('borrarError');
     errorBorrar.textContent = '';
     setButtonLoading(confirmarBorrarBtn, true, 'Borrando...');
@@ -295,7 +346,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch {
       errorBorrar.textContent = 'Error de red al borrar el tenant.';
     } finally {
+      // setButtonLoading reactiva el botón sin saber de la confirmación:
+      // hay que volver a aplicarla para no dejarlo habilitado de más.
       setButtonLoading(confirmarBorrarBtn, false);
+      validarBorrar();
     }
   });
 

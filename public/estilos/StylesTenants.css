@@ -1,12 +1,12 @@
 /* ============================================================
    Panel de tenants
-   Hereda navbar, menú de cuenta, buscador, chips, acciones y
+   Hereda navbar, menú de cuenta, buscador, acciones y
    paginación de StylesInicio.css + StylesInvitations.css;
    aquí va solo lo propio de esta pantalla.
    ============================================================ */
 
 /* Los tokens de estado no están en StylesInicio.css, y esta vista los
-   necesita para los chips y los filtros. */
+   necesita para el estado y los filtros. */
 :root {
   --ok: #4ade80;
   --danger: #ff6b6b;
@@ -14,8 +14,8 @@
 }
 
 /* StylesInicio.css deja .container al 70%, pensado para una lista de una
-   sola columna. Aquí son cinco (subdominio, estado, plan, acciones) y a
-   1440px el subdominio se truncaba y la fecha caía a otro renglón. */
+   sola columna. Aquí son cuatro (avatar, datos, estado, acciones) y a 1440px
+   el subdominio se truncaba y la fecha caía a otro renglón. */
 .container {
   width: min(94%, 1280px);
 }
@@ -175,7 +175,15 @@
   min-width: 0;
 }
 
-.tenant-item__meta > span:last-child { flex-shrink: 0; }
+/* Cada dato secundario y su separador viajan juntos: así el "·" nunca queda
+   colgando al final de un renglón cuando la línea envuelve. */
+.tenant-item__dato {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 
 .tenant-item__cuenta {
   overflow: hidden;
@@ -194,20 +202,46 @@
   flex-shrink: 0;
 }
 
-/* Estado y plan van en columnas de ancho fijo. Como ítems flexibles sueltos
-   cada fila los ponía en una x distinta según lo largo que fuera su chip, y
-   el estado es justo lo que se busca al recorrer la lista de arriba abajo. */
+/* El estado va en columna de ancho fijo: como ítem flexible suelto cada fila
+   lo ponía en una x distinta y es justo lo que se busca al recorrer la lista
+   de arriba abajo. */
 .tenant-item__estado {
   display: flex;
   justify-content: flex-start;
-  width: 168px;
+  width: 176px;
   flex-shrink: 0;
 }
 
+/* Sin cápsula ni borde: con ellos se leía como un botón más, porque tenía la
+   misma forma que "Hash" y "Borrar", que están en la misma fila. El color y
+   el punto bastan para el estado, y lo dejan claramente como dato. */
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.estado__punto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  /* Halo tenue: separa el punto del negro de la tarjeta. */
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.estado--pending { color: var(--warn); }
+.estado--ready   { color: #7cc4f5; }
+.estado--active  { color: var(--ok); }
+.estado--unpaid  { color: #ff8484; }
+
+/* El plan es texto dentro de la línea de datos, no un elemento aparte. */
 .tenant-item__plan {
-  display: flex;
-  justify-content: flex-start;
-  width: 104px;
+  text-transform: capitalize;
   flex-shrink: 0;
 }
 
@@ -230,31 +264,6 @@
 .accion-hueco { flex-shrink: 0; }
 .accion-hueco--lista  { width: 126px; }
 .accion-hueco--borrar { width: 96px; }
-
-/* ---------- Chips de estado ---------- */
-
-/* .chip, .chip--pending y .chip--accepted vienen de StylesInvitations.css;
-   aquí solo el azul, que esta pantalla es la única que usa. */
-.chip--ready {
-  background: rgba(9, 131, 214, 0.16);
-  border: 1px solid rgba(9, 131, 214, 0.45);
-  color: #7cc4f5;
-}
-
-.chip--unpaid {
-  background: rgba(255, 107, 107, 0.14);
-  border: 1px solid rgba(255, 107, 107, 0.4);
-  color: #ff8484;
-}
-
-/* El plan es un dato, no un estado: gris para que no compita con el chip
-   de estado que está a su lado. */
-.chip--plan {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: var(--text-gray);
-  text-transform: capitalize;
-}
 
 /* ---------- Acciones de la fila ---------- */
 
@@ -350,6 +359,44 @@
 
 .lista-error:empty { display: none; }
 
+/* ---------- Modal de borrado ---------- */
+
+.borrar-instruccion {
+  margin-top: 1.1rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-gray);
+}
+
+/* El subdominio a copiar, en monoespaciada y seleccionable: se lee carácter
+   por carácter, que es justo lo que hay que teclear. */
+.borrar-instruccion code {
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  user-select: all;
+}
+
+/* Lo que se teclea es un identificador: misma tipografía que el original
+   para poder compararlos de un vistazo. */
+#borrarConfirmInput {
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+}
+
+/* Mientras no coincida, el botón no debe parecer disponible. */
+.modal-content--new .delete-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-gray);
+}
+
 /* ---------- Modal del hash ---------- */
 
 .hash-texto { line-height: 1.6; color: var(--text-gray); }
@@ -420,8 +467,11 @@
 @media (max-width: 900px) {
   .tenant-item { flex-wrap: wrap; gap: 0.75rem; }
   .tenant-item__body { flex-basis: calc(100% - 68px); }
-  .tenant-item__estado,
-  .tenant-item__plan { width: auto; }
+  .tenant-item__estado { width: auto; }
+  /* En una columna no hay altura que igualar, así que la cuenta se lee
+     entera en vez de recortarse a "Cafeter...". */
+  .tenant-item__meta { flex-wrap: wrap; }
+  .tenant-item__cuenta { overflow: visible; text-overflow: clip; }
   /* Con flex-wrap:nowrap los tres botones sumaban 342px irreducibles y la
      página entera no bajaba de ~497px de ancho. Envolviendo, el mínimo pasa
      a ser el botón más ancho. */

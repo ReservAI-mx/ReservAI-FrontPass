@@ -134,11 +134,20 @@
           Se eliminará el tenant <strong id="borrarSubdomain"></strong> de
           <strong id="borrarCuenta"></strong>. Esto no se puede deshacer.
         </p>
+        <p class="borrar-instruccion" id="borrarInstruccion">
+          Escribe <code id="borrarEsperado"></code> para confirmar.
+        </p>
+        <div class="input-group">
+          <input type="text" id="borrarConfirmInput" placeholder=" " autocomplete="off"
+                 autocapitalize="none" autocorrect="off" spellcheck="false"
+                 aria-describedby="borrarInstruccion">
+          <label for="borrarConfirmInput">Subdominio del tenant</label>
+        </div>
         <p class="field-error" id="borrarError" role="alert"></p>
       </div>
       <div class="modal-footer">
         <button type="button" class="close-btn" data-cerrar="borrarModal">Cancelar</button>
-        <button type="button" class="delete-btn" id="confirmarBorrarBtn">Borrar</button>
+        <button type="button" class="delete-btn" id="confirmarBorrarBtn" disabled>Borrar</button>
       </div>
     </div>
   </div>
