@@ -584,6 +584,98 @@ input:-webkit-autofill:active {
     center / 9px 9px no-repeat;
 }
 
+/* ---------- Progreso de la contraseña ---------- */
+
+/* Acompaña a .password-rules: la lista dice QUÉ falta, la barra dice CUÁNTO.
+   Juntas evitan que el usuario descubra los requisitos a base de errores. */
+.password-progress {
+  margin: 0.9rem 0 0.25rem;
+}
+
+.password-progress__barra {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.password-progress__relleno {
+  display: block;
+  height: 100%;
+  width: var(--progreso, 0%);
+  border-radius: inherit;
+  background: var(--color-progreso, #ff6b6b);
+  transition: width 0.25s ease, background 0.25s ease;
+}
+
+.password-progress__texto {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-gray);
+  text-align: left;
+}
+
+/* El color va del rojo al verde según cuántas reglas se cumplen. */
+.password-progress[data-nivel="0"],
+.password-progress[data-nivel="1"],
+.password-progress[data-nivel="2"] { --color-progreso: var(--danger); }
+
+.password-progress[data-nivel="3"],
+.password-progress[data-nivel="4"] { --color-progreso: #fbbf24; }
+
+.password-progress[data-nivel="5"] { --color-progreso: var(--ok); }
+.password-progress[data-nivel="5"] .password-progress__texto { color: var(--ok); }
+
+/* Nota de símbolos permitidos: el backend solo acepta unos cuantos. */
+.password-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--text-gray);
+  text-align: left;
+  opacity: 0.85;
+}
+
+.password-hint code {
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.74rem;
+  color: var(--text-light);
+  word-spacing: 0.15em;
+}
+
+/* Despega el campo que va después del bloque de requisitos: pegado a la
+   lista parecía parte de ella. Va en el campo y no en la lista porque el
+   aviso de símbolos aparece y desaparece entre los dos. */
+.input-group--separado {
+  margin-top: 1.25rem;
+}
+
+/* Aviso de coincidencia entre las dos contraseñas. */
+.match-hint {
+  margin: -0.35rem 0 0.7rem 4px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.match-hint:empty { display: none; }
+.match-hint.is-ok { color: var(--ok); }
+.match-hint.is-error { color: var(--danger); }
+
+/* El botón deshabilitado no debe parecer disponible. */
+.loginbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loginbtn:disabled:hover { background: var(--primary); transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .password-progress__relleno { transition: none; }
+}
+
 /* Las páginas de recuperación reciben la misma entrada escalonada. */
 .login-box .form-intro,
 .login-box .password-rules,
@@ -676,14 +768,35 @@ input:-webkit-autofill:active {
 
 /* ---------- Reglas en dos columnas parejas ---------- */
 
+/* En la tarjeta angosta, centradas y con wrap quedaban descuadradas.
+   Tres columnas dejan las cinco reglas en dos renglones, que es lo que
+   mantiene el formulario corto. */
 .login-box--narrow .password-rules {
-  gap: 0.5rem 1.1rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-content: start;
+  gap: 0.5rem 0.5rem;
   margin: 0.85rem 0 0.35rem;
 }
 
 .login-box--narrow .password-rules li {
-  font-size: 0.8rem;
-  padding-left: 1.35rem;
+  font-size: 0.76rem;
+  padding-left: 1.15rem;
+  text-align: left;
+  /* Caben justas; sin esto "Una mayúscula" parte en dos renglones y
+     desiguala la altura de las filas. */
+  white-space: nowrap;
+}
+
+/* El círculo/palomita se ajusta al texto más chico. */
+.login-box--narrow .password-rules li::before {
+  width: 11px;
+  height: 11px;
+  top: 0.3em;
+}
+
+.login-box--narrow .password-rules li.cumplida::before {
+  background-size: 8px 8px;
 }
 
 @media (max-width: 480px) {

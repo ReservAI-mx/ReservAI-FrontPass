@@ -155,11 +155,45 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
-  function pintarEsqueleto() {
-    listaEl.innerHTML = Array.from(
-      { length: 4 },
-      () => '<li class="tenant-skeleton" aria-hidden="true"></li>'
-    ).join('');
+  /**
+   * El esqueleto solo aparece si la espera se nota. Filtrar responde en unas
+   * decenas de milisegundos, así que pintarlo de inmediato producía un
+   * destello de barras negras que además no correspondía al número real de
+   * resultados. Y si alcanza a mostrarse, se queda un mínimo para que no
+   * parpadee.
+   */
+  const ESQUELETO_RETRASO_MS = 250;
+  const ESQUELETO_MINIMO_MS = 300;
+
+  let temporizadorEsqueleto = null;
+  let esqueletoDesde = 0;
+
+  function programarEsqueleto() {
+    cancelarEsqueleto();
+    temporizadorEsqueleto = setTimeout(() => {
+      temporizadorEsqueleto = null;
+      esqueletoDesde = Date.now();
+      listaEl.innerHTML = Array.from(
+        { length: 4 },
+        () => '<li class="tenant-skeleton" aria-hidden="true"></li>'
+      ).join('');
+    }, ESQUELETO_RETRASO_MS);
+  }
+
+  function cancelarEsqueleto() {
+    if (temporizadorEsqueleto) {
+      clearTimeout(temporizadorEsqueleto);
+      temporizadorEsqueleto = null;
+    }
+  }
+
+  /** Si el esqueleto llegó a verse, completa su tiempo mínimo en pantalla. */
+  function esperarMinimoEsqueleto() {
+    if (!esqueletoDesde) return Promise.resolve();
+    const visible = Date.now() - esqueletoDesde;
+    esqueletoDesde = 0;
+    if (visible >= ESQUELETO_MINIMO_MS) return Promise.resolve();
+    return new Promise((r) => setTimeout(r, ESQUELETO_MINIMO_MS - visible));
   }
 
   function pintarVacio() {
@@ -173,11 +207,15 @@ document.addEventListener('DOMContentLoaded', () => {
       </li>`;
   }
 
+  // Cada carga lleva número: si llegan dos respuestas desordenadas (clics
+  // rápidos entre filtros), la vieja se descarta en vez de pisar a la nueva.
+  let cargaId = 0;
+
   async function cargar(nuevaPagina = page) {
+    const id = ++cargaId;
     page = nuevaPagina;
     errorEl.textContent = '';
-    pintarEsqueleto();
-    paginacion.hidden = true;
+    programarEsqueleto();
 
     const search = searchEl.value.trim() || 'all';
     const qs = new URLSearchParams({ page: String(page), search, status });
@@ -188,16 +226,25 @@ document.addEventListener('DOMContentLoaded', () => {
       res = await apiFetch(`/billing/tenants?${qs}`, { headers: HEADERS });
       data = await res.json().catch(() => ({}));
     } catch (err) {
+      cancelarEsqueleto();
+      if (id !== cargaId) return;
       listaEl.innerHTML = '';
       errorEl.textContent = 'Error de red al cargar los tenants.';
       totalEl.hidden = true;
+      paginacion.hidden = true;
       return;
     }
+
+    cancelarEsqueleto();
+    if (id !== cargaId) return; // ya hay una carga más reciente en curso
+    await esperarMinimoEsqueleto();
+    if (id !== cargaId) return;
 
     if (!res.ok) {
       listaEl.innerHTML = '';
       errorEl.textContent = data.error || `No se pudieron cargar los tenants (${res.status}).`;
       totalEl.hidden = true;
+      paginacion.hidden = true;
       return;
     }
 

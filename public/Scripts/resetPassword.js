@@ -2,14 +2,11 @@ import SessionStorageManager from './AppStorage.js';
 import { apiJson } from './api.js';
 import { setButtonLoading, shakeElement } from './buttonLoading.js';
 
-// Mismas reglas que anuncia la lista de la vista.
-const REGLAS = {
-  largo:   (v) => v.length >= 12,
-  mayus:   (v) => /[A-Z]/.test(v),
-  minus:   (v) => /[a-z]/.test(v),
-  numero:  (v) => /[0-9]/.test(v),
-  simbolo: (v) => /[^A-Za-z0-9]/.test(v),
-};
+import { evaluar } from './passwordRules.js';
+
+// Las reglas viven en passwordRules.js, espejo del backend. Antes aquí el
+// símbolo era /[^A-Za-z0-9]/, que daba por válidos caracteres como # o "
+// que el API rechaza: se veían las cinco reglas en verde y aun así fallaba.
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('resetForm');
@@ -49,10 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Reglas que se van marcando conforme escribes ---
   const items = document.querySelectorAll('#passwordRules li');
   function refreshRules() {
-    const v = passwordInput.value;
+    const { estado } = evaluar(passwordInput.value);
     items.forEach((li) => {
-      const regla = REGLAS[li.dataset.regla];
-      li.classList.toggle('cumplida', Boolean(regla && regla(v)));
+      const regla = estado.find((r) => r.id === li.dataset.regla);
+      li.classList.toggle('cumplida', Boolean(regla && regla.cumple));
     });
   }
   passwordInput.addEventListener('input', refreshRules);
@@ -90,9 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const code = codeInput.value.trim();
 
     let valido = true;
-    const faltantes = Object.entries(REGLAS)
-      .filter(([, prueba]) => !prueba(password))
-      .length;
+    const { cumplidas, total } = evaluar(password);
+    const faltantes = total - cumplidas;
 
     if (!password) {
       setError(passwordInput, errores.password, 'La contraseña es necesaria');
