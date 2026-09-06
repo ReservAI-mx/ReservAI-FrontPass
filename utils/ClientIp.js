@@ -46,4 +46,47 @@ function getClientIp(req) {
   return stripIpv6Mapped(req.socket?.remoteAddress || req.ip || '') || 'unknown';
 }
 
-module.exports = { getClientIp };
+/**
+ * Primeros 4 grupos (64 bits) de una IPv6, expandiendo la forma comprimida.
+ * Devuelve null si la dirección no se puede interpretar con seguridad.
+ */
+function ipv6Prefix64(ip) {
+  const sinZona = String(ip).split('%')[0].toLowerCase();
+  const mitades = sinZona.split('::');
+  if (mitades.length > 2) return null;
+
+  const cabeza = mitades[0] ? mitades[0].split(':') : [];
+  const cola = mitades.length === 2 && mitades[1] ? mitades[1].split(':') : [];
+
+  let grupos;
+  if (mitades.length === 2) {
+    const faltantes = 8 - cabeza.length - cola.length;
+    if (faltantes < 0) return null;
+    grupos = [...cabeza, ...Array(faltantes).fill('0'), ...cola];
+  } else {
+    grupos = cabeza;
+  }
+
+  if (grupos.length !== 8) return null;
+  if (grupos.some((g) => g === '' || g.length > 4 || !/^[0-9a-f]+$/.test(g))) return null;
+
+  return grupos.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, '')).join(':') + '::/64';
+}
+
+/**
+ * Clave para los limitadores de peticiones.
+ *
+ * Una IPv4 identifica a un cliente, pero a uno de IPv6 se le asigna un /64
+ * completo: usar la dirección exacta le daría 2^64 cupos independientes y
+ * cualquier límite quedaría de adorno. Por eso aquí se agrupa por prefijo /64.
+ *
+ * Para los logs se sigue usando getClientIp, que conserva la dirección
+ * completa: agrupar sirve para contar, no para identificar.
+ */
+function getRateLimitKey(req) {
+  const ip = getClientIp(req);
+  if (!ip.includes(':')) return ip; // IPv4 o 'unknown'
+  return ipv6Prefix64(ip) || ip;
+}
+
+module.exports = { getClientIp, getRateLimitKey, ipv6Prefix64 };

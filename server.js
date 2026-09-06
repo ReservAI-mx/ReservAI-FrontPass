@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
-const { getClientIp } = require('./utils/ClientIp');
+const { getClientIp, getRateLimitKey } = require('./utils/ClientIp');
 const VerifyProxySecret = require('./middlewares/VerifyProxySecret');
 const app = express();
 
@@ -56,12 +56,17 @@ const helmetOptions = {
 // ============================
 app.set('trust proxy', 1);
 
-const rateLimitKey = (req) => getClientIp(req);
+// Agrupa IPv6 por /64: con la direccion completa un solo cliente tendria
+// 2^64 cupos y cualquier limite seria decorativo. Ver utils/ClientIp.js.
+const rateLimitKey = (req) => getRateLimitKey(req);
 const rateLimitValidate = { xForwardedForHeader: false, keyGeneratorIpFallback: false };
 
+// Ojo: este limitador se registra antes de express.static, así que cada CSS,
+// cada módulo ES y cada imagen cuenta. Una sola vista carga ~11 peticiones,
+// así que 100 daban para unas 9 recargas antes del 429.
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: rateLimitKey,
@@ -69,9 +74,12 @@ const globalLimiter = rateLimit({
   message: { status: 429, error: 'Too many requests, please try again later.', retryAfter: '15 minutes' },
 });
 
+// Cubre rutas que también sirven HTML (/login, /twofa, /verification), así que
+// se gastaba con solo recargar la pantalla, no solo al intentar entrar.
+// El freno real contra fuerza bruta es LOGIN_RATE_LIMIT del backend.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: rateLimitKey,
@@ -81,7 +89,7 @@ const authLimiter = rateLimit({
 
 const assetsLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: isProduction ? 30 : 100,
+  max: isProduction ? 120 : 300,
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
