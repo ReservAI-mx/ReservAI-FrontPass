@@ -525,7 +525,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-        if (planPremiumOption) {
+        // El plan Premium está desactivado: no se le engancha el clic. La marca
+        // aria-disabled del HTML es la fuente de verdad, así que reactivarlo es
+        // quitarla de la vista sin tocar este archivo.
+        if (planPremiumOption && planPremiumOption.getAttribute('aria-disabled') !== 'true') {
             planPremiumOption.addEventListener('click', () => {
                 if (paymentLinksCache && paymentLinksCache.premium && paymentLinksCache.premium.url) {
                     window.open(paymentLinksCache.premium.url, '_blank');

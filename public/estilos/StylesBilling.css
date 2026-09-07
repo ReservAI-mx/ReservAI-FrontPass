@@ -818,6 +818,42 @@ body {
   box-shadow: 0 4px 18px #0983d688;
   transform: translateY(-2px) scale(1.03);
 }
+/* ---------- Plan desactivado ---------- */
+
+/* Se ve, pero no se puede elegir: apagado y sin el hover azul, que es lo que
+   dice "esto es clicable" en el resto de la lista. */
+.plan-option--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+/* Sin esto ganaría la regla de arriba (.plan-option:focus, :hover), que tiene
+   la misma especificidad pero está declarada antes. */
+.plan-option--disabled:hover,
+.plan-option--disabled:focus {
+  background: #181c22;
+  color: inherit;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 12px #0003;
+  transform: none;
+}
+
+.plan-badge {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.9rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
 .plan-title {
   font-size: 1.18rem;
   font-weight: 700;

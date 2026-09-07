@@ -131,7 +131,11 @@
             <div class="plan-price">$1699 MXN / mes</div>
             <div class="plan-desc">Este plan cuenta con soporte medio, 3 modificaciones sencillas en el comportamiento de la IA sin costo adicional, 1 sola sucursal con un solo número telefónico y un máximo 3 agendas registradas.</div>
           </div>
-          <div class="plan-option" id="planPremiumOption" tabindex="0">
+          <!-- Desactivado: se deja visible para que se sepa que el plan existe,
+               pero sin tabindex no recibe foco de teclado y el JS no le engancha
+               el clic. aria-disabled se lo comunica a los lectores de pantalla. -->
+          <div class="plan-option plan-option--disabled" id="planPremiumOption" aria-disabled="true">
+            <span class="plan-badge">No disponible</span>
             <div class="plan-title">Plan Premium</div>
             <div class="plan-price">$2699 MXN / mes</div>
             <div class="plan-desc">El plan incluye soporte alto, 10 modificaciones sencillas en el comportamiento de la IA sin costo adicional tambien máximo 4 sucursales (cada una con su teléfono individual) y Máximo 15 agendas registradas.</div>
