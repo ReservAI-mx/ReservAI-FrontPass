@@ -24,7 +24,22 @@ router.get('/inicioAdmin', (req, res) => res.sendFile(path.resolve(__dirname +�
 router.get('/invitations', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/invitations.html")));
 router.get('/admin/tenants', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/tenants.html")));
 router.get('/404', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/404.html")));
-router.get('/terms', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/terms.html")));
+/**
+ * Los textos legales viven solo en la landing, para no mantener dos copias
+ * que se desincronizan. Estas rutas se conservan como redireccion porque
+ * puede haber enlaces viejos apuntando aqui (correos, marcadores, capturas).
+ *
+ * 302 y no 301: el navegador cachea el permanente de forma agresiva y, si
+ * algun dia se quisiera volver a servir el texto desde la app, costaria
+ * revertirlo en los navegadores que ya lo guardaron.
+ */
+const LEGAL_URLS = {
+    terms: 'https://reservai.com.mx/terms',
+    privacy: 'https://reservai.com.mx/privacy',
+};
+
+router.get('/terms', (req, res) => res.redirect(302, LEGAL_URLS.terms));
+router.get('/privacy', (req, res) => res.redirect(302, LEGAL_URLS.privacy));
 router.get('/billing', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/billing.html")));
 router.get('/accept-invitation', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/accept-invitation.html")));
 router.get('/forgot-password', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/forgot-password.html")));
