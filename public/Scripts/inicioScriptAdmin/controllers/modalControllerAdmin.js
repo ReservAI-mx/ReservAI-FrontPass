@@ -2,6 +2,7 @@ import {createPasswordForAccount as createPasswordAdmin, fetchPasswordById, upda
 import { showMessage } from '../service/uiHelpersAdmin.js';
 import { showDeleteConfirmModal } from '../service/uiHelpersAdmin.js';
 import SessionStorageManager from '../../AppStorage.js';
+import { goLogout } from '../../api.js';
 
 
 export function setupAdminModals({ addBtn, createModal, viewModal, fields, listEl, passwords, renderList, getSelectedAccountId }) {
@@ -441,8 +442,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", function(e) {
             e.preventDefault();
-            SessionStorageManager.clearSession();
-            window.location.href = "/login";
+            goLogout();
         });
     }
 });

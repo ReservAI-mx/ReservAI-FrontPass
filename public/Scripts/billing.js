@@ -1,5 +1,5 @@
 import SessionStorageManager from "./AppStorage.js";
-import { apiFetch, requireUiSession } from "./api.js";
+import { apiFetch, goLogout, requireUiSession } from "./api.js";
 import { setupAccountMenu } from "./accountMenu.js";
 
 // El backend exige estas cabeceras en /billing/links y /billing/portal.
@@ -545,8 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", function(e) {
             e.preventDefault();
-            SessionStorageManager.clearSession();
-            window.location.href = "/login";
+            goLogout();
         });
     }
 

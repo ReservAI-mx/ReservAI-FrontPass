@@ -1,5 +1,5 @@
 import SessionStorageManager from './AppStorage.js';
-import { apiFetch, requireAdminSession } from './api.js';
+import { apiFetch, goLogout, requireAdminSession } from './api.js';
 import { setupAccountMenu } from './accountMenu.js';
 import { setButtonLoading } from './buttonLoading.js';
 
@@ -79,8 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      SessionStorageManager.clearSession();
-      window.location.href = '/login';
+      goLogout();
     });
   }
 

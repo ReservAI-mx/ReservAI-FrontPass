@@ -13,6 +13,11 @@ export function goLogin() {
   window.location.href = '/login';
 }
 
+export function goLogout() {
+  SessionStorageManager.clearSession();
+  window.location.href = '/api/logout';
+}
+
 export function requireUiSession() {
   const session = SessionStorageManager.getSession();
   if (!session || !session.account_type) {

@@ -1,10 +1,12 @@
 import LoginInfo from "../models/logininfo.js";
 import SessionStorageManager from "./AppStorage.js";
 import { shakeElement } from "./buttonLoading.js";
+import { captureReturnTo, hasStoredReturnTo } from "./oauthReturnTo.js";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 document.addEventListener("DOMContentLoaded", () => {
+  captureReturnTo();
   const form = document.getElementById("loginForm");
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
@@ -109,6 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (data.verified === false) {
         window.location.href = "/verify_email";
+      } else if (hasStoredReturnTo()) {
+        window.location.href = "/twofa";
       } else if (data.verified === true && data.twofaenabled === false) {
         window.location.href = "/QR";
       } else {

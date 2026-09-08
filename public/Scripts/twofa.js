@@ -1,6 +1,7 @@
 import SessionStorageManager from "./AppStorage.js";
 import { apiFetch, apiJson } from "./api.js";
 import { setButtonLoading, shakeElement } from "./buttonLoading.js";
+import { captureReturnTo, consumeReturnTo } from "./oauthReturnTo.js";
 
 const MAX_RECOVERY_SIZE = 1024 * 1024; // 1 MB: el documento son unos cuantos KB.
 const VERIFIED_HOLD_MS = 1100; // Cuánto se queda la palomita antes de continuar.
@@ -41,6 +42,11 @@ function downloadRecovery(documentObj, filename) {
 }
 
 async function goHome() {
+  const returnTo = consumeReturnTo();
+  if (returnTo) {
+    window.location.href = returnTo;
+    return;
+  }
   let type = SessionStorageManager.getSession().account_type;
   if (!type) {
     const { ok } = await apiJson('/a?page=1');
@@ -227,6 +233,7 @@ function showRecoveryGate(data) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    captureReturnTo();
     const inputs = document.querySelectorAll('.code-inputs input');
     const verifyBtn = document.querySelector('.btn-verify');
     const errorDiv = document.getElementById('twofa-error');

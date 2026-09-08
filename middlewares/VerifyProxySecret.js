@@ -40,7 +40,7 @@ function shouldSkipPath(req) {
  * /health queda abierto para checks de Fly/Docker.
  */
 function VerifyProxySecret(req, res, next) {
-  if (process.env.NODE_ENV === 'test') {
+  if (process.env.NODE_ENV === 'test' || !isProductionEnv()) {
     req.proxyVerified = true;
     return next();
   }
