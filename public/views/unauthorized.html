@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Unauthorized - ReservAI</title>
+  <meta http-equiv="refresh" content="3;url=/login">
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/Styles.css">
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0d1117;
+    }
+    .login-box {
+      background: #161b22;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      padding: 2.5em 2em;
+      max-width: 350px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo img { width: 48px; margin-bottom: 0.5em; }
+    .logo h1 {
+      font-size: 1.5em;
+      color: #fff;
+      margin: 0;
+      font-weight: 600;
+    }
+    .error-title {
+      font-size: 1.8em;
+      color: #ff5555;
+      margin: 0.6em 0 0.3em;
+      font-weight: bold;
+    }
+    .error-msg { color: #fff; margin-bottom: 1.5em; font-size: 1.05em; }
+    .back-link {
+      color: #58a6ff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover { color: #79c0ff; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <div class="logo">
+        <img src="/static/Images/ReservAiLogo.png" alt="ReservAI Logo">
+        <h1>ReservAI</h1>
+      </div>
+      <div class="error-title">Unauthorized</div>
+      <div class="error-msg">No tienes acceso a este negocio. Se cerró tu sesión.</div>
+      <a href="/login" class="back-link">Ir al login</a>
+    </div>
+  </div>
+</body>
+</html>
