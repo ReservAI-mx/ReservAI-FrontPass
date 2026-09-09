@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Unauthorized - ReservAI</title>
-  <meta http-equiv="refresh" content="3;url=/login">
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/Styles.css">
   <style>
@@ -37,12 +36,13 @@
       font-weight: bold;
     }
     .error-msg { color: #fff; margin-bottom: 1.5em; font-size: 1.05em; }
-    .back-link {
-      color: #58a6ff;
+    a.loginbtn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       text-decoration: none;
-      font-weight: 500;
+      box-sizing: border-box;
     }
-    .back-link:hover { color: #79c0ff; text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -54,8 +54,9 @@
       </div>
       <div class="error-title">Unauthorized</div>
       <div class="error-msg">No tienes acceso a este negocio. Se cerró tu sesión.</div>
-      <a href="/login" class="back-link">Ir al login</a>
+      <a href="/login" class="loginbtn" id="backLink">Ir al login</a>
     </div>
   </div>
+  <script src="/static/Scripts/unauthorized.js"></script>
 </body>
 </html>
