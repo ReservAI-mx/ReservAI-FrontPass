@@ -251,18 +251,20 @@
   justify-content: flex-end;
   gap: 0.5rem;
   flex-shrink: 0;
-  width: 342px;
+  width: 500px;
 }
 
 /* Ancho fijo para que "Hash" y "Borrar" caigan en la misma x tengan o no
    el botón de marcar lista a la izquierda. */
 .accion--lista { width: 126px; }
+.accion--retry { width: 148px; }
 .accion--hash  { width: 104px; justify-content: center; }
 .accion--borrar { width: 96px; }
 
 /* Ocupan el sitio del botón que esta fila no tiene. */
 .accion-hueco { flex-shrink: 0; }
 .accion-hueco--lista  { width: 126px; }
+.accion-hueco--retry  { width: 148px; }
 .accion-hueco--borrar { width: 96px; }
 
 /* ---------- Acciones de la fila ---------- */
@@ -276,6 +278,17 @@
 }
 
 .accion--lista:hover { background: #0a94f0; border-color: #0a94f0; }
+
+.accion--retry {
+  background: transparent;
+  border: 1px solid rgba(255, 180, 80, 0.55);
+  color: #ffc107;
+}
+
+.accion--retry:hover {
+  background: rgba(255, 180, 80, 0.12);
+  border-color: #ffc107;
+}
 
 .accion--hash {
   display: inline-flex;
@@ -478,6 +491,7 @@
   .tenant-item__acciones { width: 100%; flex-wrap: wrap; }
   .accion { flex: 1 1 auto; min-width: 96px; justify-content: center; }
   .accion--lista,
+  .accion--retry,
   .accion--hash,
   .accion--borrar { width: auto; }
   .accion-hueco { display: none; }

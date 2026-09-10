@@ -23,6 +23,7 @@ router.get('/twofa', (req, res) => res.sendFile(path.resolve(__dirname + "/../
 router.get('/inicioAdmin', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/inicioAdmin.html")));
 router.get('/invitations', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/invitations.html")));
 router.get('/admin/tenants', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/tenants.html")));
+router.get('/admin/jobs', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/jobs.html")));
 router.get('/404', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/404.html")));
 router.get('/unauthorized', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/unauthorized.html")));
 /**

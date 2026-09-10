@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReservAI - Jobs</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesTenants.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesJobs.css" />
+  <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
+</head>
+<body>
+  <div id="messageContainer" class="message-container"></div>
+
+  <nav class="navbar">
+    <div class="logo">
+      <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
+      <span class="logo-text">ReservAI Admin</span>
+    </div>
+    <div class="profile">
+      <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="Menú de cuenta">
+        <span class="profile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.5" r="3.75"/>
+            <path d="M4.5 20.25c0-3.6 3.36-6.25 7.5-6.25s7.5 2.65 7.5 6.25"/>
+          </svg>
+        </span>
+      </button>
+      <div class="dropdown" role="menu">
+        <p class="dropdown__account" id="accountName"></p>
+        <a href="/inicioAdmin" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Gestión de cuentas
+        </a>
+        <a href="/admin/tenants" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="2"/>
+            <path d="M8 9h8M8 12.5h8M8 16h5"/>
+          </svg>
+          Tenants
+        </a>
+        <a href="/admin/jobs" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+          </svg>
+          Jobs
+        </a>
+        <a href="/invitations" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/>
+            <path d="m3.5 7 8.5 6 8.5-6"/>
+          </svg>
+          Invitaciones
+        </a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+            <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+          </svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <a class="volver" href="/inicioAdmin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14.5 6.5 9 12l5.5 5.5"/>
+      </svg>
+      Volver a cuentas
+    </a>
+
+    <div class="page-head">
+      <h2>Jobs</h2>
+      <span class="count-badge" id="totalJobs" hidden></span>
+    </div>
+
+    <div class="filtros" role="group" aria-label="Filtrar por estado">
+      <button type="button" class="filtro filtro--unpaid" data-status="failed,dead" aria-pressed="true">
+        <span class="filtro__punto" aria-hidden="true"></span>Fallidos
+      </button>
+      <button type="button" class="filtro filtro--todos" data-status="all" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>Todos
+      </button>
+      <button type="button" class="filtro filtro--pending" data-status="queued" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>En cola
+      </button>
+      <button type="button" class="filtro filtro--ready" data-status="in_flight" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>En vuelo
+      </button>
+      <button type="button" class="filtro filtro--active" data-status="succeeded" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>OK
+      </button>
+    </div>
+
+    <div class="filtros filtros--action" role="group" aria-label="Filtrar por acción">
+      <button type="button" class="filtro filtro--todos" data-action="all" aria-pressed="true">
+        <span class="filtro__punto" aria-hidden="true"></span>Cualquier acción
+      </button>
+      <button type="button" class="filtro" data-action="provision" aria-pressed="false">Provision</button>
+      <button type="button" class="filtro" data-action="disable_renewal" aria-pressed="false">Disable renewal</button>
+      <button type="button" class="filtro" data-action="enable_renewal" aria-pressed="false">Enable renewal</button>
+      <button type="button" class="filtro" data-action="payment_notify" aria-pressed="false">Payment notify</button>
+    </div>
+
+    <div class="search-field">
+      <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+      </svg>
+      <input id="job-search" type="text" placeholder="Buscar por subdominio, cliente, error o id..."
+             aria-label="Buscar jobs" autocapitalize="none" spellcheck="false">
+    </div>
+
+    <p class="lista-error" id="listaError" role="alert"></p>
+    <ul id="job-list" class="tenant-list job-list" aria-live="polite"></ul>
+
+    <div class="pagination" id="job-pagination" hidden>
+      <button id="prevJob" type="button" aria-label="Página anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.5 6.5 9 12l5.5 5.5"/>
+        </svg>
+      </button>
+      <span id="pageinfoJob">Página 1</span>
+      <button id="nextJob" type="button" aria-label="Página siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 6.5 15 12l-5.5 5.5"/>
+        </svg>
+      </button>
+    </div>
+  </main>
+
+  <script type="module" src="/static/Scripts/jobs.js"></script>
+</body>
+</html>

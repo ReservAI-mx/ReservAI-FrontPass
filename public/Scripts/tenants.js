@@ -118,6 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const listaBtn = pendiente
       ? `<button type="button" class="accion accion--lista js-ready" data-id="${id}">Marcar lista</button>`
       : '<span class="accion-hueco accion-hueco--lista" aria-hidden="true"></span>';
+    const retryBtn = pendiente && row.provision_error
+      ? `<button type="button" class="accion accion--retry js-retry" data-id="${id}" title="${escapeHtml(row.provision_error)}">Reintentar provisión</button>`
+      : '<span class="accion-hueco accion-hueco--retry" aria-hidden="true"></span>';
     const borrarBtn = pendiente
       ? `<button type="button" class="accion accion--borrar js-delete" data-id="${id}"
                  data-subdomain="${subdomain}" data-cuenta="${escapeHtml(row.account_name || 'sin cuenta')}">Borrar</button>`
@@ -141,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </span>
         <span class="tenant-item__acciones">
           ${listaBtn}
+          ${retryBtn}
           <button type="button" class="accion accion--hash js-hash" data-id="${id}" data-subdomain="${subdomain}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -288,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   listaEl.addEventListener('click', async (e) => {
     const readyBtn = e.target.closest('.js-ready');
+    const retryBtn = e.target.closest('.js-retry');
     const hashBtn = e.target.closest('.js-hash');
     const deleteBtn = e.target.closest('.js-delete');
 
@@ -309,6 +314,33 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch {
         aviso('Error de red al marcar la tenant', 'error');
         setButtonLoading(readyBtn, false);
+      }
+      return;
+    }
+
+    if (retryBtn) {
+      setButtonLoading(retryBtn, true, 'Reintentando...');
+      try {
+        const res = await apiFetch(`/billing/tenants/${retryBtn.dataset.id}/retry-provision`, {
+          method: 'POST',
+          headers: HEADERS,
+        });
+        if (res.status === 409) {
+          aviso('Ya no hay error que reintentar', 'error');
+          setButtonLoading(retryBtn, false);
+          await cargar();
+          return;
+        }
+        if (!res.ok) {
+          aviso('No se pudo reintentar la provisión', 'error');
+          setButtonLoading(retryBtn, false);
+          return;
+        }
+        aviso('Provisión reenviada al worker', 'success');
+        await cargar();
+      } catch {
+        aviso('Error de red al reintentar', 'error');
+        setButtonLoading(retryBtn, false);
       }
       return;
     }

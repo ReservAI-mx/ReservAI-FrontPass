@@ -1,0 +1,74 @@
+/* Panel Jobs: hereda tarjetas/filtros de StylesTenants.css; aquí solo lo propio. */
+
+.filtros--action {
+  margin-top: -0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.job-item {
+  align-items: flex-start;
+  min-height: 108px;
+}
+
+.job-item__avatar {
+  margin-top: 0.15rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+.job-item .tenant-item__body {
+  gap: 0.4rem;
+}
+
+.job-item__id {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.job-item__error {
+  display: block;
+  margin-top: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.28);
+  color: #ffb4b4;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-item .tenant-item__estado {
+  padding-top: 0.35rem;
+}
+
+.job-item .tenant-item__acciones {
+  padding-top: 0.2rem;
+}
+
+@media (max-width: 900px) {
+  .job-item {
+    flex-wrap: wrap;
+  }
+
+  .job-item .tenant-item__estado,
+  .job-item .tenant-item__acciones {
+    width: auto;
+    padding-top: 0;
+  }
+
+  .job-item .tenant-item__acciones {
+    margin-left: auto;
+  }
+}
