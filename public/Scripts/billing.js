@@ -47,7 +47,13 @@ function getPlanIcon(name) {
 function formatDate(dateString) {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES');
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('es-MX', {
+        timeZone: 'America/Mexico_City',
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric',
+    });
 }
 
 function escapeHtml(value) {

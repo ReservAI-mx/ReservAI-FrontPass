@@ -38,7 +38,12 @@ function formatFecha(valor) {
   if (!valor) return '';
   const fecha = new Date(valor);
   if (Number.isNaN(fecha.getTime())) return '';
-  return fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  return fecha.toLocaleDateString('es-MX', {
+    timeZone: 'America/Mexico_City',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function aviso(texto, tipo = 'info', duracion = 3800) {

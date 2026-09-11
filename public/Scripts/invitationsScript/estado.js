@@ -61,5 +61,10 @@ export function fechaCorta(fechaISO) {
   if (!fechaISO) return '—';
   const fecha = new Date(fechaISO);
   if (Number.isNaN(fecha.getTime())) return '—';
-  return fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+  return fecha.toLocaleDateString('es-MX', {
+    timeZone: 'America/Mexico_City',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 }

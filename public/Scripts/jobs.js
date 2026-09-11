@@ -37,6 +37,7 @@ function formatFecha(valor) {
   const fecha = new Date(valor);
   if (Number.isNaN(fecha.getTime())) return '';
   return fecha.toLocaleString('es-MX', {
+    timeZone: 'America/Mexico_City',
     day: 'numeric',
     month: 'short',
     year: 'numeric',
