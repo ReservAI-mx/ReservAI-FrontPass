@@ -1,0 +1,102 @@
+/* Productos admin — reusa invitations + ajustes de tarjeta */
+
+.product-list {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.product-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #000;
+  color: var(--text-light);
+}
+
+.product-card__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.product-card__desc {
+  margin: 0 0 0.65rem;
+  opacity: 0.8;
+  font-size: 0.92rem;
+}
+
+.product-card__amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+.product-card__amounts dt {
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.product-card__amounts dd {
+  margin: 0.1rem 0 0;
+  font-weight: 700;
+}
+
+.product-card__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+}
+
+.badge-active,
+.badge-inactive {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.badge-active {
+  background: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+}
+
+.badge-inactive {
+  background: rgba(248, 113, 113, 0.16);
+  color: #fca5a5;
+}
+
+.product-card__toggle {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-light);
+  border-radius: 10px;
+  padding: 0.45rem 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.product-card__toggle:hover {
+  border-color: var(--primary);
+  background: rgba(9, 131, 214, 0.14);
+}
+
+.field-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}

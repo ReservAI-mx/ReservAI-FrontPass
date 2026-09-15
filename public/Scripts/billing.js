@@ -107,6 +107,19 @@ function setHasCustomer(ok) {
 }
 
 // Obtener links de pago desde el endpoint /links
+function subdomainErrorMessage(code) {
+    if (code === 'SUBDOMAIN_INVALID') {
+        return 'Subdominio inválido: usa 3–32 caracteres (letras minúsculas, números o guiones; no puede empezar/terminar con guión ni llevar --).';
+    }
+    if (code === 'SUBDOMAIN_RESERVED') {
+        return 'Ese subdominio está reservado. Elige otro.';
+    }
+    if (code === 'SUBDOMAIN_TAKEN') {
+        return 'Ese subdominio ya está en uso. Elige otro.';
+    }
+    return null;
+}
+
 async function fetchPaymentLinks(subdomain) {
     try {
         const qs = new URLSearchParams({ subdomain });
@@ -122,9 +135,18 @@ async function fetchPaymentLinks(subdomain) {
         if (response.status === 200 && data.paymentLinks) {
             return data.paymentLinks;
         }
+        const subdomainMsg = subdomainErrorMessage(data.error);
         let msg = '';
-        if (response.status === 400) {
-            msg = 'La cuenta no existe en la base de datos';
+        if (subdomainMsg) {
+            msg = subdomainMsg;
+        } else if (data.error === 'NO_ACTIVE_PRODUCTS') {
+            msg = 'No hay planes disponibles por ahora. Intenta más tarde.';
+        } else if (response.status === 400) {
+            msg = data.error || 'Solicitud inválida';
+        } else if (response.status === 409) {
+            msg = subdomainErrorMessage('SUBDOMAIN_TAKEN') || 'Conflicto al crear la sucursal';
+        } else if (response.status === 503) {
+            msg = 'No hay planes disponibles por ahora. Intenta más tarde.';
         } else if (response.status === 403 && (text.includes('not a client') || text.includes('Account is not a client'))) {
             msg = 'La cuenta no es de tipo cliente';
         } else if (response.status === 403) {
@@ -140,7 +162,7 @@ async function fetchPaymentLinks(subdomain) {
         } else {
             msg = `Error ${response.status}: ${text}`;
         }
-        showError('No se pudieron obtener los links de pago: ' + msg);
+        showError(msg);
         return null;
     } catch (err) {
         showError('No se pudieron obtener los links de pago: ' + (err.message || err));
@@ -478,6 +500,29 @@ async function fetchSetups(page = 1) {
     }
 }
 
+function formatPlanMoney(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '—';
+    return `$${Math.round(n)} MXN / mes`;
+}
+
+function renderPlanOptions(paymentLinks) {
+    const list = document.getElementById('planOptionsList');
+    if (!list) return;
+    const links = Array.isArray(paymentLinks) ? paymentLinks : [];
+    if (!links.length) {
+        list.innerHTML = '<p style="color:#fff;opacity:0.8;">No hay planes activos.</p>';
+        return;
+    }
+    list.innerHTML = links.map((link) => `
+      <div class="plan-option" tabindex="0" data-product-id="${escapeHtml(link.id)}" role="button">
+        <div class="plan-title">${escapeHtml(link.name || link.plan || 'Plan')}</div>
+        <div class="plan-price">${escapeHtml(formatPlanMoney(link.monthly_amount))}</div>
+        <div class="plan-desc">${escapeHtml(link.description || '')}</div>
+      </div>
+    `).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
         // FAB y modales de suscripción
         const fabBtn = document.getElementById('addSubscriptionBtn');
@@ -485,8 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const warningContinueBtn = document.getElementById('warningContinueBtn');
         const warningCancelBtn = document.getElementById('warningCancelBtn');
         const planModal = document.getElementById('planModal');
-        const planBasicOption = document.getElementById('planBasicOption');
-        const planPremiumOption = document.getElementById('planPremiumOption');
+        const planOptionsList = document.getElementById('planOptionsList');
         let paymentLinksCache = null;
 
         if (fabBtn) {
@@ -507,9 +551,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     showError('Escribe un subdominio para la sucursal.');
                     return;
                 }
+                if (!/^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$/.test(subdomain) || subdomain.includes('--')) {
+                    showError(subdomainErrorMessage('SUBDOMAIN_INVALID'));
+                    return;
+                }
                 hideModal('warningModal');
                 paymentLinksCache = await fetchPaymentLinks(subdomain);
                 if (paymentLinksCache) {
+                    renderPlanOptions(paymentLinksCache);
                     showModal('planModal');
                 }
             });
@@ -520,28 +569,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target === planModal) hideModal('planModal');
             });
         }
-        // Selección de plan
-        if (planBasicOption) {
-            planBasicOption.addEventListener('click', () => {
-                if (paymentLinksCache && paymentLinksCache.basico && paymentLinksCache.basico.url) {
-                    window.open(paymentLinksCache.basico.url, '_blank');
+        if (planOptionsList) {
+            planOptionsList.addEventListener('click', (e) => {
+                const option = e.target.closest('.plan-option');
+                if (!option || option.getAttribute('aria-disabled') === 'true') return;
+                const productId = option.getAttribute('data-product-id');
+                const links = Array.isArray(paymentLinksCache) ? paymentLinksCache : [];
+                const link = links.find((item) => String(item.id) === String(productId));
+                if (link?.url) {
+                    window.open(link.url, '_blank');
                     hideModal('planModal');
                 } else {
-                    showError('No se encontró el link de pago para el plan Básico.');
+                    showError('No se encontró el link de pago para ese plan.');
                 }
             });
-        }
-        // El plan Premium está desactivado: no se le engancha el clic. La marca
-        // aria-disabled del HTML es la fuente de verdad, así que reactivarlo es
-        // quitarla de la vista sin tocar este archivo.
-        if (planPremiumOption && planPremiumOption.getAttribute('aria-disabled') !== 'true') {
-            planPremiumOption.addEventListener('click', () => {
-                if (paymentLinksCache && paymentLinksCache.premium && paymentLinksCache.premium.url) {
-                    window.open(paymentLinksCache.premium.url, '_blank');
-                    hideModal('planModal');
-                } else {
-                    showError('No se encontró el link de pago para el plan Premium.');
-                }
+            planOptionsList.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                const option = e.target.closest('.plan-option');
+                if (!option) return;
+                e.preventDefault();
+                option.click();
             });
         }
     setupAccountMenu(session || {});

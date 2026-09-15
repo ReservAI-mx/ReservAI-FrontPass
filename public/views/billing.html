@@ -62,7 +62,7 @@
     <div class="billing-header">
       <div class="billing-info">
         <h1>Tus sucursales</h1>
-        <p class="billing-description">Alta de sucursal ($500) y activación del mensual cuando la VPS esté lista.</p>
+        <p class="billing-description">Alta de sucursal (anticipo de instalación) y activación del mensual cuando la VPS esté lista.</p>
       </div>
       <button class="btn-manage" id="manageBillingBtn">
         <i class="fas fa-cog"></i> Gestionar Pagos
@@ -93,7 +93,7 @@
       </span>
       <span class="add-subscription__texto">
         <span class="add-subscription__titulo">Nueva sucursal</span>
-        <span class="add-subscription__hint">Elige un slug y paga el anticipo de $500</span>
+        <span class="add-subscription__hint">Elige un slug, el plan y paga el anticipo de instalación</span>
       </span>
     </button>
   </main>
@@ -125,22 +125,7 @@
       <div class="modal-content">
         <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="modal-logo">
         <div style="font-size:1.25rem;font-weight:600;margin-bottom:1.2rem;color:#fff;letter-spacing:0.01em;">Selecciona el plan mensual previsto</div>
-        <div class="plan-options-list">
-          <div class="plan-option" id="planBasicOption" tabindex="0">
-            <div class="plan-title">Plan Básico</div>
-            <div class="plan-price">$1699 MXN / mes</div>
-            <div class="plan-desc">Este plan cuenta con soporte medio, 3 modificaciones sencillas en el comportamiento de la IA sin costo adicional, 1 sola sucursal con un solo número telefónico y un máximo 3 agendas registradas.</div>
-          </div>
-          <!-- Desactivado: se deja visible para que se sepa que el plan existe,
-               pero sin tabindex no recibe foco de teclado y el JS no le engancha
-               el clic. aria-disabled se lo comunica a los lectores de pantalla. -->
-          <div class="plan-option plan-option--disabled" id="planPremiumOption" aria-disabled="true">
-            <span class="plan-badge">No disponible</span>
-            <div class="plan-title">Plan Premium</div>
-            <div class="plan-price">$2699 MXN / mes</div>
-            <div class="plan-desc">El plan incluye soporte alto, 10 modificaciones sencillas en el comportamiento de la IA sin costo adicional tambien máximo 4 sucursales (cada una con su teléfono individual) y Máximo 15 agendas registradas.</div>
-          </div>
-        </div>
+        <div class="plan-options-list" id="planOptionsList"></div>
       </div>
     </div>
 

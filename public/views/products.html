@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReservAI - Productos</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesProducts.css" />
+  <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
+</head>
+<body>
+  <div id="messageContainer" class="message-container"></div>
+
+  <nav class="navbar">
+    <div class="logo">
+      <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
+      <span class="logo-text">ReservAI Admin</span>
+    </div>
+    <div class="profile">
+      <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="Menú de cuenta">
+        <span class="profile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.5" r="3.75"/>
+            <path d="M4.5 20.25c0-3.6 3.36-6.25 7.5-6.25s7.5 2.65 7.5 6.25"/>
+          </svg>
+        </span>
+      </button>
+      <div class="dropdown" role="menu">
+        <p class="dropdown__account" id="accountName"></p>
+        <a href="/inicioAdmin" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Gestión de cuentas
+        </a>
+        <a href="/invitations" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/>
+            <path d="m3.5 7 8.5 6 8.5-6"/>
+          </svg>
+          Invitaciones
+        </a>
+        <a href="/admin/tenants" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3.75" y="5.25" width="16.5" height="13.5" rx="2"/>
+            <path d="M8 9h8M8 12.5h8M8 16h5"/>
+          </svg>
+          Tenants
+        </a>
+        <a href="/admin/jobs" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+          </svg>
+          Jobs
+        </a>
+        <a href="/admin/products" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7.5 12 3.75 19.5 7.5 12 11.25 4.5 7.5z"/>
+            <path d="M4.5 12 12 15.75 19.5 12M4.5 16.5 12 20.25 19.5 16.5"/>
+          </svg>
+          Productos
+        </a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+            <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+          </svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <a class="volver" href="/inicioAdmin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14.5 6.5 9 12l5.5 5.5"/>
+      </svg>
+      Volver a cuentas
+    </a>
+
+    <div class="page-head">
+      <h2>Productos</h2>
+      <span class="count-badge" id="totalProducts" hidden></span>
+    </div>
+
+    <p class="lista-error" id="listaError" role="alert"></p>
+    <ul id="product-list" class="product-list" aria-live="polite"></ul>
+
+    <button class="add-invitation" id="nuevoProductoBtn" type="button">
+      <span class="add-invitation__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round">
+          <path d="M12 5.5v13M5.5 12h13"/>
+        </svg>
+      </span>
+      <span class="add-invitation__texto">
+        <span class="add-invitation__titulo">Nuevo producto</span>
+        <span class="add-invitation__hint">Crea precios en Stripe (mensual + setup)</span>
+      </span>
+    </button>
+  </main>
+
+  <div class="modal" id="crearModal">
+    <div class="modal-content modal-content--new">
+      <div class="modal-header">
+        <h2>Nuevo producto</h2>
+        <button class="modal-close" type="button" data-cerrar="crearModal" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="crearForm" novalidate>
+          <div class="input-group">
+            <input type="text" id="nuevoNombre" placeholder=" " maxlength="120" required>
+            <label for="nuevoNombre">Nombre</label>
+          </div>
+          <div class="input-group">
+            <input type="text" id="nuevaDescripcion" placeholder=" " maxlength="500" required>
+            <label for="nuevaDescripcion">Descripción</label>
+          </div>
+          <div class="input-group">
+            <input type="number" id="nuevoMensual" placeholder=" " min="0.01" step="0.01" required>
+            <label for="nuevoMensual">Costo mensual (MXN, con IVA)</label>
+          </div>
+          <div class="input-group">
+            <input type="number" id="nuevoSetup" placeholder=" " min="0.01" step="0.01" required>
+            <label for="nuevoSetup">Precio de instalación (MXN, con IVA)</label>
+          </div>
+          <p class="field-hint">También se crea la versión a −1.25% para persona moral.</p>
+          <p class="field-error" id="crearError" role="alert"></p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="close-btn" data-cerrar="crearModal">Cancelar</button>
+        <button type="submit" form="crearForm" class="enviar-btn" id="crearProductoBtn">Crear</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/Scripts/products.js"></script>
+</body>
+</html>
