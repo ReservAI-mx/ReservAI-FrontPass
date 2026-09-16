@@ -1,0 +1,99 @@
+.payments-page {
+  max-width: 960px;
+}
+
+.payments-card {
+  overflow-x: auto;
+}
+
+.payments-empty {
+  color: #A0A0A0;
+  padding: 1rem 0;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+  font-size: 0.92rem;
+}
+
+.payments-table th,
+.payments-table td {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  vertical-align: middle;
+}
+
+.payments-table th {
+  color: #A0A0A0;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.payments-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.payments-actions button,
+.payments-actions a.btn-pay-action {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #2C2C2C;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.payments-actions button:hover,
+.payments-actions a.btn-pay-action:hover {
+  background: #3a3a3a;
+}
+
+.payments-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.payments-actions .btn-invoice {
+  background: #1b5e20;
+  border-color: #2e7d32;
+}
+
+.payments-hint {
+  color: #b0a060;
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
+}
+
+.payments-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-secondary {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #2C2C2C;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

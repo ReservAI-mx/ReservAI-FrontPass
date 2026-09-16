@@ -791,6 +791,66 @@ textarea {
   text-align: center;
 }
 
+/* Toasts flotantes (inicio / admin) */
+.message-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  width: min(92vw, 440px);
+}
+
+.message {
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 560;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  word-break: break-word;
+  line-height: 1.4;
+  border: 1px solid transparent;
+}
+
+.message-success {
+  background: #2e7d32;
+  border-color: #66bb6a;
+  color: #fff;
+}
+
+.message-error {
+  background: #c62828;
+  border-color: #ef5350;
+  color: #fff;
+}
+
+.message-info {
+  background: #1565c0;
+  border-color: #42a5f5;
+  color: #fff;
+}
+
+.message-warning {
+  background: #ef6c00;
+  border-color: #ffb74d;
+  color: #fff;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translate3d(0, -16px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes slideOut {
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to { opacity: 0; transform: translate3d(0, -16px, 0); }
+}
+
 
 
 .error {
@@ -900,20 +960,43 @@ input.error-input::placeholder {
   display: none;
   position: absolute;
   right: 0;
-  background: #222;
-  min-width: 140px;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px #0008;
-  z-index: 1;
+  top: calc(100% + 6px);
+  min-width: 220px;
+  padding: 0.4rem;
+  background: var(--bg-card, #1B1B1B);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  z-index: 10001;
 }
-.dropdown-content button {
+.account-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   width: 100%;
-  background: none;
+  padding: 0.7rem 0.75rem;
   border: none;
-  color: #f55;
-  padding: 12px;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-light, #fff);
+  font-size: 0.94rem;
   text-align: left;
   cursor: pointer;
+}
+.account-dropdown__item:hover {
+  background: var(--bg-input, #2C2C2C);
+}
+.account-dropdown__item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+.account-dropdown__danger {
+  color: #ff8484;
+}
+.account-dropdown__danger:hover {
+  background: rgba(255, 107, 107, 0.12);
 }
 .dropdown-menu.open .dropdown-content {
   display: block;
@@ -976,28 +1059,6 @@ input.error-input::placeholder {
     }
     .dropdown-menu {
       position: relative;
-    }
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      right: 0;
-      background: #222;
-      min-width: 140px;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px #0008;
-      z-index: 1;
-    }
-    .dropdown-content button {
-      width: 100%;
-      background: none;
-      border: none;
-      color: #f55;
-      padding: 12px;
-      text-align: left;
-      cursor: pointer;
-    }
-    .dropdown-menu.open .dropdown-content {
-      display: block;
     }
     .modal-full-body {
       padding: 24px;
@@ -1089,6 +1150,187 @@ confirmDeleteModal{
 
 #confirmDeleteBtn:hover:enabled {
   background: #b71c1c;
+}
+
+/* ---------- Admin: menú contextual de cuenta y sub-modales ---------- */
+
+.admin-submodal {
+  z-index: 10050;
+}
+
+.admin-modal-box {
+  max-width: 520px;
+  width: min(95vw, 520px);
+  text-align: left;
+}
+
+.admin-modal-box--wide {
+  max-width: 820px;
+  width: min(95vw, 820px);
+}
+
+.admin-modal-empty {
+  color: var(--text-gray, #A0A0A0);
+  margin: 1rem 0;
+}
+
+.admin-modal-error {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: rgba(244, 67, 54, 0.18);
+  border: 1px solid rgba(244, 67, 54, 0.45);
+  color: #ffcdd2;
+  font-weight: 500;
+}
+
+.fiscal-admin-dl {
+  display: grid;
+  gap: 0;
+  margin: 1rem 0 0;
+  color: #fff;
+}
+
+.fiscal-admin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fiscal-admin-row dt {
+  color: #A0A0A0;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.fiscal-admin-row dd {
+  margin: 0;
+  text-align: right;
+  word-break: break-word;
+}
+
+.fiscal-admin-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.fiscal-admin-badge--valid { background: rgba(76, 175, 80, 0.2); color: #81c784; }
+.fiscal-admin-badge--invalid { background: rgba(244, 67, 54, 0.2); color: #ef9a9a; }
+.fiscal-admin-badge--pending { background: rgba(255, 193, 7, 0.15); color: #ffe082; }
+.fiscal-admin-badge--error { background: rgba(255, 152, 0, 0.2); color: #ffcc80; }
+
+.fiscal-admin-note {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(9, 131, 214, 0.18);
+  color: #d9ecfa;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.admin-modal-actions {
+  margin-top: 1rem;
+}
+
+.btn-admin-secondary,
+.btn-admin-outline {
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.94rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #fff;
+}
+
+.btn-admin-secondary {
+  width: 100%;
+  background: #3A3A3A;
+}
+
+.btn-admin-secondary:hover {
+  background: #4a4a4a;
+}
+
+.btn-admin-outline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.btn-admin-outline:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.modal-footerConfirm {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.admin-payments-table-wrap {
+  max-height: 420px;
+  overflow: auto;
+  margin-top: 0.75rem;
+}
+
+.admin-payments-table {
+  width: 100%;
+  color: #fff;
+  border-collapse: collapse;
+}
+
+.admin-payments-table th,
+.admin-payments-table td {
+  text-align: left;
+  padding: 0.55rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-payments-table th {
+  color: #A0A0A0;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.admin-pay-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #2C2C2C;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.admin-pay-btn:hover {
+  background: #3a3a3a;
+}
+
+.admin-pay-btn--invoice {
+  background: #1b5e20;
+  border-color: rgba(76, 175, 80, 0.4);
+}
+
+.admin-pay-hint {
+  color: #b0a060;
+  font-size: 0.75rem;
+}
+
+.admin-pay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
 }
 
 

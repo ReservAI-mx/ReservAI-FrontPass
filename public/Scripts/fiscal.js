@@ -1,5 +1,6 @@
 import { apiFetch, goLogout, requireUiSession } from './api.js';
 import { setupAccountMenu } from './accountMenu.js';
+import { showToast } from './toast.js';
 
 const BILLING_HEADERS = {
   'Content-Type': 'application/json',
@@ -28,6 +29,16 @@ const REGIMENES_MORAL = [
 ];
 
 const PLACEHOLDER_REGIMEN = 'Selecciona régimen fiscal';
+const RFC_RE = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/i;
+const CP_RE = /^\d{5}$/;
+
+function sanitizeRazon(value) {
+  return String(value ?? '').trim().toUpperCase();
+}
+
+function sanitizeCp(value) {
+  return String(value ?? '').trim();
+}
 
 const session = requireUiSession();
 setupAccountMenu(session);
@@ -48,6 +59,7 @@ const els = {
   meta: document.getElementById('fiscalMeta'),
   activeBadge: document.getElementById('fiscalActiveBadge'),
   satBadge: document.getElementById('fiscalSatBadge'),
+  satDetail: document.getElementById('fiscalSatDetail'),
   rfc: document.getElementById('rfc'),
   razon: document.getElementById('razon_social'),
   cp: document.getElementById('codigo_postal'),
@@ -64,9 +76,11 @@ const els = {
 let current = null;
 
 function showError(msg) {
-  if (!els.error) return;
-  els.error.hidden = false;
-  els.error.textContent = msg;
+  if (els.error) {
+    els.error.hidden = false;
+    els.error.textContent = msg;
+  }
+  showToast(msg, 'error');
 }
 
 function clearError() {
@@ -75,13 +89,20 @@ function clearError() {
   els.error.textContent = '';
 }
 
-function showMessage(msg) {
-  if (!els.message) return;
-  els.message.hidden = false;
-  els.message.textContent = msg;
-  setTimeout(() => {
-    els.message.hidden = true;
-  }, 3500);
+function showMessage(msg, type = 'success') {
+  if (els.message) {
+    els.message.hidden = false;
+    els.message.textContent = msg;
+    els.message.className = type === 'error'
+      ? 'fiscal-status fiscal-status--error'
+      : type === 'warning'
+        ? 'fiscal-status fiscal-status--error'
+        : 'fiscal-status fiscal-status--ok';
+    setTimeout(() => {
+      els.message.hidden = true;
+    }, 3500);
+  }
+  showToast(msg, type);
 }
 
 function syncSaveEnabled() {
@@ -127,12 +148,43 @@ function populateRegimenSelect(isMoral, selectedValue = '') {
   }
 }
 
+function formatSatMessages(satValidation) {
+  if (!satValidation?.messages?.length) return '';
+  return satValidation.messages.join(' ');
+}
+
+function formatSatDetail(detailRaw) {
+  if (!detailRaw) return '';
+  let detail = detailRaw;
+  if (typeof detailRaw === 'string') {
+    try {
+      detail = JSON.parse(detailRaw);
+    } catch {
+      return String(detailRaw);
+    }
+  }
+  if (detail.error) {
+    return `No se pudo validar con Facturama: ${detail.error}`;
+  }
+  const fails = [];
+  if (detail.ExistRfc === false) fails.push('RFC no localizado/activo');
+  if (detail.MatchName === false) fails.push('razón social no coincide');
+  if (detail.MatchZipCode === false) fails.push('código postal no coincide');
+  if (detail.MatchFiscalRegime === false) fails.push('régimen fiscal no coincide');
+  if (fails.length === 0) return '';
+  return `SAT rechazó: ${fails.join('; ')}.`;
+}
+
 function fillForm(data) {
   current = data;
   if (!data) {
     els.meta.hidden = true;
     els.toggleBtn.hidden = true;
     els.deleteBtn.hidden = true;
+    if (els.satDetail) {
+      els.satDetail.hidden = true;
+      els.satDetail.textContent = '';
+    }
     els.form.reset();
     if (els.uso) els.uso.value = 'G01';
     if (els.moral) els.moral.checked = false;
@@ -142,8 +194,8 @@ function fillForm(data) {
   }
 
   els.rfc.value = data.rfc || '';
-  els.razon.value = data.razon_social || '';
-  els.cp.value = data.codigo_postal || '';
+  els.razon.value = sanitizeRazon(data.razon_social || '');
+  els.cp.value = sanitizeCp(data.codigo_postal || '');
   els.uso.value = data.uso_cfdi || 'G01';
   els.moral.checked = !!data.persona_moral;
   populateRegimenSelect(!!data.persona_moral, data.regimen_fiscal || '');
@@ -151,7 +203,33 @@ function fillForm(data) {
 
   els.meta.hidden = false;
   els.activeBadge.textContent = data.active ? 'Activa' : 'Inactiva';
-  els.satBadge.textContent = `SAT: ${data.sat_validation_status || 'pending'}`;
+  const satStatus = data.sat_validation_status || 'pending';
+  els.satBadge.textContent = `SAT: ${satStatus}`;
+
+  if (els.satDetail) {
+    let sandboxNote = '';
+    if (data.sat_validation_detail) {
+      try {
+        const detail = JSON.parse(data.sat_validation_detail);
+        if (detail.sandbox_relaxed && detail.note) sandboxNote = detail.note;
+      } catch {
+        // ignore
+      }
+    }
+    const msg = sandboxNote || formatSatDetail(data.sat_validation_detail);
+    if (sandboxNote) {
+      els.satDetail.hidden = false;
+      els.satDetail.className = 'fiscal-status fiscal-status--ok';
+      els.satDetail.textContent = msg;
+    } else if ((satStatus === 'invalid' || satStatus === 'error') && msg) {
+      els.satDetail.hidden = false;
+      els.satDetail.className = 'fiscal-status fiscal-status--error';
+      els.satDetail.textContent = msg;
+    } else {
+      els.satDetail.hidden = true;
+      els.satDetail.textContent = '';
+    }
+  }
 
   els.toggleBtn.hidden = false;
   els.toggleBtn.textContent = data.active ? 'Desactivar' : 'Activar';
@@ -181,9 +259,45 @@ async function loadFiscal() {
 
 els.disclaimer?.addEventListener('change', syncSaveEnabled);
 
+els.razon?.addEventListener('input', () => {
+  const { selectionStart, selectionEnd, value } = els.razon;
+  const sanitized = sanitizeRazon(value);
+  if (value !== sanitized) {
+    els.razon.value = sanitized;
+    els.razon.setSelectionRange(selectionStart, selectionEnd);
+  }
+});
+
+els.cp?.addEventListener('blur', () => {
+  els.cp.value = sanitizeCp(els.cp.value);
+});
+
 els.moral?.addEventListener('change', () => {
   populateRegimenSelect(!!els.moral.checked, '');
 });
+
+function validateFormFields() {
+  const rfc = els.rfc.value.trim().toUpperCase();
+  const razon = sanitizeRazon(els.razon.value);
+  const cp = sanitizeCp(els.cp.value);
+
+  els.razon.value = razon;
+  els.cp.value = cp;
+
+  if (!RFC_RE.test(rfc)) {
+    return 'RFC inválido. Verifica el formato (12 o 13 caracteres).';
+  }
+  if (razon.length < 3) {
+    return 'La razón social es requerida (mínimo 3 caracteres).';
+  }
+  if (!CP_RE.test(cp)) {
+    return 'Código postal inválido. Debe ser de 5 dígitos.';
+  }
+  if (!els.regimen.value) {
+    return 'Selecciona un régimen fiscal.';
+  }
+  return null;
+}
 
 els.form?.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -194,21 +308,24 @@ els.form?.addEventListener('submit', async (e) => {
     return;
   }
 
-  if (!els.regimen.value) {
-    showError('Selecciona un régimen fiscal.');
+  const fieldError = validateFormFields();
+  if (fieldError) {
+    showError(fieldError);
     return;
   }
 
+  const saveLabel = els.saveBtn.textContent;
   els.saveBtn.disabled = true;
+  els.saveBtn.textContent = 'Validando con SAT…';
   try {
     const res = await apiFetch('/billing/fiscal', {
       method: 'PUT',
       headers: BILLING_HEADERS,
       body: JSON.stringify({
         confirmed: true,
-        rfc: els.rfc.value.trim(),
-        razon_social: els.razon.value.trim(),
-        codigo_postal: els.cp.value.trim(),
+        rfc: els.rfc.value.trim().toUpperCase(),
+        razon_social: sanitizeRazon(els.razon.value),
+        codigo_postal: sanitizeCp(els.cp.value),
         regimen_fiscal: els.regimen.value.trim(),
         uso_cfdi: els.uso.value.trim() || 'G01',
         persona_moral: !!els.moral.checked,
@@ -219,12 +336,39 @@ els.form?.addEventListener('submit', async (e) => {
       if (body.error === 'DISCLAIMER_REQUIRED') {
         throw new Error('Debes aceptar el aviso de autorización.');
       }
+      if (body.error === 'SAT_VALIDATION_FAILED') {
+        const satMsg = formatSatMessages(body.sat_validation);
+        if (els.satDetail && satMsg) {
+          els.satDetail.hidden = false;
+          els.satDetail.textContent = satMsg;
+        }
+        throw new Error(
+          satMsg || 'Los datos fiscales no coinciden con el SAT. Corrígelos e intenta de nuevo.'
+        );
+      }
+      if (body.error === 'rfc inválido') {
+        throw new Error('RFC inválido. Verifica el formato.');
+      }
       throw new Error(body.error || 'No se pudo guardar');
     }
     fillForm(body.data);
-    showMessage('Información fiscal guardada.');
+    const sat = body.data?.sat_validation_status || body.sat_validation?.status || 'pending';
+    if (sat === 'valid') {
+      showMessage('Información fiscal guardada. Validación SAT correcta.');
+    } else if (sat === 'error') {
+      const satMsg = formatSatMessages(body.sat_validation);
+      if (els.satDetail && satMsg) {
+        els.satDetail.hidden = false;
+        els.satDetail.textContent = satMsg;
+      }
+      showMessage('Guardada, pero no se pudo validar con Facturama. Intenta de nuevo.', 'warning');
+    } else {
+      showMessage('Información fiscal guardada.');
+    }
   } catch (err) {
     showError(err.message || 'Error al guardar');
+  } finally {
+    els.saveBtn.textContent = saveLabel;
     syncSaveEnabled();
   }
 });
@@ -243,6 +387,11 @@ els.toggleBtn?.addEventListener('click', async () => {
     if (!res.ok) {
       if (body.error === 'DISCLAIMER_REQUIRED') {
         throw new Error('Debes guardar con el aviso aceptado antes de activar.');
+      }
+      if (body.error === 'SAT_VALIDATION_REQUIRED') {
+        throw new Error(
+          'La validación SAT debe ser válida antes de activar la facturación. Guarda de nuevo con datos correctos.'
+        );
       }
       throw new Error(body.error || 'No se pudo actualizar el estado');
     }

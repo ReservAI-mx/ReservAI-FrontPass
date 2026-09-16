@@ -8,18 +8,22 @@ export function setupAccountMenu(session) {
   const nombreEl = document.getElementById('accountName');
   const billingLink = document.getElementById('billingLink');
   const fiscalLink = document.getElementById('fiscalLink');
+  const paymentsLink = document.getElementById('paymentsLink');
 
   if (nombreEl && session?.account_name) {
     nombreEl.textContent = session.account_name;
   }
 
-  // Facturación / fiscal se ocultan solo para admin.
+  // Facturación / fiscal / cobros se ocultan solo para admin.
   const rol = String(session?.account_type || '').trim().toLowerCase();
   if (billingLink) {
     billingLink.hidden = rol === 'admin';
   }
   if (fiscalLink) {
     fiscalLink.hidden = rol === 'admin';
+  }
+  if (paymentsLink) {
+    paymentsLink.hidden = rol === 'admin';
   }
 
   if (!profile || !btn) return;

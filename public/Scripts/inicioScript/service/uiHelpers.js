@@ -1,3 +1,5 @@
+import { showToast } from '../../toast.js';
+
 export function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -25,14 +27,6 @@ export function showError(input, message) {
   }
 
 
-export function showMessage(msg) {
-    let msgDiv = document.getElementById("msg");
-    if (msgDiv) {
-        msgDiv.textContent = msg;
-        msgDiv.classList.add("show");
-        setTimeout(() => {
-            msgDiv.classList.remove("show");
-            msgDiv.textContent = "";
-        }, 1500);
-    }
+export function showMessage(msg, type) {
+    showToast(msg, type);
 }

@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ReservAI - Información fiscal</title>
+  <title>ReservAI - Historial de cobros</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesBilling.css" />
   <link rel="stylesheet" href="/static/estilos/StylesFiscal.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesPayments.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
@@ -45,14 +46,13 @@
           </svg>
           Facturación
         </a>
-        <a href="/payments" id="paymentsLink" role="menuitem">
+        <a href="/fiscal" id="fiscalLink" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4.75 6.75h14.5v10.5H4.75z"/>
-            <path d="M4.75 10.25h14.5"/>
-            <path d="M8 14.25h4"/>
+            <path d="M7 4.75h10A2.25 2.25 0 0 1 19.25 7v10A2.25 2.25 0 0 1 17 19.25H7A2.25 2.25 0 0 1 4.75 17V7A2.25 2.25 0 0 1 7 4.75z"/>
+            <path d="M8.5 9.5h7"/><path d="M8.5 12.5h7"/><path d="M8.5 15.5h4"/>
           </svg>
-          Historial de cobros
+          Información fiscal
         </a>
         <a href="#" id="logout" role="menuitem" class="dropdown__danger">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -66,87 +66,52 @@
     </div>
   </nav>
 
-  <main class="container fiscal-page">
+  <main class="container fiscal-page payments-page">
     <a class="volver" href="/inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M14.5 6.5 9 12l5.5 5.5"/>
       </svg>
-      Volver a mis contraseñas
+      Volver
     </a>
 
     <div class="billing-header">
       <div class="billing-info">
-        <h1>Información fiscal</h1>
+        <h1>Historial de cobros</h1>
         <p class="billing-description">
-          Datos para facturación CFDI. Eres responsable de proporcionar un RFC autorizado.
+          Descarga tickets Stripe y facturas CFDI. Solo puedes solicitar factura
+          en el mes del cobro (hora Ciudad de México).
         </p>
       </div>
     </div>
 
-    <div id="fiscalLoading" class="fiscal-status" hidden>Cargando…</div>
-    <div id="fiscalError" class="fiscal-status fiscal-status--error" hidden></div>
-    <div id="fiscalMessage" class="fiscal-status fiscal-status--ok" hidden></div>
+    <div id="paymentsLoading" class="fiscal-status" hidden>Cargando…</div>
+    <div id="paymentsError" class="fiscal-status fiscal-status--error" hidden></div>
+    <div id="paymentsMessage" class="fiscal-status fiscal-status--ok" hidden></div>
 
-    <section class="fiscal-card" id="fiscalPanel">
-      <div class="fiscal-meta" id="fiscalMeta" hidden>
-        <span id="fiscalActiveBadge"></span>
-        <span id="fiscalSatBadge"></span>
+    <section class="fiscal-card payments-card">
+      <div id="paymentsEmpty" class="payments-empty" hidden>No hay cobros registrados.</div>
+      <div class="payments-table-wrap">
+        <table class="payments-table" id="paymentsTable" hidden>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="paymentsBody"></tbody>
+        </table>
       </div>
-      <p id="fiscalSatDetail" class="fiscal-status fiscal-status--error" hidden></p>
-
-      <form id="fiscalForm" class="fiscal-form" novalidate>
-        <label>
-          RFC
-          <input id="rfc" name="rfc" type="text" maxlength="13" autocomplete="off" required />
-        </label>
-        <label>
-          Razón social / Nombre
-          <input id="razon_social" name="razon_social" type="text" maxlength="300" required style="text-transform: uppercase" />
-        </label>
-        <label>
-          Código postal fiscal
-          <input id="codigo_postal" name="codigo_postal" type="text" maxlength="5" inputmode="numeric" required />
-        </label>
-        <label class="fiscal-check">
-          <input id="persona_moral" name="persona_moral" type="checkbox" />
-          Persona moral
-        </label>
-        <label>
-          Régimen fiscal
-          <select id="regimen_fiscal" name="regimen_fiscal" required>
-            <option value="">Selecciona régimen fiscal</option>
-          </select>
-        </label>
-        <label>
-          Uso CFDI
-          <input id="uso_cfdi" name="uso_cfdi" type="text" maxlength="10" value="G01" />
-        </label>
-
-        <p class="fiscal-disclaimer-note">
-          Al guardar, autorizas el uso de estos datos para emitir CFDI de los servicios ReservAI.
-          Debes contar con autorización del titular del RFC.
-        </p>
-
-        <label class="fiscal-check fiscal-disclaimer">
-          <input id="disclaimer" name="disclaimer" type="checkbox" />
-          <span id="disclaimerLabel">
-            Confirmo que los datos fiscales proporcionados son correctos y que cuento con autorización
-            para utilizarlos para la emisión de CFDI relacionados con los servicios contratados con ReservAI.
-            Entiendo que es mi responsabilidad proporcionar información autorizada y que ReservAI no responde
-            por el uso de un RFC ajeno o no autorizado.
-          </span>
-        </label>
-
-        <div class="fiscal-actions">
-          <button type="submit" id="saveFiscalBtn" class="btn-manage" disabled>Guardar</button>
-          <button type="button" id="toggleActiveBtn" class="btn-secondary" hidden>Activar</button>
-          <button type="button" id="deleteFiscalBtn" class="btn-danger" hidden>Eliminar</button>
-        </div>
-      </form>
+      <div class="payments-pager" id="paymentsPager" hidden>
+        <button type="button" id="paymentsPrev" class="btn-secondary">Anterior</button>
+        <span id="paymentsPageInfo"></span>
+        <button type="button" id="paymentsNext" class="btn-secondary">Siguiente</button>
+      </div>
     </section>
   </main>
 
-  <script type="module" src="/static/Scripts/fiscal.js"></script>
+  <script type="module" src="/static/Scripts/payments.js"></script>
 </body>
 </html>

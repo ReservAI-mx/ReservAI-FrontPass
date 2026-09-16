@@ -1,3 +1,5 @@
+import { showToast } from '../../toast.js';
+
 export function renderPasswordList(passwords, listEl) {
   listEl.innerHTML = "";
   if (!passwords.length) {
@@ -20,17 +22,8 @@ export function renderPasswordList(passwords, listEl) {
   });
 }
 
-export function showMessage(msg) {
-  let msgDiv = document.getElementById("admin-msg");
-  if (!msgDiv) {
-    msgDiv = document.createElement("div");
-    msgDiv.id = "admin-msg";
-    msgDiv.style.color = "#d32f2f";
-    msgDiv.style.textAlign = "center";
-    document.body.appendChild(msgDiv);
-  }
-  msgDiv.textContent = msg;
-  setTimeout(() => { msgDiv.textContent = ""; }, 2500);
+export function showMessage(msg, type) {
+  showToast(msg, type);
 }
 
 export function escapeHtml(text) {

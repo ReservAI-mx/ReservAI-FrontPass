@@ -45,6 +45,7 @@ router.get('/terms', (req, res) => res.redirect(302, LEGAL_URLS.terms));
 router.get('/privacy', (req, res) => res.redirect(302, LEGAL_URLS.privacy));
 router.get('/billing', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/billing.html")));
 router.get('/fiscal', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/fiscal.html")));
+router.get('/payments', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/payments.html")));
 router.get('/accept-invitation', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/accept-invitation.html")));
 router.get('/forgot-password', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/forgot-password.html")));
 router.get('/reset-password', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/reset-password.html")));

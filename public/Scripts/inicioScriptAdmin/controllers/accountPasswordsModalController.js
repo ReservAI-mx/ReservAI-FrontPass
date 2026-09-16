@@ -4,12 +4,14 @@ import { renderAdminPasswordList } from '../service/renderlistadmin.js';
 import { setupAdminModals, openAdminPasswordModal } from './modalControllerAdmin.js';
 import { deleteAccount } from '../services/adminUserService.js';
 import { showDeleteConfirmModal } from '../service/uiHelpersAdmin.js';
-import { apiFetch } from '../../api.js';
+import { apiFetch, API_BASE } from '../../api.js';
 
 const BILLING_HEADERS = {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
 };
+
+let currentPaymentsAccountId = null;
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -19,21 +21,247 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;');
 }
 
+function formatPayDate(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return d.toLocaleString('es-MX', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function formatPayAmount(amount) {
+    const n = Number(amount);
+    if (!Number.isFinite(n)) return '—';
+    return `MXN ${n.toFixed(2)}`;
+}
+
+function formatAdminDate(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return d.toLocaleString('es-MX', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function formatSatDetail(detailRaw) {
+    if (!detailRaw) return '';
+    let detail = detailRaw;
+    if (typeof detailRaw === 'string') {
+        try {
+            detail = JSON.parse(detailRaw);
+        } catch {
+            return String(detailRaw);
+        }
+    }
+    if (detail.sandbox_relaxed && detail.note) {
+        return detail.note;
+    }
+    if (detail.error) {
+        return `No se pudo validar con Facturama: ${detail.error}`;
+    }
+    const data = detail.facturama_response || detail;
+    const fails = [];
+    if (data.ExistRfc === false) fails.push('RFC no localizado/activo');
+    if (data.MatchName === false) fails.push('razón social no coincide');
+    if (data.MatchZipCode === false) fails.push('código postal no coincide');
+    if (data.MatchFiscalRegime === false) fails.push('régimen fiscal no coincide');
+    if (fails.length === 0) return 'Validación SAT correcta.';
+    return `SAT rechazó: ${fails.join('; ')}.`;
+}
+
+function satStatusBadge(status) {
+    const s = String(status || 'pending').toLowerCase();
+    const label = { valid: 'Válido', invalid: 'Inválido', pending: 'Pendiente', error: 'Error' }[s] || s;
+    return `<span class="fiscal-admin-badge fiscal-admin-badge--${s}">${escapeHtml(label)}</span>`;
+}
+
+let accountContextMenuDocHandler = null;
+
+function closeAccountContextMenu() {
+    const menu = document.getElementById('accountContextMenu');
+    const btn = document.getElementById('accountMenuBtn');
+    if (menu) menu.classList.remove('open');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function toggleAccountContextMenu() {
+    const menu = document.getElementById('accountContextMenu');
+    const btn = document.getElementById('accountMenuBtn');
+    if (!menu || !btn) return;
+    const open = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', String(open));
+}
+
+function blockedLabel(reason) {
+    if (reason === 'already_invoiced') return 'Ya facturado';
+    if (reason === 'month_expired') return 'Fuera de plazo (solo mes de compra)';
+    if (reason === 'fiscal_not_ready') return 'Fiscal no lista';
+    return '';
+}
+
+async function openAccountPaymentsModal(accountId) {
+    const modal = document.getElementById('accountPaymentsModal');
+    const emptyEl = document.getElementById('accountPaymentsEmpty');
+    const errorEl = document.getElementById('accountPaymentsError');
+    const table = document.getElementById('accountPaymentsTable');
+    const bodyEl = document.getElementById('accountPaymentsBody');
+    const closeBtn = document.getElementById('closeAccountPaymentsBtn');
+    if (!modal || !bodyEl) return;
+
+    currentPaymentsAccountId = accountId;
+    if (errorEl) {
+        errorEl.hidden = true;
+        errorEl.textContent = '';
+    }
+    if (emptyEl) emptyEl.hidden = true;
+    if (table) table.hidden = true;
+        bodyEl.innerHTML = '<tr><td colspan="4">Cargando…</td></tr>';
+    if (table) table.hidden = false;
+    modal.classList.add('show');
+
+    const close = () => modal.classList.remove('show');
+    if (closeBtn) closeBtn.onclick = close;
+
+    try {
+        const res = await apiFetch(
+            `/billing/accounts/${encodeURIComponent(accountId)}/payments?limit=50&offset=0`,
+            { headers: BILLING_HEADERS }
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(data.error || 'No se pudo cargar el historial');
+        }
+        const payments = data.data || [];
+        bodyEl.innerHTML = '';
+        if (payments.length === 0) {
+            if (table) table.hidden = true;
+            if (emptyEl) emptyEl.hidden = false;
+            return;
+        }
+        if (emptyEl) emptyEl.hidden = true;
+        if (table) table.hidden = false;
+
+        for (const p of payments) {
+            const tr = document.createElement('tr');
+            const actions = document.createElement('div');
+            actions.className = 'admin-pay-actions';
+
+            const mkBtn = (label, onClick, extraClass = '') => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.textContent = label;
+                b.className = `admin-pay-btn${extraClass ? ` ${extraClass}` : ''}`;
+                b.onclick = onClick;
+                return b;
+            };
+
+            if (p.ticket_available) {
+                actions.appendChild(
+                    mkBtn('Ticket', () => {
+                        window.location.href = `${API_BASE}/billing/accounts/${encodeURIComponent(accountId)}/tickets/${encodeURIComponent(p.id)}/pdf`;
+                    })
+                );
+            }
+            if (p.invoice_id) {
+                actions.appendChild(
+                    mkBtn('PDF CFDI', () => {
+                        window.location.href = `${API_BASE}/billing/accounts/${encodeURIComponent(accountId)}/invoices/${encodeURIComponent(p.invoice_id)}/pdf`;
+                    })
+                );
+                actions.appendChild(
+                    mkBtn('XML', () => {
+                        window.location.href = `${API_BASE}/billing/accounts/${encodeURIComponent(accountId)}/invoices/${encodeURIComponent(p.invoice_id)}/xml`;
+                    })
+                );
+            } else if (p.can_invoice) {
+                const invBtn = mkBtn('Solicitar factura', async () => {
+                    invBtn.disabled = true;
+                    try {
+                        const r = await apiFetch(
+                            `/billing/accounts/${encodeURIComponent(accountId)}/invoices/from-payment/${encodeURIComponent(p.id)}`,
+                            { method: 'POST', headers: BILLING_HEADERS }
+                        );
+                        const body = await r.json().catch(() => ({}));
+                        if (!r.ok) {
+                            throw new Error(body.error || 'No se pudo facturar');
+                        }
+                        showMessage(body.message || 'Factura generada');
+                        await openAccountPaymentsModal(accountId);
+                    } catch (err) {
+                        showMessage(err.message || 'Error al facturar');
+                        invBtn.disabled = false;
+                    }
+                });
+                invBtn.classList.add('admin-pay-btn--invoice');
+                actions.appendChild(invBtn);
+            } else if (p.invoice_blocked_reason) {
+                const hint = document.createElement('span');
+                hint.className = 'admin-pay-hint';
+                hint.textContent = blockedLabel(p.invoice_blocked_reason);
+                actions.appendChild(hint);
+            }
+
+            tr.innerHTML = `
+              <td>${escapeHtml(formatPayDate(p.created_at))}</td>
+              <td>${escapeHtml(formatPayAmount(p.amount))}</td>
+              <td>${escapeHtml(p.status || '—')}</td>
+            `;
+            const td = document.createElement('td');
+            td.appendChild(actions);
+            tr.appendChild(td);
+            bodyEl.appendChild(tr);
+        }
+    } catch (err) {
+        bodyEl.innerHTML = '';
+        if (table) table.hidden = true;
+        if (errorEl) {
+            errorEl.hidden = false;
+            errorEl.textContent = err.message || 'Error al cargar';
+        }
+        showMessage(err.message || 'Error al cargar historial');
+    }
+}
+
 async function openFiscalSituationModal(accountId) {
     const modal = document.getElementById('fiscalSituationModal');
     const emptyEl = document.getElementById('fiscalSituationEmpty');
     const bodyEl = document.getElementById('fiscalSituationBody');
+    const satNoteEl = document.getElementById('fiscalSatNote');
     const closeBtn = document.getElementById('closeFiscalSituationBtn');
+    const paymentsBtn = document.getElementById('openAccountPaymentsBtn');
     if (!modal || !bodyEl || !emptyEl) return;
 
     emptyEl.hidden = true;
     bodyEl.hidden = true;
-    bodyEl.innerHTML = '<p style="color:#fff;">Cargando…</p>';
+    bodyEl.innerHTML = '';
+    if (satNoteEl) {
+        satNoteEl.hidden = true;
+        satNoteEl.textContent = '';
+    }
+    bodyEl.innerHTML = '<div class="fiscal-admin-row"><dt>Cargando…</dt><dd></dd></div>';
     bodyEl.hidden = false;
     modal.classList.add('show');
 
     const close = () => modal.classList.remove('show');
     if (closeBtn) closeBtn.onclick = close;
+    if (paymentsBtn) {
+        paymentsBtn.onclick = async () => {
+            modal.classList.remove('show');
+            await openAccountPaymentsModal(accountId);
+        };
+    }
 
     try {
         const res = await apiFetch(`/billing/fiscal/${encodeURIComponent(accountId)}`, {
@@ -52,6 +280,8 @@ async function openFiscalSituationModal(accountId) {
         }
         emptyEl.hidden = true;
         bodyEl.hidden = false;
+
+        const satDetailMsg = formatSatDetail(fiscal.sat_validation_detail);
         const rows = [
             ['RFC', fiscal.rfc],
             ['Razón social', fiscal.razon_social],
@@ -61,18 +291,22 @@ async function openFiscalSituationModal(accountId) {
             ['Persona moral', fiscal.persona_moral ? 'Sí' : 'No'],
             ['Activa', fiscal.active ? 'Sí' : 'No'],
             ['Aceptación disclaimer', fiscal.authorization_accepted ? 'Sí' : 'No'],
-            ['Aceptada el', fiscal.authorization_accepted_at || '—'],
+            ['Aceptada el', formatAdminDate(fiscal.authorization_accepted_at)],
             ['Versión términos', fiscal.authorization_terms_version || '—'],
-            ['Estado SAT', fiscal.sat_validation_status || 'pending'],
-            ['SAT validado el', fiscal.sat_validated_at || '—'],
-            ['Detalle SAT', fiscal.sat_validation_detail || '—'],
+            ['Estado SAT', satStatusBadge(fiscal.sat_validation_status || 'pending')],
+            ['SAT validado el', formatAdminDate(fiscal.sat_validated_at)],
         ];
         bodyEl.innerHTML = rows.map(([k, v]) => `
-          <div style="display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid rgba(255,255,255,0.08);padding:0.35rem 0;">
-            <dt style="color:#A0A0A0;">${escapeHtml(k)}</dt>
-            <dd style="margin:0;text-align:right;">${escapeHtml(v)}</dd>
+          <div class="fiscal-admin-row">
+            <dt>${escapeHtml(k)}</dt>
+            <dd>${typeof v === 'string' && v.includes('fiscal-admin-badge') ? v : escapeHtml(v)}</dd>
           </div>
         `).join('');
+
+        if (satNoteEl && satDetailMsg) {
+            satNoteEl.hidden = false;
+            satNoteEl.textContent = satDetailMsg;
+        }
     } catch (err) {
         bodyEl.innerHTML = '';
         bodyEl.hidden = true;
@@ -90,6 +324,7 @@ export async function openAccountPasswordsModal(account) {
     const menuBtn = document.getElementById('accountMenuBtn');
     const deleteBtn = document.getElementById('deleteAccountBtn');
     const fiscalBtn = document.getElementById('fiscalSituationBtn');
+    const paymentsMenuBtn = document.getElementById('accountPaymentsMenuBtn');
     const addBtn = document.getElementById('addPasswordBtn');
     const createModal = document.getElementById('createModal');
     const viewModal = document.getElementById('viewModal');
@@ -201,6 +436,11 @@ export async function openAccountPasswordsModal(account) {
     // Botón regresar
     backBtn.onclick = () => {
         modal.classList.remove('show');
+        closeAccountContextMenu();
+        if (accountContextMenuDocHandler) {
+            document.removeEventListener('click', accountContextMenuDocHandler);
+            accountContextMenuDocHandler = null;
+        }
         const searchbar2 = document.getElementById('search2');
         if (searchbar2){
             searchbar2.style.display = 'none';
@@ -213,19 +453,37 @@ export async function openAccountPasswordsModal(account) {
     };
 
     // Menú tres puntos
-    menuBtn.onclick = () => {
-        menuBtn.parentElement.classList.toggle('open');
+    if (accountContextMenuDocHandler) {
+        document.removeEventListener('click', accountContextMenuDocHandler);
+    }
+    accountContextMenuDocHandler = (e) => {
+        const menu = document.getElementById('accountContextMenu');
+        if (menu && !menu.contains(e.target)) closeAccountContextMenu();
     };
+
+    menuBtn.onclick = (e) => {
+        e.stopPropagation();
+        toggleAccountContextMenu();
+    };
+    document.addEventListener('click', accountContextMenuDocHandler);
 
     if (fiscalBtn) {
         fiscalBtn.onclick = async () => {
-            menuBtn.parentElement.classList.remove('open');
+            closeAccountContextMenu();
             await openFiscalSituationModal(account.id);
+        };
+    }
+
+    if (paymentsMenuBtn) {
+        paymentsMenuBtn.onclick = async () => {
+            closeAccountContextMenu();
+            await openAccountPaymentsModal(account.id);
         };
     }
 
     // Eliminar cuenta
     deleteBtn.onclick = async () => {
+        closeAccountContextMenu();
         showDeleteConfirmModal({
             title: "Eliminar cuenta",
             message: "¿Seguro que deseas eliminar esta cuenta? Esta acción no se puede deshacer.<br>Escribe <b>eliminar</b> para confirmar.",

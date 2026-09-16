@@ -112,15 +112,85 @@
 
 .fiscal-status {
   margin: 0.75rem 0;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.45;
   color: #fff;
+  border: 1px solid transparent;
 }
 
 .fiscal-status--error {
-  color: #f44336;
+  background: rgba(244, 67, 54, 0.18);
+  border-color: rgba(244, 67, 54, 0.45);
+  color: #ffcdd2;
 }
 
 .fiscal-status--ok {
-  color: #4caf50;
+  background: rgba(76, 175, 80, 0.16);
+  border-color: rgba(76, 175, 80, 0.4);
+  color: #c8e6c9;
+}
+
+/* Toasts flotantes (fiscal / cobros) */
+.message-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  width: min(92vw, 440px);
+}
+
+.message {
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 560;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  word-break: break-word;
+  line-height: 1.4;
+  border: 1px solid transparent;
+}
+
+.message-success {
+  background: #2e7d32;
+  border-color: #66bb6a;
+  color: #fff;
+}
+
+.message-error {
+  background: #c62828;
+  border-color: #ef5350;
+  color: #fff;
+}
+
+.message-info {
+  background: #1565c0;
+  border-color: #42a5f5;
+  color: #fff;
+}
+
+.message-warning {
+  background: #ef6c00;
+  border-color: #ffb74d;
+  color: #fff;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translate3d(0, -16px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes slideOut {
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to { opacity: 0; transform: translate3d(0, -16px, 0); }
 }
 
 .fiscal-notice {

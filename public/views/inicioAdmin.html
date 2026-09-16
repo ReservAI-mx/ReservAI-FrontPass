@@ -123,11 +123,32 @@
     <div class="modal-full-header">
       <button id="backToAccountsBtn" class="back-btn">&larr; Regresar</button>
       <span id="accountEmailTitle"></span>
-      <div class="dropdown-menu">
-        <button id="accountMenuBtn" class="menu-btn"><i class="fas fa-ellipsis-v"></i></button>
-        <div class="dropdown-content" id="accountDropdown">
-          <button id="fiscalSituationBtn" type="button">Situación fiscal</button>
-          <button id="deleteAccountBtn" class="delete-account-btn">Eliminar cuenta</button>
+      <div class="dropdown-menu" id="accountContextMenu">
+        <button id="accountMenuBtn" class="menu-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Opciones de cuenta">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+        <div class="dropdown-content account-dropdown" id="accountDropdown" role="menu">
+          <button id="fiscalSituationBtn" type="button" class="account-dropdown__item" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 3.75h7.5L18.25 7.5V20.25a1.5 1.5 0 0 1-1.5 1.5H7.5a1.5 1.5 0 0 1-1.5-1.5V5.25a1.5 1.5 0 0 1 1.5-1.5z"/>
+              <path d="M14.5 3.75V7.5H18.25M8.5 11h7M8.5 14.5h7M8.5 18h4.5"/>
+            </svg>
+            Situación fiscal
+          </button>
+          <button id="accountPaymentsMenuBtn" type="button" class="account-dropdown__item" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2"/>
+              <path d="M2.75 9.5h18.5M6.5 14.25h3.5"/>
+            </svg>
+            Historial de cobros
+          </button>
+          <button id="deleteAccountBtn" type="button" class="account-dropdown__item account-dropdown__danger" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.75 7h14.5M9.5 7V5.25a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V7m2 0v11.25a1.5 1.5 0 0 1-1.5 1.5h-7a1.5 1.5 0 0 1-1.5-1.5V7"/>
+              <path d="M10 11v5.5M14 11v5.5"/>
+            </svg>
+            Eliminar cuenta
+          </button>
         </div>
       </div>
     </div>
@@ -260,14 +281,42 @@
 
 
   <!-- Modal situación fiscal (solo lectura) -->
-  <div id="fiscalSituationModal" class="modal">
-    <div class="modal-contentConfirm" style="max-width:520px;text-align:left;">
+  <div id="fiscalSituationModal" class="modal admin-submodal">
+    <div class="modal-contentConfirm admin-modal-box">
       <h3>Situación fiscal</h3>
-      <p id="fiscalSituationEmpty" hidden>Esta cuenta no tiene información fiscal registrada.</p>
-      <dl id="fiscalSituationBody" class="fiscal-admin-dl" hidden style="display:grid;gap:0.55rem;margin:1rem 0;color:#fff;">
-      </dl>
+      <p id="fiscalSituationEmpty" class="admin-modal-empty" hidden>Esta cuenta no tiene información fiscal registrada.</p>
+      <dl id="fiscalSituationBody" class="fiscal-admin-dl" hidden></dl>
+      <p id="fiscalSatNote" class="fiscal-admin-note" hidden></p>
+      <div class="admin-modal-actions">
+        <button type="button" id="openAccountPaymentsBtn" class="btn-admin-secondary">Historial de cobros</button>
+      </div>
       <div class="modal-footerConfirm">
-        <button type="button" id="closeFiscalSituationBtn">Cerrar</button>
+        <button type="button" id="closeFiscalSituationBtn" class="btn-admin-outline">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal historial de cobros (admin) -->
+  <div id="accountPaymentsModal" class="modal admin-submodal">
+    <div class="modal-contentConfirm admin-modal-box admin-modal-box--wide">
+      <h3>Historial de cobros</h3>
+      <p id="accountPaymentsEmpty" class="admin-modal-empty" hidden>No hay cobros registrados.</p>
+      <p id="accountPaymentsError" class="admin-modal-error" hidden></p>
+      <div class="admin-payments-table-wrap">
+        <table class="admin-payments-table" id="accountPaymentsTable" hidden>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="accountPaymentsBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-footerConfirm">
+        <button type="button" id="closeAccountPaymentsBtn" class="btn-admin-outline">Cerrar</button>
       </div>
     </div>
   </div>
