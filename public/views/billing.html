@@ -6,6 +6,7 @@
   <title>ReservAI - Billing</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesBilling.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesFiscal.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
@@ -36,6 +37,14 @@
             <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
           </svg>
           Mis contraseñas
+        </a>
+        <a href="/fiscal" id="fiscalLink" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 4.75h10A2.25 2.25 0 0 1 19.25 7v10A2.25 2.25 0 0 1 17 19.25H7A2.25 2.25 0 0 1 4.75 17V7A2.25 2.25 0 0 1 7 4.75z"/>
+            <path d="M8.5 9.5h7"/><path d="M8.5 12.5h7"/><path d="M8.5 15.5h4"/>
+          </svg>
+          Información fiscal
         </a>
         <a href="#" id="logout" role="menuitem" class="dropdown__danger">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -125,6 +134,7 @@
       <div class="modal-content">
         <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="modal-logo">
         <div style="font-size:1.25rem;font-weight:600;margin-bottom:1.2rem;color:#fff;letter-spacing:0.01em;">Selecciona el plan mensual previsto</div>
+        <div id="fiscalPriceNotice" class="fiscal-notice" hidden></div>
         <div class="plan-options-list" id="planOptionsList"></div>
       </div>
     </div>

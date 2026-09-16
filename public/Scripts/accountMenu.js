@@ -7,17 +7,19 @@ export function setupAccountMenu(session) {
   const btn = document.getElementById('profileBtn');
   const nombreEl = document.getElementById('accountName');
   const billingLink = document.getElementById('billingLink');
+  const fiscalLink = document.getElementById('fiscalLink');
 
   if (nombreEl && session?.account_name) {
     nombreEl.textContent = session.account_name;
   }
 
-  // Facturación se oculta solo para admin. Se compara contra 'admin' y no
-  // contra 'client' para que un backend que responda "cliente" o "CLIENT"
-  // no deje al usuario sin acceso a su facturación.
+  // Facturación / fiscal se ocultan solo para admin.
+  const rol = String(session?.account_type || '').trim().toLowerCase();
   if (billingLink) {
-    const rol = String(session?.account_type || '').trim().toLowerCase();
     billingLink.hidden = rol === 'admin';
+  }
+  if (fiscalLink) {
+    fiscalLink.hidden = rol === 'admin';
   }
 
   if (!profile || !btn) return;

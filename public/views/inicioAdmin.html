@@ -126,6 +126,7 @@
       <div class="dropdown-menu">
         <button id="accountMenuBtn" class="menu-btn"><i class="fas fa-ellipsis-v"></i></button>
         <div class="dropdown-content" id="accountDropdown">
+          <button id="fiscalSituationBtn" type="button">Situación fiscal</button>
           <button id="deleteAccountBtn" class="delete-account-btn">Eliminar cuenta</button>
         </div>
       </div>
@@ -257,6 +258,19 @@
 
 
 
+
+  <!-- Modal situación fiscal (solo lectura) -->
+  <div id="fiscalSituationModal" class="modal">
+    <div class="modal-contentConfirm" style="max-width:520px;text-align:left;">
+      <h3>Situación fiscal</h3>
+      <p id="fiscalSituationEmpty" hidden>Esta cuenta no tiene información fiscal registrada.</p>
+      <dl id="fiscalSituationBody" class="fiscal-admin-dl" hidden style="display:grid;gap:0.55rem;margin:1rem 0;color:#fff;">
+      </dl>
+      <div class="modal-footerConfirm">
+        <button type="button" id="closeFiscalSituationBtn">Cerrar</button>
+      </div>
+    </div>
+  </div>
 
   <div id="changePasswordModal" class="modalcreate">
     <div class="modal-content2">

@@ -120,6 +120,21 @@ function subdomainErrorMessage(code) {
     return null;
 }
 
+function updateFiscalPriceNotice(data) {
+    const el = document.getElementById('fiscalPriceNotice');
+    if (!el) return;
+    const fiscal = data?.fiscal || {};
+    const variant = data?.price_variant || 'full';
+    if (fiscal.persona_moral && variant === 'full') {
+        el.hidden = false;
+        el.textContent =
+            'Tu perfil es persona moral, pero aún no está activo y validado ante SAT. Este cobro usa la tarifa completa. Completa y activa tu información fiscal para la tarifa moral.';
+        return;
+    }
+    el.hidden = true;
+    el.textContent = '';
+}
+
 async function fetchPaymentLinks(subdomain) {
     try {
         const qs = new URLSearchParams({ subdomain });
@@ -133,6 +148,7 @@ async function fetchPaymentLinks(subdomain) {
             data = {};
         }
         if (response.status === 200 && data.paymentLinks) {
+            updateFiscalPriceNotice(data);
             return data.paymentLinks;
         }
         const subdomainMsg = subdomainErrorMessage(data.error);

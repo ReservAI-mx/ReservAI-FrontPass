@@ -4,6 +4,83 @@ import { renderAdminPasswordList } from '../service/renderlistadmin.js';
 import { setupAdminModals, openAdminPasswordModal } from './modalControllerAdmin.js';
 import { deleteAccount } from '../services/adminUserService.js';
 import { showDeleteConfirmModal } from '../service/uiHelpersAdmin.js';
+import { apiFetch } from '../../api.js';
+
+const BILLING_HEADERS = {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+};
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+async function openFiscalSituationModal(accountId) {
+    const modal = document.getElementById('fiscalSituationModal');
+    const emptyEl = document.getElementById('fiscalSituationEmpty');
+    const bodyEl = document.getElementById('fiscalSituationBody');
+    const closeBtn = document.getElementById('closeFiscalSituationBtn');
+    if (!modal || !bodyEl || !emptyEl) return;
+
+    emptyEl.hidden = true;
+    bodyEl.hidden = true;
+    bodyEl.innerHTML = '<p style="color:#fff;">Cargando…</p>';
+    bodyEl.hidden = false;
+    modal.classList.add('show');
+
+    const close = () => modal.classList.remove('show');
+    if (closeBtn) closeBtn.onclick = close;
+
+    try {
+        const res = await apiFetch(`/billing/fiscal/${encodeURIComponent(accountId)}`, {
+            headers: BILLING_HEADERS,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(data.error || 'No se pudo cargar la situación fiscal');
+        }
+        const fiscal = data.data;
+        if (!fiscal) {
+            bodyEl.hidden = true;
+            bodyEl.innerHTML = '';
+            emptyEl.hidden = false;
+            return;
+        }
+        emptyEl.hidden = true;
+        bodyEl.hidden = false;
+        const rows = [
+            ['RFC', fiscal.rfc],
+            ['Razón social', fiscal.razon_social],
+            ['Código postal', fiscal.codigo_postal],
+            ['Régimen fiscal', fiscal.regimen_fiscal],
+            ['Uso CFDI', fiscal.uso_cfdi],
+            ['Persona moral', fiscal.persona_moral ? 'Sí' : 'No'],
+            ['Activa', fiscal.active ? 'Sí' : 'No'],
+            ['Aceptación disclaimer', fiscal.authorization_accepted ? 'Sí' : 'No'],
+            ['Aceptada el', fiscal.authorization_accepted_at || '—'],
+            ['Versión términos', fiscal.authorization_terms_version || '—'],
+            ['Estado SAT', fiscal.sat_validation_status || 'pending'],
+            ['SAT validado el', fiscal.sat_validated_at || '—'],
+            ['Detalle SAT', fiscal.sat_validation_detail || '—'],
+        ];
+        bodyEl.innerHTML = rows.map(([k, v]) => `
+          <div style="display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid rgba(255,255,255,0.08);padding:0.35rem 0;">
+            <dt style="color:#A0A0A0;">${escapeHtml(k)}</dt>
+            <dd style="margin:0;text-align:right;">${escapeHtml(v)}</dd>
+          </div>
+        `).join('');
+    } catch (err) {
+        bodyEl.innerHTML = '';
+        bodyEl.hidden = true;
+        emptyEl.hidden = false;
+        emptyEl.textContent = err.message || 'Error al cargar';
+        showMessage(err.message || 'Error al cargar situación fiscal');
+    }
+}
 
 export async function openAccountPasswordsModal(account) {
     const modal = document.getElementById('accountPasswordsModal');
@@ -12,6 +89,7 @@ export async function openAccountPasswordsModal(account) {
     const backBtn = document.getElementById('backToAccountsBtn');
     const menuBtn = document.getElementById('accountMenuBtn');
     const deleteBtn = document.getElementById('deleteAccountBtn');
+    const fiscalBtn = document.getElementById('fiscalSituationBtn');
     const addBtn = document.getElementById('addPasswordBtn');
     const createModal = document.getElementById('createModal');
     const viewModal = document.getElementById('viewModal');
@@ -138,6 +216,13 @@ export async function openAccountPasswordsModal(account) {
     menuBtn.onclick = () => {
         menuBtn.parentElement.classList.toggle('open');
     };
+
+    if (fiscalBtn) {
+        fiscalBtn.onclick = async () => {
+            menuBtn.parentElement.classList.remove('open');
+            await openFiscalSituationModal(account.id);
+        };
+    }
 
     // Eliminar cuenta
     deleteBtn.onclick = async () => {
