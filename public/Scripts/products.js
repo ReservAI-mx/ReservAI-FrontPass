@@ -73,6 +73,7 @@ function renderList(products) {
               <dd>${formatMoney(p.setup_amount)}</dd>
             </div>
           </dl>
+          ${p.facturama_product_id ? `<p class="product-card__desc">Facturama: ${escapeHtml(p.facturama_product_id)} · ${escapeHtml(p.facturama_code_prod_serv || '')}</p>` : ''}
         </div>
         <div class="product-card__side">
           <span class="${active ? 'badge-active' : 'badge-inactive'}">
@@ -116,7 +117,7 @@ async function createProduct(payload, btn) {
     }
     hideModal('crearModal');
     document.getElementById('crearForm')?.reset();
-    aviso('Producto creado en Stripe y guardado', 'success');
+    aviso('Producto creado en Stripe, Facturama y DB', 'success');
     await fetchProducts();
   } catch (e) {
     if (errorEl) errorEl.textContent = e.message || 'Error al crear';
