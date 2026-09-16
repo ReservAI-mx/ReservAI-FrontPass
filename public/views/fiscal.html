@@ -98,17 +98,19 @@
           Código postal fiscal
           <input id="codigo_postal" name="codigo_postal" type="text" maxlength="5" inputmode="numeric" required />
         </label>
+        <label class="fiscal-check">
+          <input id="persona_moral" name="persona_moral" type="checkbox" />
+          Persona moral
+        </label>
         <label>
           Régimen fiscal
-          <input id="regimen_fiscal" name="regimen_fiscal" type="text" maxlength="10" placeholder="ej. 601" required />
+          <select id="regimen_fiscal" name="regimen_fiscal" required>
+            <option value="">Selecciona régimen fiscal</option>
+          </select>
         </label>
         <label>
           Uso CFDI
           <input id="uso_cfdi" name="uso_cfdi" type="text" maxlength="10" value="G01" />
-        </label>
-        <label class="fiscal-check">
-          <input id="persona_moral" name="persona_moral" type="checkbox" />
-          Persona moral
         </label>
 
         <p class="fiscal-disclaimer-note">

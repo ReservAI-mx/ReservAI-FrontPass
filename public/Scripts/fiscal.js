@@ -6,6 +6,29 @@ const BILLING_HEADERS = {
   'X-Requested-With': 'XMLHttpRequest',
 };
 
+/** Regímenes más usados en CFDI 4.0 (c_RegimenFiscal) por tipo de persona. */
+const REGIMENES_FISICA = [
+  { value: '612', label: '612 — Actividades empresariales y profesionales' },
+  { value: '626', label: '626 — Régimen Simplificado de Confianza (RESICO)' },
+  { value: '621', label: '621 — Incorporación Fiscal' },
+  { value: '606', label: '606 — Arrendamiento' },
+  { value: '625', label: '625 — Ingresos por plataformas tecnológicas' },
+  { value: '605', label: '605 — Sueldos y salarios / asimilados' },
+  { value: '608', label: '608 — Demás ingresos' },
+];
+
+const REGIMENES_MORAL = [
+  { value: '601', label: '601 — General de Ley Personas Morales' },
+  { value: '626', label: '626 — Régimen Simplificado de Confianza (RESICO)' },
+  { value: '603', label: '603 — Personas Morales con fines no lucrativos' },
+  { value: '622', label: '622 — Actividades agrícolas, ganaderas, silvícolas y pesqueras' },
+  { value: '620', label: '620 — Sociedades cooperativas de producción' },
+  { value: '623', label: '623 — Opcional para grupos de sociedades' },
+  { value: '624', label: '624 — Coordinados' },
+];
+
+const PLACEHOLDER_REGIMEN = 'Selecciona régimen fiscal';
+
 const session = requireUiSession();
 setupAccountMenu(session);
 
@@ -66,6 +89,44 @@ function syncSaveEnabled() {
   els.saveBtn.disabled = !els.disclaimer.checked;
 }
 
+function regimenOptionsFor(isMoral) {
+  return isMoral ? REGIMENES_MORAL : REGIMENES_FISICA;
+}
+
+/** Rellena el select; selectedValue null/'' deja el placeholder. */
+function populateRegimenSelect(isMoral, selectedValue = '') {
+  if (!els.regimen) return;
+  const options = regimenOptionsFor(isMoral);
+  const selected = selectedValue != null ? String(selectedValue).trim() : '';
+  const known = options.some((o) => o.value === selected);
+
+  els.regimen.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = PLACEHOLDER_REGIMEN;
+  els.regimen.appendChild(placeholder);
+
+  for (const opt of options) {
+    const el = document.createElement('option');
+    el.value = opt.value;
+    el.textContent = opt.label;
+    els.regimen.appendChild(el);
+  }
+
+  if (selected && known) {
+    els.regimen.value = selected;
+  } else if (selected && !known) {
+    // Valor guardado fuera de la lista común: mostrarlo para no perderlo.
+    const extra = document.createElement('option');
+    extra.value = selected;
+    extra.textContent = `${selected} — (guardado)`;
+    els.regimen.appendChild(extra);
+    els.regimen.value = selected;
+  } else {
+    els.regimen.value = '';
+  }
+}
+
 function fillForm(data) {
   current = data;
   if (!data) {
@@ -74,6 +135,8 @@ function fillForm(data) {
     els.deleteBtn.hidden = true;
     els.form.reset();
     if (els.uso) els.uso.value = 'G01';
+    if (els.moral) els.moral.checked = false;
+    populateRegimenSelect(false, '');
     syncSaveEnabled();
     return;
   }
@@ -81,9 +144,9 @@ function fillForm(data) {
   els.rfc.value = data.rfc || '';
   els.razon.value = data.razon_social || '';
   els.cp.value = data.codigo_postal || '';
-  els.regimen.value = data.regimen_fiscal || '';
   els.uso.value = data.uso_cfdi || 'G01';
   els.moral.checked = !!data.persona_moral;
+  populateRegimenSelect(!!data.persona_moral, data.regimen_fiscal || '');
   els.disclaimer.checked = false;
 
   els.meta.hidden = false;
@@ -118,12 +181,21 @@ async function loadFiscal() {
 
 els.disclaimer?.addEventListener('change', syncSaveEnabled);
 
+els.moral?.addEventListener('change', () => {
+  populateRegimenSelect(!!els.moral.checked, '');
+});
+
 els.form?.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearError();
 
   if (!els.disclaimer.checked) {
     showError('Debes aceptar el aviso de autorización para guardar.');
+    return;
+  }
+
+  if (!els.regimen.value) {
+    showError('Selecciona un régimen fiscal.');
     return;
   }
 
@@ -201,4 +273,5 @@ els.deleteBtn?.addEventListener('click', async () => {
   }
 });
 
+populateRegimenSelect(false, '');
 loadFiscal();
