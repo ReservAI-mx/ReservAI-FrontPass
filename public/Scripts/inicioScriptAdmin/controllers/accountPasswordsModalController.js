@@ -195,7 +195,13 @@ async function openAccountPaymentsModal(accountId) {
                         );
                         const body = await r.json().catch(() => ({}));
                         if (!r.ok) {
-                            throw new Error(body.error || 'No se pudo facturar');
+                            if (body.error === 'MONTH_EXPIRED') {
+                                throw new Error('Fuera de plazo (solo mes de compra)');
+                            }
+                            if (body.error === 'FISCAL_NOT_READY') {
+                                throw new Error('Fiscal no lista');
+                            }
+                            throw new Error('No se pudo facturar (error interno).');
                         }
                         showMessage(body.message || 'Factura generada');
                         await openAccountPaymentsModal(accountId);

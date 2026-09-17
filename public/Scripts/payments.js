@@ -174,7 +174,17 @@ async function requestInvoice(paymentHistoryId, btn) {
       if (body.error === 'FISCAL_NOT_READY') {
         throw new Error('Tu información fiscal no está activa y validada ante el SAT.');
       }
-      throw new Error(body.error || 'No se pudo generar la factura');
+      if (body.error === 'PAYMENT_NOT_FOUND') {
+        throw new Error('No se encontró el cobro.');
+      }
+      if (
+        body.error === 'Internal server error' ||
+        res.status >= 500 ||
+        /certificado|sello|facturama|expedition/i.test(String(body.error || ''))
+      ) {
+        throw new Error('No se pudo generar la factura. Intenta más tarde.');
+      }
+      throw new Error('No se pudo generar la factura.');
     }
     showMessage(body.message || 'Factura generada.');
     await loadPayments();
