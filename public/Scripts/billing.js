@@ -135,9 +135,9 @@ function updateFiscalPriceNotice(data) {
     el.textContent = '';
 }
 
-async function fetchPaymentLinks(subdomain) {
+async function fetchPaymentLinks(subdomain, pipelineTestPhone) {
     try {
-        const qs = new URLSearchParams({ subdomain });
+        const qs = new URLSearchParams({ subdomain, pipeline_test_phone: pipelineTestPhone });
         const response = await apiFetch(`/billing/links?${qs}`, { headers: BILLING_HEADERS });
         const text = await response.text();
 
@@ -151,12 +151,15 @@ async function fetchPaymentLinks(subdomain) {
             updateFiscalPriceNotice(data);
             return data.paymentLinks;
         }
-        const subdomainMsg = subdomainErrorMessage(data.error);
+        const code = data.error || '';
+        const subdomainMsg = subdomainErrorMessage(code);
         let msg = '';
         if (subdomainMsg) {
             msg = subdomainMsg;
-        } else if (data.error === 'NO_ACTIVE_PRODUCTS') {
+        } else if (code === 'NO_ACTIVE_PRODUCTS') {
             msg = 'No hay planes disponibles por ahora. Intenta más tarde.';
+        } else if (response.status === 400 && (code === 'PHONE_INVALID' || code === 'PIPELINE_TEST_PHONE_INVALID')) {
+            msg = 'Teléfono de pruebas inválido (WhatsApp MX).';
         } else if (response.status === 400) {
             msg = data.error || 'Solicitud inválida';
         } else if (response.status === 409) {
@@ -169,6 +172,8 @@ async function fetchPaymentLinks(subdomain) {
             msg = 'Path traversal detectado (Forbidden)';
         } else if (response.status === 404) {
             msg = 'No existe un customer asociado';
+        } else if (response.status === 409) {
+            msg = 'Ese subdominio ya está en uso.';
         } else if (response.status === 418 && text.includes('Token is required')) {
             msg = 'No se envió el token';
         } else if (response.status === 418) {
@@ -562,7 +567,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (warningContinueBtn) {
             warningContinueBtn.addEventListener('click', async () => {
                 const subdomainInput = document.getElementById('subdomainInput');
+                const phoneInput = document.getElementById('pipelineTestPhoneInput');
                 const subdomain = (subdomainInput && subdomainInput.value || '').trim().toLowerCase();
+                const rawPhone = (phoneInput && phoneInput.value || '').trim();
                 if (!subdomain) {
                     showError('Escribe un subdominio para la sucursal.');
                     return;
@@ -571,11 +578,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     showError(subdomainErrorMessage('SUBDOMAIN_INVALID'));
                     return;
                 }
+                if (!rawPhone) {
+                    showError('Escribe un teléfono de pruebas (WhatsApp MX).');
+                    return;
+                }
+                const pipelineTestPhone = globalThis.normalizePipelineTestPhone(rawPhone);
+                if (!pipelineTestPhone) {
+                    showError('Teléfono de pruebas inválido (WhatsApp MX).');
+                    return;
+                }
                 hideModal('warningModal');
-                paymentLinksCache = await fetchPaymentLinks(subdomain);
-                if (paymentLinksCache) {
-                    renderPlanOptions(paymentLinksCache);
-                    showModal('planModal');
+                warningContinueBtn.disabled = true;
+                try {
+                    paymentLinksCache = await fetchPaymentLinks(subdomain, pipelineTestPhone);
+                    if (paymentLinksCache) {
+                        renderPlanOptions(paymentLinksCache);
+                        showModal('planModal');
+                    }
+                } finally {
+                    warningContinueBtn.disabled = false;
                 }
             });
         }

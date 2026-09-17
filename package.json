@@ -1,12 +1,16 @@
 {
   "scripts": {
     "start": "node server.js 3000",
-    "local": "node server.js 3002"
+    "local": "node server.js 3002",
+    "test": "jest"
   },
   "dependencies": {
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
     "node": "^24.9.0"
+  },
+  "devDependencies": {
+    "jest": "^30.5.1"
   }
 }
