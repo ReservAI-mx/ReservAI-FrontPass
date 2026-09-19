@@ -73,12 +73,15 @@ function renderList(products) {
               <dd>${formatMoney(p.setup_amount)}</dd>
             </div>
           </dl>
-          ${p.facturama_product_id ? `<p class="product-card__desc">Facturama: ${escapeHtml(p.facturama_product_id)} · ${escapeHtml(p.facturama_code_prod_serv || '')}</p>` : ''}
+          ${p.facturama_product_id
+            ? `<p class="product-card__desc">Facturama: ${escapeHtml(p.facturama_product_id)} · ${escapeHtml(p.facturama_code_prod_serv || '')}</p>`
+            : '<p class="product-card__desc product-card__pending">Pendiente Facturama</p>'}
         </div>
         <div class="product-card__side">
           <span class="${active ? 'badge-active' : 'badge-inactive'}">
             ${active ? 'Activo' : 'Inactivo'}
           </span>
+          ${!p.facturama_product_id ? '<span class="badge-pending">Pendiente Facturama</span>' : ''}
           <button type="button" class="product-card__toggle" data-active="${active ? 'true' : 'false'}">
             ${active ? 'Desactivar' : 'Activar'}
           </button>
@@ -117,7 +120,15 @@ async function createProduct(payload, btn) {
     }
     hideModal('crearModal');
     document.getElementById('crearForm')?.reset();
-    aviso('Producto creado en Stripe, Facturama y DB', 'success');
+    if (data.facturama_pending) {
+      aviso(
+        data.message || 'Producto creado; Facturama pendiente de sincronizar',
+        'warning',
+        5200
+      );
+    } else {
+      aviso(data.message || 'Producto creado en Stripe, Facturama y DB', 'success');
+    }
     await fetchProducts();
   } catch (e) {
     if (errorEl) errorEl.textContent = e.message || 'Error al crear';

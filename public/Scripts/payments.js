@@ -44,10 +44,24 @@ function showError(msg) {
   showToast(msg, 'error');
 }
 
+function showFacturamaUnavailableAlert() {
+  const text =
+    'El servicio de facturación no está disponible en este momento. Contáctanos por WhatsApp al 52 33 1462 7189 o escribe a support@reservai.com.mx.';
+  if (els.error) {
+    els.error.hidden = false;
+    els.error.innerHTML =
+      'El servicio de facturación no está disponible en este momento. Contáctanos por ' +
+      '<a href="https://wa.me/523314627189" target="_blank" rel="noopener noreferrer">WhatsApp (52 33 1462 7189)</a> ' +
+      'o escribe a <a href="mailto:support@reservai.com.mx">support@reservai.com.mx</a>.';
+  }
+  showToast(text, 'error');
+}
+
 function clearError() {
   if (!els.error) return;
   els.error.hidden = true;
   els.error.textContent = '';
+  els.error.innerHTML = '';
 }
 
 function showMessage(msg) {
@@ -176,6 +190,11 @@ async function requestInvoice(paymentHistoryId, btn) {
       }
       if (body.error === 'PAYMENT_NOT_FOUND') {
         throw new Error('No se encontró el cobro.');
+      }
+      if (body.error === 'FACTURAMA_UNAVAILABLE' || res.status === 503) {
+        showFacturamaUnavailableAlert();
+        if (btn) btn.disabled = false;
+        return;
       }
       if (
         body.error === 'Internal server error' ||

@@ -201,6 +201,11 @@ async function openAccountPaymentsModal(accountId) {
                             if (body.error === 'FISCAL_NOT_READY') {
                                 throw new Error('Fiscal no lista');
                             }
+                            if (body.error === 'FACTURAMA_UNAVAILABLE' || r.status === 503) {
+                                throw new Error(
+                                    'Facturación no disponible. WhatsApp 52 33 1462 7189 · support@reservai.com.mx'
+                                );
+                            }
                             throw new Error('No se pudo facturar (error interno).');
                         }
                         showMessage(body.message || 'Factura generada');

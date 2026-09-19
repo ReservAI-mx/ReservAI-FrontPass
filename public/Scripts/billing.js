@@ -178,10 +178,12 @@ async function fetchPaymentLinks(subdomain, pipelineTestPhone) {
             msg = 'No se envió el token';
         } else if (response.status === 418) {
             msg = 'El token es inválido';
-        } else if (response.status === 500) {
-            msg = 'Error creando sesiones o links de pago';
+        } else if (response.status >= 500) {
+            msg = data.error
+                ? `Error del servidor: ${data.error}`
+                : `Error del servidor (${response.status}). Si es 502, el gateway no alcanzó Stripe Service.`;
         } else {
-            msg = `Error ${response.status}: ${text}`;
+            msg = data.error || `Error ${response.status}: ${text.slice(0, 200)}`;
         }
         showError(msg);
         return null;
@@ -222,10 +224,12 @@ export async function openStripeBillingPortal() {
             msg = 'No se envió el token';
         } else if (response.status === 418) {
             msg = 'El token es inválido';
-        } else if (response.status === 500) {
-            msg = 'Error creando la sesión del portal en Stripe';
+        } else if (response.status >= 500) {
+            msg = data.error
+                ? `Error del servidor: ${data.error}`
+                : `Error del servidor (${response.status}). Si es 502, el gateway no alcanzó Stripe Service.`;
         } else {
-            msg = `Error ${response.status}: ${text}`;
+            msg = data.error || `Error ${response.status}: ${text.slice(0, 200)}`;
         }
         console.error('[openStripeBillingPortal] Error:', msg);
         showError('No se pudo abrir el portal de facturación: ' + msg);
@@ -272,10 +276,14 @@ export async function createStripeCustomer() {
                 msg = 'Acceso denegado (403)';
             } else if (response.status === 418) {
                 msg = 'No se envió el token';
-            } else if (response.status === 500) {
-                msg = 'Error creando el customer en Stripe';
+            } else if (response.status >= 500) {
+                let parsed = {};
+                try { parsed = JSON.parse(errorText); } catch (_) { /* html 502 */ }
+                msg = parsed.error
+                    ? `Error del servidor: ${parsed.error}`
+                    : `Error del servidor (${response.status}). Si es 502, el gateway no alcanzó Stripe Service.`;
             } else {
-                msg = `Error ${response.status}: ${errorText}`;
+                msg = `Error ${response.status}: ${errorText.slice(0, 200)}`;
             }
             if (stripeLoadingText) {
                 stripeLoadingText.textContent = 'Error: ' + msg;
@@ -347,8 +355,14 @@ async function fetchSetups(page = 1) {
                 throw new Error('Account is not a client');
             } else if (response.status === 404) {
                 throw new Error('404');
-            } else if (response.status === 500) {
-                throw new Error('Internal server error');
+            } else if (response.status >= 500) {
+                let parsed = {};
+                try { parsed = JSON.parse(errorText); } catch (_) { /* html 502 */ }
+                throw new Error(
+                    parsed.error
+                        ? `Error del servidor: ${parsed.error}`
+                        : `Error del servidor (${response.status}). Si es 502, el gateway no alcanzó Stripe Service.`
+                );
             }
             throw new Error(`Error ${response.status}: No se pudieron cargar los planes`);
         }

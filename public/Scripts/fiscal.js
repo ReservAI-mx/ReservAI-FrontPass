@@ -355,13 +355,16 @@ els.form?.addEventListener('submit', async (e) => {
     const sat = body.data?.sat_validation_status || body.sat_validation?.status || 'pending';
     if (sat === 'valid') {
       showMessage('Información fiscal guardada. Validación SAT correcta.');
-    } else if (sat === 'error') {
+    } else if (sat === 'pending' || sat === 'error') {
       const satMsg = formatSatMessages(body.sat_validation);
       if (els.satDetail && satMsg) {
         els.satDetail.hidden = false;
         els.satDetail.textContent = satMsg;
       }
-      showMessage('Guardada, pero no se pudo validar con Facturama. Intenta de nuevo.', 'warning');
+      showMessage(
+        'Guardada; validación SAT pendiente (Facturama no disponible).',
+        'warning'
+      );
     } else {
       showMessage('Información fiscal guardada.');
     }
