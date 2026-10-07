@@ -53,7 +53,37 @@ async function goHome() {
     type = ok ? 'admin' : 'client';
     SessionStorageManager.saveSession({ account_type: type });
   }
-  window.location.href = type === 'admin' ? '/inicioAdmin' : '/inicio';
+  if (type === 'admin') {
+    window.location.href = '/inicioAdmin';
+    return;
+  }
+  let dest = '/inicio';
+  try {
+    const onboard = globalThis.PassOnboard;
+    const res = await apiFetch('/billing/setup?page=1', {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+    let setups = [];
+    if (res.status === 200) {
+      const data = await res.json().catch(() => ({}));
+      setups = data.data || data.provisions || [];
+    }
+    if (onboard && onboard.shouldRedirectToBilling({
+      role: type,
+      dismissed: onboard.isDismissed(),
+      status: res.status,
+      setups,
+    })) {
+      dest = '/billing';
+    }
+  } catch (err) {
+    if (err && err.message === 'Session expired') return;
+    dest = '/inicio';
+  }
+  window.location.href = dest;
 }
 
 const ICON_SHIELD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.75 4.75 5.5v5.25c0 4.45 3.1 8.15 7.25 9.25 4.15-1.1 7.25-4.8 7.25-9.25V5.5L12 2.75Z"/><path d="M12 8.5v5"/><path d="m9.75 11.25 2.25 2.25 2.25-2.25"/></svg>`;
