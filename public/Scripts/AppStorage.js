@@ -5,6 +5,7 @@ class SessionStorageManager {
     tokenType: 'token_type',
     verified: 'verified',
     twofaenabled: 'twofaenabled',
+    onboardDismissed: 'pm_onboard_dismissed',
   };
 
   static setItem(key, value) {

@@ -1153,3 +1153,99 @@ body {
   .add-subscription:active { transform: none; }
   .add-subscription:hover .add-subscription__icon { transform: none; }
 }
+
+#onboard {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  pointer-events: none;
+}
+
+#onboard[hidden] { display: none; }
+
+#onboardShade > div {
+  position: fixed;
+  background: rgba(13, 13, 13, 0.72);
+  pointer-events: auto;
+}
+
+#onboardHole {
+  position: fixed;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 0 3px var(--primary);
+  animation: onboardPulse 1.5s ease-in-out infinite;
+}
+
+#onboardCard {
+  position: fixed;
+  width: min(320px, calc(100vw - 16px));
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid rgba(9, 131, 214, 0.45);
+  color: var(--text-light);
+  pointer-events: auto;
+  animation: onboardIn 0.2s ease;
+}
+
+#onboardCard.is-below::before,
+#onboardCard.is-above::before {
+  content: "";
+  position: absolute;
+  left: 1.4rem;
+  border: 8px solid transparent;
+}
+
+#onboardCard.is-below::before {
+  top: -16px;
+  border-bottom-color: var(--bg-card);
+}
+
+#onboardCard.is-above::before {
+  bottom: -16px;
+  border-top-color: var(--bg-card);
+}
+
+#onboardKicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+#onboardText {
+  margin: 0;
+  color: var(--text-gray);
+  line-height: 1.4;
+}
+
+#onboardSkip,
+.onboard-recall {
+  margin-top: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.onboard-recall { display: block; margin: 1rem auto 0; }
+
+@keyframes onboardPulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--primary); }
+  50% { box-shadow: 0 0 0 8px rgba(9, 131, 214, 0.35); }
+}
+
+@keyframes onboardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #onboardHole { animation: none; }
+  #onboardCard { animation: none; }
+}

@@ -106,6 +106,137 @@ function setHasCustomer(ok) {
     if (manage) manage.style.display = ok ? '' : 'none';
 }
 
+const ONBOARD_TARGETS = {
+    1: '#stripeConfigLink',
+    2: '#addSubscriptionBtn',
+    3: '#subdomainInput',
+};
+
+let onboardStep = 0;
+
+function hideOnboard() {
+    onboardStep = 0;
+    const root = document.getElementById('onboard');
+    if (root) root.hidden = true;
+}
+
+function showRecall(container) {
+    const onboard = globalThis.PassOnboard;
+    if (!onboard || !onboard.isDismissed() || !container || container.querySelector('.onboard-recall')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'onboard-recall';
+    btn.textContent = 'Ver los pasos';
+    btn.addEventListener('click', () => {
+        onboard.recall();
+        btn.remove();
+        setOnboardStep(document.getElementById('stripeConfigLink') ? 1 : 2);
+    });
+    container.appendChild(btn);
+}
+
+function dismissOnboard() {
+    if (globalThis.PassOnboard) globalThis.PassOnboard.dismiss();
+    hideOnboard();
+    const empty = document.querySelector('.empty-message');
+    const err = document.getElementById('billingError');
+    if (empty) showRecall(empty);
+    else if (err && document.getElementById('stripeConfigLink')) showRecall(err);
+}
+
+function placeShade(open) {
+    const shade = document.getElementById('onboardShade');
+    if (!shade) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const t = open.top;
+    const l = open.left;
+    const b = open.top + open.height;
+    const r = open.left + open.width;
+    const boxes = [
+        [0, 0, vw, t],
+        [0, b, vw, vh - b],
+        [0, t, l, open.height],
+        [r, t, vw - r, open.height],
+    ];
+    shade.querySelectorAll('div').forEach((el, i) => {
+        const [x, y, w, h] = boxes[i];
+        el.style.top = y + 'px';
+        el.style.left = x + 'px';
+        el.style.width = Math.max(0, w) + 'px';
+        el.style.height = Math.max(0, h) + 'px';
+    });
+}
+
+function positionOnboard(target) {
+    const hole = document.getElementById('onboardHole');
+    const card = document.getElementById('onboardCard');
+    if (!hole || !card || !target) return;
+    const pad = 8;
+    const rect = target.getBoundingClientRect();
+    const top = Math.max(0, rect.top - pad);
+    const left = Math.max(0, rect.left - pad);
+    const width = rect.width + pad * 2;
+    const height = rect.height + pad * 2;
+    hole.style.top = top + 'px';
+    hole.style.left = left + 'px';
+    hole.style.width = width + 'px';
+    hole.style.height = height + 'px';
+
+    const modal = target.closest('.modal-content');
+    const open = modal ? modal.getBoundingClientRect() : { top, left, width, height };
+    placeShade(open);
+
+    const gap = 16;
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+    const cardH = card.offsetHeight || 120;
+    const cardW = card.offsetWidth || 320;
+    const below = top + height + gap + cardH < vh - 8;
+    card.classList.toggle('is-above', !below);
+    card.classList.toggle('is-below', below);
+    let cardTop = below ? top + height + gap : top - gap - cardH;
+    cardTop = Math.max(8, Math.min(cardTop, vh - cardH - 8));
+    let cardLeft = left;
+    if (cardLeft + cardW > vw - 8) cardLeft = Math.max(8, vw - cardW - 8);
+    card.style.top = cardTop + 'px';
+    card.style.left = cardLeft + 'px';
+}
+
+function setOnboardStep(n) {
+    const onboard = globalThis.PassOnboard;
+    if (!onboard || onboard.isDismissed()) {
+        hideOnboard();
+        return;
+    }
+    const root = document.getElementById('onboard');
+    const text = document.getElementById('onboardText');
+    const kicker = document.getElementById('onboardKicker');
+    const copy = onboard.ONBOARD_COPY[n];
+    const target = document.querySelector(ONBOARD_TARGETS[n]);
+    if (!root || !text || !copy || !target) {
+        hideOnboard();
+        return;
+    }
+    onboardStep = n;
+    if (kicker) kicker.textContent = copy.kicker;
+    text.textContent = copy.body;
+    root.hidden = false;
+    target.scrollIntoView({ block: 'center', inline: 'nearest' });
+    requestAnimationFrame(() => {
+        positionOnboard(target);
+        target.focus({ preventScroll: true });
+    });
+}
+
+function onOnboardReflow() {
+    if (!onboardStep) return;
+    const root = document.getElementById('onboard');
+    if (!root || root.hidden) return;
+    const target = document.querySelector(ONBOARD_TARGETS[onboardStep]);
+    if (target) positionOnboard(target);
+}
+
 // Obtener links de pago desde el endpoint /links
 function subdomainErrorMessage(code) {
     if (code === 'SUBDOMAIN_INVALID') {
@@ -375,6 +506,8 @@ async function fetchSetups(page = 1) {
         if (!cardsContainer) return;
         if (setups.length === 0) {
             cardsContainer.innerHTML = '<div class="empty-message"><p>Aún no tienes sucursales. Da de alta la primera.</p></div>';
+            setOnboardStep(2);
+            showRecall(cardsContainer.querySelector('.empty-message'));
         } else {
             cardsContainer.innerHTML = setups.map(setup => {
                 const badge = getStatusBadge(setup.status);
@@ -418,6 +551,7 @@ async function fetchSetups(page = 1) {
             cardsContainer.querySelectorAll('.js-portal').forEach((btn) => {
                 btn.addEventListener('click', () => openStripeBillingPortal());
             });
+            hideOnboard();
         }
         // Mostrar el contenedor de tarjetas cuando termina de cargar
         // (No es necesario mostrar/ocultar billingTable, ya no existe)
@@ -495,6 +629,7 @@ async function fetchSetups(page = 1) {
                 if (stripeConfigLink) {
                     stripeConfigLink.addEventListener('click', async (e) => {
                         e.preventDefault();
+                        hideOnboard();
                         if (stripeLoadingModal) stripeLoadingModal.style.display = 'flex';
                         if (stripeModalIcon) stripeModalIcon.style.display = 'block';
                         if (stripeLoadingText) {
@@ -522,12 +657,16 @@ async function fetchSetups(page = 1) {
                             if (stripeModalIcon) stripeModalIcon.style.display = 'none';
                             setTimeout(() => {
                                 if (stripeLoadingModal) stripeLoadingModal.style.display = 'none';
+                                setOnboardStep(1);
                             }, 2200);
                         }
                     });
                 }
+                setOnboardStep(1);
+                showRecall(errorEl);
             } else {
                 errorEl.textContent = '❌ ' + err.message;
+                hideOnboard();
             }
         }
     } finally {
@@ -571,6 +710,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fabBtn) {
             fabBtn.addEventListener('click', () => {
                 showModal('warningModal');
+                const aside = document.getElementById('onboard');
+                if (aside && !aside.hidden) setOnboardStep(3);
             });
         }
         if (warningCancelBtn) {
@@ -630,6 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (link?.url) {
                     window.open(link.url, '_blank');
                     hideModal('planModal');
+                    dismissOnboard();
                 } else {
                     showError('No se encontró el link de pago para ese plan.');
                 }
@@ -660,6 +802,15 @@ document.addEventListener('DOMContentLoaded', () => {
             await openStripeBillingPortal();
         });
     }
+    const onboardSkip = document.getElementById('onboardSkip');
+    if (onboardSkip) onboardSkip.addEventListener('click', dismissOnboard);
+    window.addEventListener('resize', onOnboardReflow);
+    window.addEventListener('scroll', onOnboardReflow, true);
+    document.addEventListener('keydown', (e) => {
+        const root = document.getElementById('onboard');
+        if (e.key === 'Escape' && root && !root.hidden) dismissOnboard();
+    });
+
     // Cargar datos iniciales
     fetchSetups(1);
 });
