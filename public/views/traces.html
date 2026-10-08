@@ -3,15 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ReservAI - Jobs</title>
+  <title>ReservAI - Traces</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
   <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
   <link rel="stylesheet" href="/static/estilos/StylesTenants.css" />
   <link rel="stylesheet" href="/static/estilos/StylesJobs.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesTraces.css" />
   <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
 </head>
-<body>
+<body class="traces-page">
   <div id="messageContainer" class="message-container"></div>
 
   <nav class="navbar">
@@ -100,67 +101,83 @@
     </a>
 
     <div class="page-head">
-      <h2>Jobs</h2>
-      <span class="count-badge" id="totalJobs" hidden></span>
+      <h2>Traces</h2>
+      <span class="count-badge" id="totalTraces" hidden></span>
+      <button type="button" class="btn-reload" id="reloadBtn">Recargar</button>
     </div>
 
-    <div class="filtros" role="group" aria-label="Filtrar por estado">
-      <button type="button" class="filtro filtro--unpaid" data-status="failed,dead" aria-pressed="true">
-        <span class="filtro__punto" aria-hidden="true"></span>Fallidos
-      </button>
-      <button type="button" class="filtro filtro--todos" data-status="all" aria-pressed="false">
+    <div class="filtros" role="group" aria-label="Filtrar por nivel">
+      <button type="button" class="filtro filtro--todos" data-level="" aria-pressed="true">
         <span class="filtro__punto" aria-hidden="true"></span>Todos
       </button>
-      <button type="button" class="filtro filtro--pending" data-status="queued" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>En cola
+      <button type="button" class="filtro filtro--info" data-level="info" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>Info
       </button>
-      <button type="button" class="filtro filtro--ready" data-status="in_flight" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>En vuelo
+      <button type="button" class="filtro filtro--warning" data-level="warning" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>Warning
       </button>
-      <button type="button" class="filtro filtro--active" data-status="succeeded" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>OK
+      <button type="button" class="filtro filtro--error" data-level="error" aria-pressed="false">
+        <span class="filtro__punto" aria-hidden="true"></span>Error
       </button>
     </div>
 
-    <div class="filtros filtros--action" role="group" aria-label="Filtrar por acción">
-      <button type="button" class="filtro filtro--todos" data-action="all" aria-pressed="true">
-        <span class="filtro__punto" aria-hidden="true"></span>Cualquier acción
-      </button>
-      <button type="button" class="filtro" data-action="provision" aria-pressed="false">Provision</button>
-      <button type="button" class="filtro" data-action="disable_renewal" aria-pressed="false">Disable renewal</button>
-      <button type="button" class="filtro" data-action="enable_renewal" aria-pressed="false">Enable renewal</button>
-      <button type="button" class="filtro" data-action="payment_notify" aria-pressed="false">Payment notify</button>
+    <div class="filtros filtros--resolution" role="group" aria-label="Filtrar por resolución">
+      <button type="button" class="filtro" data-resolution="" aria-pressed="true">Todos</button>
+      <button type="button" class="filtro" data-resolution="open" aria-pressed="false">Abiertos</button>
+      <button type="button" class="filtro" data-resolution="resolved" aria-pressed="false">Resueltos</button>
     </div>
 
-    <div class="search-field">
-      <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
-      </svg>
-      <input id="job-search" type="text" placeholder="Buscar por subdominio, cliente, error o id..."
-             aria-label="Buscar jobs" autocapitalize="none" spellcheck="false">
+    <div class="filter-row">
+      <div class="search-field">
+        <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+        </svg>
+        <input id="serviceFilter" type="text" value=""
+               placeholder="Servicio (vacío = todos)…"
+               aria-label="Filtrar por servicio" autocapitalize="none" spellcheck="false">
+      </div>
+      <label class="date-field">
+        <span>Rango</span>
+        <select id="rangePreset" aria-label="Rango de tiempo">
+          <option value="1h">Última hora</option>
+          <option value="6h">Últimas 6 horas</option>
+          <option value="today" selected>Hoy</option>
+          <option value="24h">Últimas 24 horas</option>
+          <option value="7d">Última semana</option>
+          <option value="30d">Últimos 30 días</option>
+          <option value="custom">Personalizado…</option>
+          <option value="all">Todo</option>
+        </select>
+      </label>
+      <label class="date-field date-field--custom" id="fromWrap" hidden>
+        <span>Desde</span>
+        <input id="fromDate" type="datetime-local" aria-label="Fecha y hora desde">
+      </label>
+      <label class="date-field date-field--custom" id="toWrap" hidden>
+        <span>Hasta</span>
+        <input id="toDate" type="datetime-local" aria-label="Fecha y hora hasta">
+      </label>
     </div>
 
     <p class="lista-error" id="listaError" role="alert"></p>
-    <ul id="job-list" class="tenant-list job-list" aria-live="polite"></ul>
 
-    <div class="pagination" id="job-pagination" hidden>
-      <button id="prevJob" type="button" aria-label="Página anterior">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M14.5 6.5 9 12l5.5 5.5"/>
-        </svg>
-      </button>
-      <span id="pageinfoJob">Página 1</span>
-      <button id="nextJob" type="button" aria-label="Página siguiente">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M9.5 6.5 15 12l-5.5 5.5"/>
-        </svg>
-      </button>
+    <div class="layout">
+      <section class="panel panel--list" aria-label="Lista de traces">
+        <ul id="traceList" class="tenant-list" aria-live="polite"></ul>
+        <div class="pager" id="pager" hidden>
+          <button type="button" class="btn-pager" id="prevPage">Anterior</button>
+          <span class="pager__label" id="pagerLabel"></span>
+          <button type="button" class="btn-pager" id="nextPage">Siguiente</button>
+        </div>
+      </section>
+      <section class="panel panel--detail" id="detailPanel" aria-label="Detalle del trace">
+        <p class="detail-placeholder" id="detailPlaceholder">Selecciona un trace</p>
+        <div id="detailContent" hidden></div>
+      </section>
     </div>
   </main>
 
-  <script type="module" src="/static/Scripts/jobs.js"></script>
+  <script type="module" src="/static/Scripts/traces.js"></script>
 </body>
 </html>
