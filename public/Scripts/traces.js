@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const elPagerLabel = document.getElementById('pagerLabel');
   const elPrev = document.getElementById('prevPage');
   const elNext = document.getElementById('nextPage');
-  const levelBtns = Array.from(document.querySelectorAll('#levelSeg .tr-seg__btn'));
-  const resolutionBtns = Array.from(document.querySelectorAll('#resolutionSeg .tr-seg__btn'));
-  const kpiBtns = Array.from(document.querySelectorAll('.tr-kpi'));
+  const levelBtns = Array.from(document.querySelectorAll('#levelSeg .ui-seg__btn'));
+  const resolutionBtns = Array.from(document.querySelectorAll('#resolutionSeg .ui-seg__btn'));
+  const kpiBtns = Array.from(document.querySelectorAll('.ui-kpi'));
   const narrow = window.matchMedia('(max-width: 960px)');
 
   let level = '';
@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bar.parentElement.title = total > 0 ? `${pct.toFixed(1)} % del total` : '';
     });
 
-    const openCard = document.querySelector('.tr-kpi--open');
+    const openCard = document.querySelector('.ui-kpi--open');
     if (openCard) openCard.classList.toggle('has-pending', Number(values.open) > 0);
   }
 
@@ -460,14 +460,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showEmpty(title, sub, opts = {}) {
     elList.replaceChildren();
-    const li = el('li', 'tr-empty' + (opts.error ? ' tr-empty--error' : ''));
-    const ic = el('span', 'tr-empty__icono');
+    const li = el('li', 'ui-empty' + (opts.error ? ' ui-empty--error' : ''));
+    const ic = el('span', 'ui-empty__icono');
     ic.appendChild(icon(opts.error ? 'alert' : 'inbox'));
     li.appendChild(ic);
-    li.appendChild(el('span', 'tr-empty__titulo', title));
-    if (sub) li.appendChild(el('span', 'tr-empty__sub', sub));
+    li.appendChild(el('span', 'ui-empty__titulo', title));
+    if (sub) li.appendChild(el('span', 'ui-empty__sub', sub));
     if (opts.action) {
-      const btn = el('button', 'tr-btn tr-btn--ghost', opts.action.label, { type: 'button' });
+      const btn = el('button', 'ui-btn ui-btn--ghost', opts.action.label, { type: 'button' });
       btn.addEventListener('click', opts.action.run);
       li.appendChild(btn);
     }
@@ -685,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeButton() {
-    const btn = el('button', 'tr-icon-btn tr-icon-btn--sm tr-detail__close', null, {
+    const btn = el('button', 'ui-icon-btn ui-icon-btn--sm tr-detail__close', null, {
       type: 'button', 'aria-label': 'Cerrar detalle', title: 'Cerrar (Esc)',
     });
     btn.appendChild(icon('close'));
@@ -710,12 +710,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const box = el('div', 'tr-detail-status');
-    const ic = el('span', 'tr-empty__icono');
+    const ic = el('span', 'ui-empty__icono');
     ic.appendChild(icon('alert'));
     box.appendChild(ic);
     box.appendChild(el('p', null, text));
     if (retryId) {
-      const btn = el('button', 'tr-btn tr-btn--ghost', 'Reintentar', { type: 'button' });
+      const btn = el('button', 'ui-btn ui-btn--ghost', 'Reintentar', { type: 'button' });
       btn.addEventListener('click', () => selectTrace(retryId));
       box.appendChild(btn);
     }
@@ -735,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function actionBtn(label, iconName, mod, onClick, title) {
-    const btn = el('button', `tr-btn ${mod}`, null, { type: 'button', title: title || null });
+    const btn = el('button', `ui-btn ${mod}`, null, { type: 'button', title: title || null });
     btn.appendChild(icon(iconName));
     btn.appendChild(el('span', null, label));
     btn.addEventListener('click', onClick);
@@ -816,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const idRow = el('div', 'tr-detail__id');
     idRow.appendChild(el('code', null, trace.trace_id || '—'));
     if (trace.trace_id) {
-      const cp = el('button', 'tr-icon-btn tr-icon-btn--xs', null, { type: 'button', 'aria-label': 'Copiar ID', title: 'Copiar ID' });
+      const cp = el('button', 'ui-icon-btn ui-icon-btn--xs', null, { type: 'button', 'aria-label': 'Copiar ID', title: 'Copiar ID' });
       cp.appendChild(icon('copy'));
       cp.addEventListener('click', () => copyText(trace.trace_id, 'ID copiado.'));
       idRow.appendChild(cp);
@@ -829,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resolveBtn = actionBtn(
       isResolved ? 'Reabrir' : 'Marcar resuelto',
       isResolved ? 'undo' : 'check',
-      isResolved ? 'tr-btn--ghost' : 'tr-btn--ok',
+      isResolved ? 'ui-btn--ghost' : 'ui-btn--ok',
       async () => {
         resolveBtn.disabled = true;
         resolveBtn.classList.add('is-loading');
@@ -844,9 +844,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     );
     actions.appendChild(resolveBtn);
-    actions.appendChild(actionBtn('Enlace', 'link', 'tr-btn--ghost',
+    actions.appendChild(actionBtn('Enlace', 'link', 'ui-btn--ghost',
       () => copyText(traceLink(trace.trace_id), 'Enlace copiado.'), 'Copiar enlace a este trace'));
-    actions.appendChild(actionBtn('JSON', 'code', 'tr-btn--ghost',
+    actions.appendChild(actionBtn('JSON', 'code', 'ui-btn--ghost',
       () => copyText(JSON.stringify(currentDetail, null, 2), 'JSON copiado.'), 'Copiar trace y logs como JSON'));
     elDetail.appendChild(actions);
 
@@ -871,7 +871,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Stack
     if (trace.stack) {
-      const cp = el('button', 'tr-icon-btn tr-icon-btn--xs', null, { type: 'button', 'aria-label': 'Copiar stack', title: 'Copiar stack' });
+      const cp = el('button', 'ui-icon-btn ui-icon-btn--xs', null, { type: 'button', 'aria-label': 'Copiar stack', title: 'Copiar stack' });
       cp.appendChild(icon('copy'));
       cp.addEventListener('click', () => copyText(String(trace.stack), 'Stack copiado.'));
       elDetail.appendChild(section('Stack', null, cp));

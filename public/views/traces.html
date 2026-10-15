@@ -7,10 +7,11 @@
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
   <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="/static/estilos/StylesTraces.css" />
   <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
 </head>
-<body class="traces-page">
+<body class="ui-page traces-page">
   <div id="messageContainer" class="message-container"></div>
 
   <nav class="navbar">
@@ -99,9 +100,9 @@
     </a>
 
     <!-- Encabezado -->
-    <header class="tr-head">
-      <div class="tr-head__titulo">
-        <span class="tr-head__icono" aria-hidden="true">
+    <header class="ui-head">
+      <div class="ui-head__titulo">
+        <span class="ui-head__icono" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <path d="M3.5 12h3.25l2.5-6 4.5 12 2.5-6h4.25"/>
@@ -109,18 +110,18 @@
         </span>
         <div>
           <h2>Monitoreo de traces</h2>
-          <p class="tr-head__sub">Errores, advertencias y peticiones de todos los servicios</p>
+          <p class="ui-head__sub">Errores, advertencias y peticiones de todos los servicios</p>
         </div>
       </div>
 
-      <div class="tr-head__acciones">
-        <span class="tr-updated" id="updatedLabel" aria-live="off"></span>
-        <button type="button" class="tr-live" id="liveBtn" aria-pressed="false"
+      <div class="ui-head__acciones">
+        <span class="ui-updated" id="updatedLabel" aria-live="off"></span>
+        <button type="button" class="ui-live" id="liveBtn" aria-pressed="false"
                 title="Actualizar automáticamente cada 30 segundos">
-          <span class="tr-live__punto" aria-hidden="true"></span>
+          <span class="ui-live__punto" aria-hidden="true"></span>
           En vivo
         </button>
-        <button type="button" class="tr-icon-btn" id="reloadBtn" aria-label="Recargar" title="Recargar (R)">
+        <button type="button" class="ui-icon-btn" id="reloadBtn" aria-label="Recargar" title="Recargar (R)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/>
@@ -131,41 +132,41 @@
     </header>
 
     <!-- KPIs: también funcionan como filtro de nivel / resolución -->
-    <div class="tr-kpis" id="kpis">
-      <button type="button" class="tr-kpi tr-kpi--todos" data-kpi="all" aria-pressed="true">
-        <span class="tr-kpi__label">Total</span>
-        <span class="tr-kpi__num" data-num="all">—</span>
-        <span class="tr-kpi__hint">en el rango</span>
+    <div class="ui-kpis" id="kpis">
+      <button type="button" class="ui-kpi ui-kpi--todos" data-kpi="all" aria-pressed="true">
+        <span class="ui-kpi__label">Total</span>
+        <span class="ui-kpi__num" data-num="all">—</span>
+        <span class="ui-kpi__hint">en el rango</span>
       </button>
-      <button type="button" class="tr-kpi tr-kpi--error" data-kpi="error" aria-pressed="false">
-        <span class="tr-kpi__label"><span class="tr-dot" aria-hidden="true"></span>Errores</span>
-        <span class="tr-kpi__num" data-num="error">—</span>
-        <span class="tr-kpi__bar" aria-hidden="true"><span data-bar="error"></span></span>
+      <button type="button" class="ui-kpi ui-kpi--error" data-kpi="error" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Errores</span>
+        <span class="ui-kpi__num" data-num="error">—</span>
+        <span class="ui-kpi__bar" aria-hidden="true"><span data-bar="error"></span></span>
       </button>
-      <button type="button" class="tr-kpi tr-kpi--warning" data-kpi="warning" aria-pressed="false">
-        <span class="tr-kpi__label"><span class="tr-dot" aria-hidden="true"></span>Warnings</span>
-        <span class="tr-kpi__num" data-num="warning">—</span>
-        <span class="tr-kpi__bar" aria-hidden="true"><span data-bar="warning"></span></span>
+      <button type="button" class="ui-kpi ui-kpi--warning" data-kpi="warning" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Warnings</span>
+        <span class="ui-kpi__num" data-num="warning">—</span>
+        <span class="ui-kpi__bar" aria-hidden="true"><span data-bar="warning"></span></span>
       </button>
-      <button type="button" class="tr-kpi tr-kpi--info" data-kpi="info" aria-pressed="false">
-        <span class="tr-kpi__label"><span class="tr-dot" aria-hidden="true"></span>Info</span>
-        <span class="tr-kpi__num" data-num="info">—</span>
-        <span class="tr-kpi__bar" aria-hidden="true"><span data-bar="info"></span></span>
+      <button type="button" class="ui-kpi ui-kpi--info" data-kpi="info" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Info</span>
+        <span class="ui-kpi__num" data-num="info">—</span>
+        <span class="ui-kpi__bar" aria-hidden="true"><span data-bar="info"></span></span>
       </button>
-      <button type="button" class="tr-kpi tr-kpi--open" data-kpi="open" aria-pressed="false">
-        <span class="tr-kpi__label">
+      <button type="button" class="ui-kpi ui-kpi--open" data-kpi="open" aria-pressed="false">
+        <span class="ui-kpi__label">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5M12 15.5v.01"/></svg>
           Sin resolver
         </span>
-        <span class="tr-kpi__num" data-num="open">—</span>
-        <span class="tr-kpi__hint">pendientes de revisar</span>
+        <span class="ui-kpi__num" data-num="open">—</span>
+        <span class="ui-kpi__hint">pendientes de revisar</span>
       </button>
     </div>
 
     <!-- Barra de filtros -->
-    <section class="tr-toolbar" aria-label="Filtros">
-      <div class="search-field tr-search">
+    <section class="ui-toolbar" aria-label="Filtros">
+      <div class="search-field ui-search">
         <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
@@ -173,29 +174,29 @@
         <input id="serviceFilter" type="text" value=""
                placeholder="Filtrar por servicio…"
                aria-label="Filtrar por servicio" autocapitalize="none" spellcheck="false">
-        <kbd class="tr-kbd" aria-hidden="true">/</kbd>
+        <kbd class="ui-kbd" aria-hidden="true">/</kbd>
       </div>
 
-      <div class="tr-seg" role="group" aria-label="Filtrar por nivel" id="levelSeg">
-        <button type="button" class="tr-seg__btn" data-level="" aria-pressed="true">Todos</button>
-        <button type="button" class="tr-seg__btn tr-seg__btn--error" data-level="error" aria-pressed="false">
-          <span class="tr-dot" aria-hidden="true"></span>Error
+      <div class="ui-seg" role="group" aria-label="Filtrar por nivel" id="levelSeg">
+        <button type="button" class="ui-seg__btn" data-level="" aria-pressed="true">Todos</button>
+        <button type="button" class="ui-seg__btn ui-seg__btn--error" data-level="error" aria-pressed="false">
+          <span class="ui-dot" aria-hidden="true"></span>Error
         </button>
-        <button type="button" class="tr-seg__btn tr-seg__btn--warning" data-level="warning" aria-pressed="false">
-          <span class="tr-dot" aria-hidden="true"></span>Warning
+        <button type="button" class="ui-seg__btn ui-seg__btn--warning" data-level="warning" aria-pressed="false">
+          <span class="ui-dot" aria-hidden="true"></span>Warning
         </button>
-        <button type="button" class="tr-seg__btn tr-seg__btn--info" data-level="info" aria-pressed="false">
-          <span class="tr-dot" aria-hidden="true"></span>Info
+        <button type="button" class="ui-seg__btn ui-seg__btn--info" data-level="info" aria-pressed="false">
+          <span class="ui-dot" aria-hidden="true"></span>Info
         </button>
       </div>
 
-      <div class="tr-seg" role="group" aria-label="Filtrar por resolución" id="resolutionSeg">
-        <button type="button" class="tr-seg__btn" data-resolution="" aria-pressed="true">Todos</button>
-        <button type="button" class="tr-seg__btn" data-resolution="open" aria-pressed="false">Abiertos</button>
-        <button type="button" class="tr-seg__btn" data-resolution="resolved" aria-pressed="false">Resueltos</button>
+      <div class="ui-seg" role="group" aria-label="Filtrar por resolución" id="resolutionSeg">
+        <button type="button" class="ui-seg__btn" data-resolution="" aria-pressed="true">Todos</button>
+        <button type="button" class="ui-seg__btn" data-resolution="open" aria-pressed="false">Abiertos</button>
+        <button type="button" class="ui-seg__btn" data-resolution="resolved" aria-pressed="false">Resueltos</button>
       </div>
 
-      <label class="tr-select">
+      <label class="ui-select">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>
@@ -212,18 +213,18 @@
         </select>
       </label>
 
-      <div class="tr-custom" id="customRange" hidden>
-        <label class="tr-date">
+      <div class="ui-custom" id="customRange" hidden>
+        <label class="ui-date">
           <span>Desde</span>
           <input id="fromDate" type="datetime-local" aria-label="Fecha y hora desde">
         </label>
-        <label class="tr-date">
+        <label class="ui-date">
           <span>Hasta</span>
           <input id="toDate" type="datetime-local" aria-label="Fecha y hora hasta">
         </label>
       </div>
 
-      <button type="button" class="tr-clear" id="clearFilters" hidden>
+      <button type="button" class="ui-clear" id="clearFilters" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>
         Limpiar filtros
@@ -237,7 +238,7 @@
         <div class="tr-list-head">
           <span id="rangeLabel">Cargando…</span>
           <span class="tr-list-head__keys" aria-hidden="true">
-            <kbd class="tr-kbd">↑</kbd><kbd class="tr-kbd">↓</kbd> navegar
+            <kbd class="ui-kbd">↑</kbd><kbd class="ui-kbd">↓</kbd> navegar
           </span>
         </div>
         <ul id="traceList" class="tr-list" aria-live="polite"></ul>
