@@ -4,6 +4,7 @@ import { setupAccountMenu } from '../accountMenu.js';
 import { setupPasswordList } from './controllers/passwordListController.js';
 import { setupModals } from './controllers/modalController.js';
 import { setupChangePassword } from '../changePassword.js';
+import { bindSearchShortcut } from '../uiShell.js';
 
 const session = requireUiSession();
 
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         totalEl: document.getElementById('totalPasswords'),
     };
 
+    bindSearchShortcut(elements.searchEl);
     const { reload } = await setupPasswordList(elements);
 
     setupModals({

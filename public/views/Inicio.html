@@ -6,11 +6,12 @@
   <title>ReservAI - Inicio</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
 </head>
-<body>
+<body class="ui-page">
   <!-- Navbar -->
   <nav class="navbar">
     <div class="logo">
@@ -78,18 +79,32 @@
 
   <!-- Main -->
   <main class="container">
-    <div class="page-head">
-      <h2>Resumen de Contraseñas</h2>
-      <span class="count-badge" id="totalPasswords" hidden></span>
-    </div>
+    <header class="ui-head">
+      <div class="ui-head__titulo">
+        <span class="ui-head__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+        </span>
+        <div>
+          <h2>Mis contraseñas <span class="count-badge" id="totalPasswords" hidden></span></h2>
+          <p class="ui-head__sub">Guardadas cifradas en tu bóveda; solo tú puedes verlas</p>
+        </div>
+      </div>
+    </header>
 
-    <div class="search-field">
-      <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
-      </svg>
-      <input id="search" type="text" placeholder="Buscar contraseña por nombre..." aria-label="Buscar">
-    </div>
+    <section class="ui-toolbar" aria-label="Búsqueda">
+      <div class="search-field ui-search">
+        <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+        </svg>
+        <input id="search" type="text" placeholder="Buscar contraseña por nombre…" aria-label="Buscar contraseñas">
+        <kbd class="ui-kbd" aria-hidden="true">/</kbd>
+      </div>
+    </section>
 
     <ul id="password-list" class="password-list" aria-live="polite"></ul>
 
