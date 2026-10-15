@@ -2,59 +2,36 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Unauthorized - ReservAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sin acceso - ReservAI</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/Styles.css">
-  <style>
-    .login-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #0d1117;
-    }
-    .login-box {
-      background: #161b22;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-      padding: 2.5em 2em;
-      max-width: 350px;
-      width: 100%;
-      text-align: center;
-    }
-    .logo img { width: 48px; margin-bottom: 0.5em; }
-    .logo h1 {
-      font-size: 1.5em;
-      color: #fff;
-      margin: 0;
-      font-weight: 600;
-    }
-    .error-title {
-      font-size: 1.8em;
-      color: #ff5555;
-      margin: 0.6em 0 0.3em;
-      font-weight: bold;
-    }
-    .error-msg { color: #fff; margin-bottom: 1.5em; font-size: 1.05em; }
-    a.loginbtn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      box-sizing: border-box;
-    }
-  </style>
+  <link rel="stylesheet" href="/static/estilos/StylesStatus.css">
 </head>
 <body>
   <div class="login-container">
-    <div class="login-box">
+    <div class="login-box status-box">
       <div class="logo">
         <img src="/static/Images/ReservAiLogo.png" alt="ReservAI Logo">
         <h1>ReservAI</h1>
       </div>
-      <div class="error-title">Unauthorized</div>
-      <div class="error-msg">No tienes acceso a este negocio. Se cerró tu sesión.</div>
-      <a href="/login" class="loginbtn" id="backLink">Ir al login</a>
+
+      <span class="status-icono status-icono--danger" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+          <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/><path d="M12 14v2.25"/>
+        </svg>
+      </span>
+      <h2 class="status-titulo">No tienes acceso a este negocio</h2>
+      <p class="status-msg">Por seguridad cerramos tu sesión. Entra de nuevo con una cuenta que tenga permiso.</p>
+
+      <div class="status-acciones">
+        <a href="/login" class="loginbtn" id="backLink">Ir al login</a>
+      </div>
+
+      <p class="status-cuenta" id="cuentaTexto" aria-live="polite">Te llevamos al login en 3 s…</p>
+      <div class="status-barra" aria-hidden="true"><span></span></div>
     </div>
   </div>
   <script src="/static/Scripts/unauthorized.js"></script>

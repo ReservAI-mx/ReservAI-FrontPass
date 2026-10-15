@@ -1,0 +1,127 @@
+/* ============================================================
+   Páginas de estado (404, no autorizado).
+   La tarjeta, el logo y el botón vienen de Styles.css (login).
+   Antes vivían en un <style> en línea, que la CSP bloquea
+   (style-src-elem sin 'unsafe-inline') y nunca se aplicaba.
+   ============================================================ */
+
+.status-box {
+  max-width: 420px;
+  text-align: center;
+}
+
+.status-icono {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 1.25rem auto 0.9rem;
+  border-radius: 20px;
+  background: rgba(9, 131, 214, 0.14);
+  border: 1px solid rgba(9, 131, 214, 0.4);
+  color: var(--primary);
+}
+
+.status-icono svg { width: 30px; height: 30px; }
+
+.status-icono--danger {
+  background: rgba(255, 107, 107, 0.12);
+  border-color: rgba(255, 107, 107, 0.4);
+  color: #ff8484;
+}
+
+.status-codigo {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(160deg, #fff, #7cc4f5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.status-titulo {
+  margin: 0.6rem 0 0.4rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-light);
+}
+
+.status-msg {
+  margin: 0 auto 1.5rem;
+  max-width: 32ch;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-gray);
+}
+
+.status-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Los botones son <a>/<button> con la clase del login */
+.status-acciones .loginbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  text-decoration: none;
+}
+
+.status-secundario {
+  min-height: 46px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: var(--text-light);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.status-secundario:hover {
+  background: rgba(9, 131, 214, 0.14);
+  border-color: var(--primary);
+}
+
+.status-secundario:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Cuenta regresiva antes de redirigir */
+.status-cuenta {
+  margin-top: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--text-gray);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-barra {
+  height: 4px;
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.status-barra span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transform-origin: left;
+  animation: status-vaciar var(--duracion, 3s) linear forwards;
+}
+
+@keyframes status-vaciar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-barra span { animation: none; }
+}
