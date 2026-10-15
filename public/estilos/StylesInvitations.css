@@ -530,3 +530,14 @@
   .volver:hover { transform: none; }
   .add-invitation:hover .add-invitation__icon { transform: none; }
 }
+
+/* ---------- Encabezado, KPIs y barra compartidos (StylesUI.css) ---------- */
+
+.ui-kpis .ui-kpi { min-height: 92px; }
+
+/* Franja por estado de la invitación */
+.invitation-item.ui-stripe { padding-left: 1.6rem; }
+.invitation-item[data-estado="pending"]  { --accent: var(--ui-warn); }
+.invitation-item[data-estado="accepted"] { --accent: var(--ui-ok); }
+.invitation-item[data-estado="expired"]  { --accent: var(--ui-purple); }
+.invitation-item[data-estado="revoked"]  { --accent: var(--ui-error); }

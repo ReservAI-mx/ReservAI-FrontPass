@@ -512,14 +512,6 @@
    Encabezado y barra compartidos (StylesUI.css)
    ============================================================ */
 
-.ui-head h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.ui-head h2 .count-badge { font-size: 0.75rem; }
-
 /* Color de la franja según el estado del tenant */
 .tenant-item--warn  { --accent: var(--ui-warn); }
 .tenant-item--info  { --accent: var(--ui-info); }

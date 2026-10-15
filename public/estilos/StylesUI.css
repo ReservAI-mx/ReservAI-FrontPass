@@ -56,7 +56,13 @@
   font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  /* flex para alinear el contador junto al título */
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
+
+.ui-head h2 .count-badge { font-size: 0.75rem; }
 
 .ui-head__sub {
   margin-top: 0.15rem;
@@ -571,6 +577,15 @@
 }
 
 .ui-btn--ok:hover { background: #15803d; border-color: #15803d; }
+
+.ui-btn--primary {
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(9, 131, 214, 0.3);
+}
+
+.ui-btn--primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 
 .ui-btn--ghost {
   border: 1px solid var(--ui-line-2);
