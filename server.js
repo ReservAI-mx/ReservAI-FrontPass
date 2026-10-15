@@ -213,9 +213,22 @@ app.use((req, res) => {
     if (suspicious.some(p => req.path.includes(p))) {
       console.log(`[SECURITY-ALERT] Suspicious 404: ${getClientIp(req)} -> ${req.path}`);
     }
-    res.status(404).send('Page not found');
   } else {
     console.log(`[404] ${req.method} ${req.originalUrl}`);
+  }
+
+  // Un navegador que pide una página recibe la vista 404; archivos (con
+  // extensión) y llamadas que esperan JSON conservan la respuesta corta.
+  const quierePagina = req.method === 'GET'
+    && !path.extname(req.path)
+    && req.accepts(['html', 'json']) === 'html';
+  if (quierePagina) {
+    return res.status(404).sendFile(path.join(__dirname, 'public', 'views', '404.html'));
+  }
+
+  if (isProduction) {
+    res.status(404).send('Page not found');
+  } else {
     res.status(404).json({ error: 'Ruta no encontrada', path: req.originalUrl });
   }
 });
