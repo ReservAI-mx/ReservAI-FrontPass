@@ -7,8 +7,6 @@
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
   <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
-  <link rel="stylesheet" href="/static/estilos/StylesTenants.css" />
-  <link rel="stylesheet" href="/static/estilos/StylesJobs.css" />
   <link rel="stylesheet" href="/static/estilos/StylesTraces.css" />
   <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
 </head>
@@ -59,7 +57,7 @@
         <a href="/admin/traces" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+            <path d="M3.5 12h3.25l2.5-6 4.5 12 2.5-6h4.25"/>
           </svg>
           Traces
         </a>
@@ -100,45 +98,108 @@
       Volver a cuentas
     </a>
 
-    <div class="page-head">
-      <h2>Traces</h2>
-      <span class="count-badge" id="totalTraces" hidden></span>
-      <button type="button" class="btn-reload" id="reloadBtn">Recargar</button>
+    <!-- Encabezado -->
+    <header class="tr-head">
+      <div class="tr-head__titulo">
+        <span class="tr-head__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3.5 12h3.25l2.5-6 4.5 12 2.5-6h4.25"/>
+          </svg>
+        </span>
+        <div>
+          <h2>Monitoreo de traces</h2>
+          <p class="tr-head__sub">Errores, advertencias y peticiones de todos los servicios</p>
+        </div>
+      </div>
+
+      <div class="tr-head__acciones">
+        <span class="tr-updated" id="updatedLabel" aria-live="off"></span>
+        <button type="button" class="tr-live" id="liveBtn" aria-pressed="false"
+                title="Actualizar automáticamente cada 30 segundos">
+          <span class="tr-live__punto" aria-hidden="true"></span>
+          En vivo
+        </button>
+        <button type="button" class="tr-icon-btn" id="reloadBtn" aria-label="Recargar" title="Recargar (R)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/>
+            <path d="M19.5 4.5v4h-4"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- KPIs: también funcionan como filtro de nivel / resolución -->
+    <div class="tr-kpis" id="kpis">
+      <button type="button" class="tr-kpi tr-kpi--todos" data-kpi="all" aria-pressed="true">
+        <span class="tr-kpi__label">Total</span>
+        <span class="tr-kpi__num" data-num="all">—</span>
+        <span class="tr-kpi__hint">en el rango</span>
+      </button>
+      <button type="button" class="tr-kpi tr-kpi--error" data-kpi="error" aria-pressed="false">
+        <span class="tr-kpi__label"><span class="tr-dot" aria-hidden="true"></span>Errores</span>
+        <span class="tr-kpi__num" data-num="error">—</span>
+        <span class="tr-kpi__bar" aria-hidden="true"><span data-bar="error"></span></span>
+      </button>
+      <button type="button" class="tr-kpi tr-kpi--warning" data-kpi="warning" aria-pressed="false">
+        <span class="tr-kpi__label"><span class="tr-dot" aria-hidden="true"></span>Warnings</span>
+        <span class="tr-kpi__num" data-num="warning">—</span>
+        <span class="tr-kpi__bar" aria-hidden="true"><span data-bar="warning"></span></span>
+      </button>
+      <button type="button" class="tr-kpi tr-kpi--info" data-kpi="info" aria-pressed="false">
+        <span class="tr-kpi__label"><span class="tr-dot" aria-hidden="true"></span>Info</span>
+        <span class="tr-kpi__num" data-num="info">—</span>
+        <span class="tr-kpi__bar" aria-hidden="true"><span data-bar="info"></span></span>
+      </button>
+      <button type="button" class="tr-kpi tr-kpi--open" data-kpi="open" aria-pressed="false">
+        <span class="tr-kpi__label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5M12 15.5v.01"/></svg>
+          Sin resolver
+        </span>
+        <span class="tr-kpi__num" data-num="open">—</span>
+        <span class="tr-kpi__hint">pendientes de revisar</span>
+      </button>
     </div>
 
-    <div class="filtros" role="group" aria-label="Filtrar por nivel">
-      <button type="button" class="filtro filtro--todos" data-level="" aria-pressed="true">
-        <span class="filtro__punto" aria-hidden="true"></span>Todos
-      </button>
-      <button type="button" class="filtro filtro--info" data-level="info" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>Info
-      </button>
-      <button type="button" class="filtro filtro--warning" data-level="warning" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>Warning
-      </button>
-      <button type="button" class="filtro filtro--error" data-level="error" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>Error
-      </button>
-    </div>
-
-    <div class="filtros filtros--resolution" role="group" aria-label="Filtrar por resolución">
-      <button type="button" class="filtro" data-resolution="" aria-pressed="true">Todos</button>
-      <button type="button" class="filtro" data-resolution="open" aria-pressed="false">Abiertos</button>
-      <button type="button" class="filtro" data-resolution="resolved" aria-pressed="false">Resueltos</button>
-    </div>
-
-    <div class="filter-row">
-      <div class="search-field">
+    <!-- Barra de filtros -->
+    <section class="tr-toolbar" aria-label="Filtros">
+      <div class="search-field tr-search">
         <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
         </svg>
         <input id="serviceFilter" type="text" value=""
-               placeholder="Servicio (vacío = todos)…"
+               placeholder="Filtrar por servicio…"
                aria-label="Filtrar por servicio" autocapitalize="none" spellcheck="false">
+        <kbd class="tr-kbd" aria-hidden="true">/</kbd>
       </div>
-      <label class="date-field">
-        <span>Rango</span>
+
+      <div class="tr-seg" role="group" aria-label="Filtrar por nivel" id="levelSeg">
+        <button type="button" class="tr-seg__btn" data-level="" aria-pressed="true">Todos</button>
+        <button type="button" class="tr-seg__btn tr-seg__btn--error" data-level="error" aria-pressed="false">
+          <span class="tr-dot" aria-hidden="true"></span>Error
+        </button>
+        <button type="button" class="tr-seg__btn tr-seg__btn--warning" data-level="warning" aria-pressed="false">
+          <span class="tr-dot" aria-hidden="true"></span>Warning
+        </button>
+        <button type="button" class="tr-seg__btn tr-seg__btn--info" data-level="info" aria-pressed="false">
+          <span class="tr-dot" aria-hidden="true"></span>Info
+        </button>
+      </div>
+
+      <div class="tr-seg" role="group" aria-label="Filtrar por resolución" id="resolutionSeg">
+        <button type="button" class="tr-seg__btn" data-resolution="" aria-pressed="true">Todos</button>
+        <button type="button" class="tr-seg__btn" data-resolution="open" aria-pressed="false">Abiertos</button>
+        <button type="button" class="tr-seg__btn" data-resolution="resolved" aria-pressed="false">Resueltos</button>
+      </div>
+
+      <label class="tr-select">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>
+        </svg>
         <select id="rangePreset" aria-label="Rango de tiempo">
           <option value="1h">Última hora</option>
           <option value="6h">Últimas 6 horas</option>
@@ -150,29 +211,65 @@
           <option value="all">Todo</option>
         </select>
       </label>
-      <label class="date-field date-field--custom" id="fromWrap" hidden>
-        <span>Desde</span>
-        <input id="fromDate" type="datetime-local" aria-label="Fecha y hora desde">
-      </label>
-      <label class="date-field date-field--custom" id="toWrap" hidden>
-        <span>Hasta</span>
-        <input id="toDate" type="datetime-local" aria-label="Fecha y hora hasta">
-      </label>
-    </div>
+
+      <div class="tr-custom" id="customRange" hidden>
+        <label class="tr-date">
+          <span>Desde</span>
+          <input id="fromDate" type="datetime-local" aria-label="Fecha y hora desde">
+        </label>
+        <label class="tr-date">
+          <span>Hasta</span>
+          <input id="toDate" type="datetime-local" aria-label="Fecha y hora hasta">
+        </label>
+      </div>
+
+      <button type="button" class="tr-clear" id="clearFilters" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>
+        Limpiar filtros
+      </button>
+    </section>
 
     <p class="lista-error" id="listaError" role="alert"></p>
 
-    <div class="layout">
-      <section class="panel panel--list" aria-label="Lista de traces">
-        <ul id="traceList" class="tenant-list" aria-live="polite"></ul>
-        <div class="pager" id="pager" hidden>
-          <button type="button" class="btn-pager" id="prevPage">Anterior</button>
-          <span class="pager__label" id="pagerLabel"></span>
-          <button type="button" class="btn-pager" id="nextPage">Siguiente</button>
+    <div class="tr-layout">
+      <section class="tr-panel tr-panel--list" aria-label="Lista de traces">
+        <div class="tr-list-head">
+          <span id="rangeLabel">Cargando…</span>
+          <span class="tr-list-head__keys" aria-hidden="true">
+            <kbd class="tr-kbd">↑</kbd><kbd class="tr-kbd">↓</kbd> navegar
+          </span>
+        </div>
+        <ul id="traceList" class="tr-list" aria-live="polite"></ul>
+        <div class="tr-pager" id="pager" hidden>
+          <button type="button" class="tr-pager__btn" id="prevPage" aria-label="Página anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14.5 6.5 9 12l5.5 5.5"/>
+            </svg>
+          </button>
+          <span class="tr-pager__label" id="pagerLabel"></span>
+          <button type="button" class="tr-pager__btn" id="nextPage" aria-label="Página siguiente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9.5 6.5 15 12l-5.5 5.5"/>
+            </svg>
+          </button>
         </div>
       </section>
-      <section class="panel panel--detail" id="detailPanel" aria-label="Detalle del trace">
-        <p class="detail-placeholder" id="detailPlaceholder">Selecciona un trace</p>
+
+      <div class="tr-backdrop" id="detailBackdrop" hidden></div>
+      <section class="tr-panel tr-panel--detail" id="detailPanel" aria-label="Detalle del trace">
+        <div class="tr-placeholder" id="detailPlaceholder">
+          <span class="tr-placeholder__icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3.5 12h3.25l2.5-6 4.5 12 2.5-6h4.25"/>
+            </svg>
+          </span>
+          <strong>Selecciona un trace</strong>
+          <span>Verás su stack, los logs en orden y podrás marcarlo como resuelto.</span>
+        </div>
         <div id="detailContent" hidden></div>
       </section>
     </div>
