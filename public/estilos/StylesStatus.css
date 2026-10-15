@@ -125,3 +125,18 @@
 @media (prefers-reduced-motion: reduce) {
   .status-barra span { animation: none; }
 }
+
+/* Verificar correo: mismos botones que las páginas de estado */
+.status-acciones .status-secundario:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-box .verification-msg { font-size: 0.95rem; line-height: 1.5; }
+.status-acciones .verifybtn,
+.status-acciones .resendbtn {
+  width: 100%;
+  height: auto;
+  min-height: 46px;
+  margin-top: 0;
+  font-size: 0.95rem;
+}
+
+.status-acciones .resendbtn { background: transparent; color: var(--text-light); }
+.status-acciones .resendbtn:hover:not(:disabled) { background: rgba(9, 131, 214, 0.14); }
