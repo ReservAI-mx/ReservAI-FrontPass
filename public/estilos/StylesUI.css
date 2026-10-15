@@ -552,6 +552,12 @@
 
 .ui-empty__icono svg { width: 24px; height: 24px; }
 
+.ui-empty--error .ui-empty__icono {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.35);
+  color: var(--ui-error);
+}
+
 .ui-empty__titulo {
   font-size: 1.05rem;
   font-weight: 700;

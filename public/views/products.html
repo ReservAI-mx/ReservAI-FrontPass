@@ -6,12 +6,12 @@
   <title>ReservAI - Productos</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
-  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="/static/estilos/StylesProducts.css" />
   <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
 </head>
-<body>
+<body class="ui-page">
   <div id="messageContainer" class="message-container"></div>
 
   <nav class="navbar">
@@ -99,9 +99,47 @@
       Volver a cuentas
     </a>
 
-    <div class="page-head">
-      <h2>Productos</h2>
-      <span class="count-badge" id="totalProducts" hidden></span>
+    <header class="ui-head">
+      <div class="ui-head__titulo">
+        <span class="ui-head__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 7.5 12 3.75 19.5 7.5 12 11.25 4.5 7.5z"/>
+            <path d="M4.5 12 12 15.75 19.5 12M4.5 16.5 12 20.25 19.5 16.5"/>
+          </svg>
+        </span>
+        <div>
+          <h2>Productos <span class="count-badge" id="totalProducts" hidden></span></h2>
+          <p class="ui-head__sub">Planes que se cobran en Stripe (mensual + instalación) y su alta en Facturama</p>
+        </div>
+      </div>
+      <div class="ui-head__acciones">
+        <button type="button" class="ui-btn ui-btn--primary" id="nuevoProductoHeadBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+               stroke-linecap="round" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"/></svg>
+          Nuevo producto
+        </button>
+      </div>
+    </header>
+
+    <!-- Conteos calculados de la lista completa; también filtran -->
+    <div class="ui-kpis ui-kpis--4" id="productKpis" hidden>
+      <button type="button" class="ui-kpi ui-kpi--todos" data-filtro="todos" aria-pressed="true">
+        <span class="ui-kpi__label">Todos</span>
+        <span class="ui-kpi__num" data-num="todos">0</span>
+      </button>
+      <button type="button" class="ui-kpi ui-kpi--ok" data-filtro="activos" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Activos</span>
+        <span class="ui-kpi__num" data-num="activos">0</span>
+      </button>
+      <button type="button" class="ui-kpi ui-kpi--error" data-filtro="inactivos" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Inactivos</span>
+        <span class="ui-kpi__num" data-num="inactivos">0</span>
+      </button>
+      <button type="button" class="ui-kpi ui-kpi--warning" data-filtro="pendientes" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Pendiente Facturama</span>
+        <span class="ui-kpi__num" data-num="pendientes">0</span>
+      </button>
     </div>
 
     <p class="lista-error" id="listaError" role="alert"></p>

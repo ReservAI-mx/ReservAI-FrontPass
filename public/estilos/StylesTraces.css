@@ -336,7 +336,6 @@
 
 /* ---------- Vacíos, cargando ---------- */
 
-.ui-empty--error .ui-empty__icono,
 .tr-detail-status .ui-empty__icono {
   background: rgba(255, 107, 107, 0.1);
   border-color: rgba(255, 107, 107, 0.35);
