@@ -18,6 +18,7 @@ function consumeVerifyToken() {
 document.addEventListener("DOMContentLoaded", async () => {
   const qrCodeDiv = document.querySelector(".qr-code");
   const qrMessage = document.querySelector(".qr-message");
+  const qrError = document.querySelector(".qr-error");
   const nextBtn = document.getElementById('nextBtn');
 
   if (nextBtn) {
@@ -80,13 +81,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       img.className = "qr-fade-in";
       qrCodeDiv.innerHTML = "";
       qrCodeDiv.appendChild(img);
-      qrMessage.textContent = "Escanea este código QR para usar el doble factor de autenticación.";
     } else {
-      qrCodeDiv.innerHTML = "";
-      qrMessage.textContent = "No se recibió el QR. Contacta soporte.";
+      mostrarError("No se recibió el QR. Contacta soporte.");
     }
   } catch (err) {
-    if (qrCodeDiv) qrCodeDiv.innerHTML = "";
-    qrMessage.textContent = "Error: " + err.message;
+    mostrarError(err.message);
+  }
+
+  // El error va en su propia caja y el marco blanco del QR se oculta.
+  function mostrarError(texto) {
+    if (qrCodeDiv) {
+      qrCodeDiv.innerHTML = "";
+      qrCodeDiv.classList.add("is-error");
+    }
+    if (qrMessage) qrMessage.hidden = true;
+    if (qrError) {
+      qrError.textContent = texto;
+      qrError.hidden = false;
+    }
   }
 });
