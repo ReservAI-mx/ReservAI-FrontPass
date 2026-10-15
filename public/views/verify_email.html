@@ -6,6 +6,7 @@
   <title>ReservAI - Verificación</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/Styles.css">
+  <link rel="stylesheet" href="/static/estilos/StylesStatus.css">
   <link rel="stylesheet" href="/static/estilos/buttonLoading.css">
 </head>
 <body>
@@ -13,23 +14,32 @@
   <div id="messageContainer" class="message-container"></div>
   
   <div class="login-container">
-    <div class="login-box">
+    <div class="login-box status-box">
       <div class="logo">
-        <img src="static/Images/ReservAiLogo.png" alt="ReservAI Logo">
+        <img src="/static/Images/ReservAiLogo.png" alt="ReservAI Logo">
         <h1>ReservAI</h1>
       </div>
 
+      <span class="status-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/>
+          <path d="m3.5 7 8.5 6 8.5-6"/>
+        </svg>
+      </span>
+
       <h2>Verifica tu correo</h2>
 
-      <h1 class="verification-msg">
-        Te hemos enviado un enlace de verificación a tu correo electrónico.  <br><br>
-        Por favor revisa tu bandeja de entrada (y la carpeta de spam si no lo encuentras).
-      </h1>
+      <p class="verification-msg">
+        Te enviamos un enlace de verificación a tu correo electrónico.
+        Revisa tu bandeja de entrada y, si no lo ves, la carpeta de spam.
+      </p>
 
-      <div id="botones" class="botones">
-        <button class="verifybtn">He verificado mi correo</button>
-        <button class="resendbtn">Reenviar correo</button>
+      <div id="botones" class="status-acciones">
+        <button type="button" class="loginbtn verifybtn">Ya verifiqué mi correo</button>
+        <button type="button" class="status-secundario resendbtn">Reenviar correo</button>
       </div>
+      <p class="status-cuenta" id="reenvioEspera" aria-live="polite" hidden></p>
     </div>
   </div>
   <script type="module" src="/static/Scripts/verifyEmail.js"></script>

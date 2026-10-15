@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.ok) {
           showMessage(data.message || "Correo de verificación reenviado.", 'success');
+          esperarReenvio();
         } else {
           showMessage(data.message || "No se pudo reenviar el correo.", 'error');
         }
@@ -47,7 +48,35 @@ document.addEventListener("DOMContentLoaded", () => {
         showMessage("Error al reenviar el correo: " + err.message, 'error');
       } finally {
         setButtonLoading(resendBtn, false);
+        if (esperaRestante > 0) resendBtn.disabled = true;
       }
     });
+  }
+
+  // Tras un reenvío correcto se espera un poco antes de permitir otro,
+  // para no llenar la bandeja (y que el usuario vea que sí se envió).
+  const ESPERA_REENVIO_S = 30;
+  const esperaEl = document.getElementById("reenvioEspera");
+  let esperaRestante = 0;
+
+  function esperarReenvio() {
+    if (!resendBtn) return;
+    esperaRestante = ESPERA_REENVIO_S;
+    resendBtn.disabled = true;
+    const pintar = () => {
+      if (esperaEl) {
+        esperaEl.hidden = esperaRestante <= 0;
+        esperaEl.textContent = `Podrás reenviarlo de nuevo en ${esperaRestante} s`;
+      }
+    };
+    pintar();
+    const tick = setInterval(() => {
+      esperaRestante -= 1;
+      pintar();
+      if (esperaRestante <= 0) {
+        clearInterval(tick);
+        resendBtn.disabled = false;
+      }
+    }, 1000);
   }
 });

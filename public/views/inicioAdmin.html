@@ -6,17 +6,17 @@
   <title>ReservAI - Admin</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
-<body>
+<body class="ui-page admin-home">
   <!-- Navbar -->
   <nav class="navbar">
     <div class="logo">
       <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
       <span class="logo-text">ReservAI Admin</span>
     </div>
-    <a href="/register" id="registerBtn" class="register-btn">Invitar</a>
     <div class="profile">
       <button class="profile-btn" id="profileBtn" aria-haspopup="true"
               aria-expanded="false" aria-label="Menú de cuenta">
@@ -99,13 +99,105 @@
 
   <!-- Main -->
   <main class="container">
-      <h1>Gestión de Cuentas</h1>
-      <div class="searchbar">
-        <input id="account-search" class="search" type="text" placeholder="Buscar cuenta por nombre..." aria-label="Buscar cuentas">
+    <header class="ui-head">
+      <div class="ui-head__titulo">
+        <span class="ui-head__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="8.5" r="3.25"/>
+            <path d="M3.5 19.25c0-3 2.46-5.25 5.5-5.25s5.5 2.25 5.5 5.25"/>
+            <path d="M15.5 5.5a3.25 3.25 0 0 1 0 6M17.5 14.25c1.86.6 3 2.4 3 5"/>
+          </svg>
+        </span>
+        <div>
+          <h1 class="ui-head__h1">Gestión de cuentas</h1>
+          <p class="ui-head__sub">Clientes y sus contraseñas guardadas en la bóveda</p>
+        </div>
       </div>
-      <div id="accounts-loading" style="display:none; text-align:center; color:#fff; margin: 2em 0;">
-        ⏳Cargando cuentas...
+      <div class="ui-head__acciones">
+        <a href="/register" id="registerBtn" class="ui-btn ui-btn--primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+               stroke-linecap="round" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"/></svg>
+          Invitar
+        </a>
       </div>
+    </header>
+
+    <nav class="ui-shortcuts" aria-label="Accesos rápidos">
+      <a class="ui-shortcut" href="/admin/tenants">
+        <span class="ui-shortcut__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="6" rx="1.5"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+        </span>
+        <span class="ui-shortcut__texto">
+          <span class="ui-shortcut__titulo">Tenants</span>
+          <span class="ui-shortcut__hint">Instancias y provisión</span>
+        </span>
+        
+      </a>
+      <a class="ui-shortcut" href="/admin/jobs">
+        <span class="ui-shortcut__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M4.5 12h15M4.5 17h10"/><path d="m17 16 2 2 3-3.5"/></svg>
+        </span>
+        <span class="ui-shortcut__texto">
+          <span class="ui-shortcut__titulo">Jobs</span>
+          <span class="ui-shortcut__hint">Tareas del worker</span>
+        </span>
+        <span class="ui-shortcut__badge" data-badge="jobs" hidden></span>
+      </a>
+      <a class="ui-shortcut" href="/admin/traces">
+        <span class="ui-shortcut__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12h3.25l2.5-6 4.5 12 2.5-6h4.25"/></svg>
+        </span>
+        <span class="ui-shortcut__texto">
+          <span class="ui-shortcut__titulo">Traces</span>
+          <span class="ui-shortcut__hint">Errores de los servicios</span>
+        </span>
+        <span class="ui-shortcut__badge" data-badge="traces" hidden></span>
+      </a>
+      <a class="ui-shortcut" href="/invitations">
+        <span class="ui-shortcut__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round"><rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
+        </span>
+        <span class="ui-shortcut__texto">
+          <span class="ui-shortcut__titulo">Invitaciones</span>
+          <span class="ui-shortcut__hint">Enlaces para crear cuentas</span>
+        </span>
+        
+      </a>
+      <a class="ui-shortcut" href="/admin/products">
+        <span class="ui-shortcut__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.5 12 3.75 19.5 7.5 12 11.25 4.5 7.5z"/><path d="M4.5 12 12 15.75 19.5 12M4.5 16.5 12 20.25 19.5 16.5"/></svg>
+        </span>
+        <span class="ui-shortcut__texto">
+          <span class="ui-shortcut__titulo">Productos</span>
+          <span class="ui-shortcut__hint">Precios en Stripe</span>
+        </span>
+        
+      </a>
+    </nav>
+
+    <section class="ui-toolbar" aria-label="Búsqueda de cuentas">
+      <div class="search-field ui-search">
+        <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+        </svg>
+        <input id="account-search" type="text" placeholder="Buscar cuenta por nombre o ID…"
+               aria-label="Buscar cuentas" autocapitalize="none" spellcheck="false">
+        <kbd class="ui-kbd" aria-hidden="true">/</kbd>
+      </div>
+    </section>
+
+    <!-- El controlador lo muestra/oculta con style.display -->
+    <div id="accounts-loading" class="ui-loading" style="display:none;" role="status">
+      <span class="ui-loading__spinner" aria-hidden="true"></span>
+      Cargando cuentas…
+    </div>
     <div id="account-list"></div>
       <div class="pagination2" style="display: none;">
         <button id="prevAccount" type="button" aria-label="Página anterior">
@@ -128,10 +220,22 @@
 <div id="accountPasswordsModal" class="modal-fullscreen">
   <div class="modal-full-content">
     <div class="modal-full-header">
-      <button id="backToAccountsBtn" class="back-btn">&larr; Regresar</button>
-      <span id="accountEmailTitle"></span>
+      <button id="backToAccountsBtn" class="volver back-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.5 6.5 9 12l5.5 5.5"/>
+        </svg>
+        Regresar
+      </button>
+      <div class="account-head">
+        <span class="account-item__avatar account-head__avatar" id="accountAvatarTitle" aria-hidden="true"></span>
+        <span class="account-head__texto">
+          <span class="account-head__nombre" id="accountNameTitle"></span>
+          <span id="accountEmailTitle"></span>
+        </span>
+      </div>
       <div class="dropdown-menu" id="accountContextMenu">
-        <button id="accountMenuBtn" class="menu-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Opciones de cuenta">
+        <button id="accountMenuBtn" class="menu-btn ui-icon-btn ui-icon-btn--sm" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Opciones de cuenta">
           <i class="fas fa-ellipsis-v"></i>
         </button>
         <div class="dropdown-content account-dropdown" id="accountDropdown" role="menu">
@@ -161,11 +265,19 @@
     </div>
     <div class="modal-full-body">
       
-      <div id="passwords-loading" style="display:none; text-align:center; color:#fff; margin: 2em 0;">
-      ⏳Cargando contraseñas...
+      <div id="passwords-loading" class="ui-loading" style="display:none;" role="status">
+        <span class="ui-loading__spinner" aria-hidden="true"></span>
+        Cargando contraseñas…
       </div>
 
-      <input id="search2" class="searchbar2" type="text" placeholder="Buscar contraseña por nombre..." aria-label="Buscar" style="display: none;">
+      <!-- El controlador muestra/oculta este bloque junto con el input -->
+      <div class="search-field ui-search account-search2" style="display: none;">
+        <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+        </svg>
+        <input id="search2" class="searchbar2" type="text" placeholder="Buscar contraseña por nombre…" aria-label="Buscar contraseñas">
+      </div>
 
       <ul id="password-list" class="password-list" aria-live="polite"></ul>
       <div class="pagination" style="display: none;">
@@ -347,5 +459,6 @@
   </div>
 
   <script type="module" src="/static/Scripts/inicioScriptAdmin/inicioadmin.js"></script>
+  <script type="module" src="/static/Scripts/inicioScriptAdmin/hubShortcuts.js"></script>
 </body>
 </html>

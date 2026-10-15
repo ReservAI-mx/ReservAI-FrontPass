@@ -507,3 +507,34 @@
   .tenant-item:hover { transform: none; }
   .tenant-skeleton { animation: none; }
 }
+
+/* ============================================================
+   Encabezado y barra compartidos (StylesUI.css)
+   ============================================================ */
+
+/* Color de la franja según el estado del tenant */
+.tenant-item--warn  { --accent: var(--ui-warn); }
+.tenant-item--info  { --accent: var(--ui-info); }
+.tenant-item--ok    { --accent: var(--ui-ok); }
+.tenant-item--error { --accent: var(--ui-error); }
+
+.tenant-item.ui-stripe { padding-left: 1.6rem; }
+
+/* Error de provisión visible sin tener que pasar el mouse por "Reintentar" */
+.tenant-item__error {
+  display: block;
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.28);
+  color: #ffb4b4;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-toolbar .ui-search { flex: 1 1 260px; }

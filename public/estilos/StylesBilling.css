@@ -1249,3 +1249,37 @@ body {
   #onboardHole { animation: none; }
   #onboardCard { animation: none; }
 }
+
+
+/* ---------- Ícono del encabezado (mismo cuadro que en las pantallas de admin) ---------- */
+
+.billing-info--icono {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.9rem;
+  align-items: center;
+}
+
+.billing-info--icono > :not(.billing-icono) { grid-column: 2; }
+
+.billing-icono {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(140deg, rgba(9, 131, 214, 0.35), rgba(9, 131, 214, 0.08));
+  border: 1px solid rgba(9, 131, 214, 0.5);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(9, 131, 214, 0.25);
+}
+
+.billing-icono svg { width: 24px; height: 24px; }
+
+.billing-info--icono h1 { margin-bottom: 0.15rem; }
+
+@media (max-width: 600px) {
+  .billing-icono { width: 40px; height: 40px; border-radius: 12px; }
+  .billing-icono svg { width: 20px; height: 20px; }
+}

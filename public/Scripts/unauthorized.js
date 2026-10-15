@@ -18,6 +18,16 @@ const next = kbLogin(new URLSearchParams(window.location.search).get('next') || 
 const dest = next || '/login';
 const link = document.getElementById('backLink');
 if (link) link.href = dest;
+
+const ESPERA_S = 3;
+const cuentaEl = document.getElementById('cuentaTexto');
+let restante = ESPERA_S;
+const tick = setInterval(() => {
+  restante -= 1;
+  if (cuentaEl && restante > 0) cuentaEl.textContent = `Te llevamos al login en ${restante} s…`;
+  if (restante <= 0) clearInterval(tick);
+}, 1000);
+
 setTimeout(() => {
   window.location.replace(dest);
-}, 3000);
+}, ESPERA_S * 1000);

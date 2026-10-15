@@ -16,7 +16,20 @@ export function renderList(passwords, listEl) {
 
 
     if (!passwords || passwords.length === 0) {
-        listEl.innerHTML = '<li class="empty">No se encontraron contraseñas.</li>';
+        const buscando = Boolean(document.getElementById('search')?.value.trim());
+        listEl.innerHTML = `<li class="ui-empty">
+            <span class="ui-empty__icono ui-empty__icono--neutral" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+                    <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+                </svg>
+            </span>
+            <span class="ui-empty__titulo">${buscando ? 'Sin coincidencias' : 'Tu bóveda está vacía'}</span>
+            <span class="ui-empty__sub">${buscando
+                ? 'Ninguna contraseña coincide con la búsqueda.'
+                : 'Usa el botón + para guardar tu primera contraseña.'}</span>
+        </li>`;
         return;
     }
 

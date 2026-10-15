@@ -2,6 +2,7 @@ import { goLogout, requireAdminSession } from '../api.js';
 import SessionStorageManager from '../AppStorage.js';
 import { setupAccountMenu } from '../accountMenu.js';
 import { setButtonLoading, shakeElement } from '../buttonLoading.js';
+import { bindSearchShortcut } from '../uiShell.js';
 import {
   fetchInvitations,
   createInvitation,
@@ -123,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
           data-id="${id}" data-email="${correo}">Revocar</button>`);
     }
 
-    return `<li class="invitation-item" data-estado="${estado}" data-id="${id}">
+    return `<li class="invitation-item ui-stripe" data-estado="${estado}" data-id="${id}">
       <span class="invitation-item__avatar" aria-hidden="true">${escapa(iniciales(inv.email))}</span>
       <span class="invitation-item__body">
         <span class="invitation-item__email">${correo}</span>
@@ -303,6 +304,12 @@ document.addEventListener('DOMContentLoaded', () => {
   nuevoRol.addEventListener('change', pintarRol);
   labelClient.addEventListener('click', () => { nuevoRol.checked = false; pintarRol(); });
   labelAdmin.addEventListener('click', () => { nuevoRol.checked = true; pintarRol(); });
+
+  // El botón del encabezado abre el mismo flujo que el grande de abajo.
+  document.getElementById('nuevaInvitacionHeadBtn').addEventListener('click', () => {
+    document.getElementById('nuevaInvitacionBtn').click();
+  });
+  bindSearchShortcut(searchEl);
 
   document.getElementById('nuevaInvitacionBtn').addEventListener('click', () => {
     crearForm.reset();

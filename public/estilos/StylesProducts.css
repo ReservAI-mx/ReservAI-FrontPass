@@ -116,3 +116,18 @@
   font-size: 0.85rem;
   opacity: 0.75;
 }
+
+/* ---------- Encabezado, KPIs y franja (StylesUI.css) ---------- */
+
+.ui-kpis--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ui-kpis--4 .ui-kpi { min-height: 92px; }
+
+.product-card.ui-stripe { padding-left: 1.6rem; }
+.product-card--active { --accent: var(--ui-ok); }
+.product-card--inactive { --accent: rgba(255, 255, 255, 0.25); }
+.product-card--inactive .product-card__title,
+.product-card--inactive .product-card__amounts { opacity: 0.6; }
+
+@media (max-width: 700px) {
+  .ui-kpis--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

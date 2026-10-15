@@ -1,37 +1,9 @@
 /* ============================================================
    Dashboard de invitaciones
    Hereda navbar, menú de cuenta, buscador y paginación de
-   StylesInicio.css; aquí va solo lo propio de esta pantalla.
+   StylesInicio.css y "Volver" de StylesUI.css; aquí va solo lo
+   propio de esta pantalla.
    ============================================================ */
-
-/* ---------- Volver ---------- */
-
-.volver {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  align-self: flex-start;
-  margin-bottom: 1.25rem;
-  padding: 0.6rem 1rem 0.6rem 0.75rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-light);
-  font-size: 0.94rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-}
-
-.volver svg { width: 18px; height: 18px; }
-
-.volver:hover {
-  background: rgba(9, 131, 214, 0.14);
-  border-color: var(--primary);
-  transform: translateX(-2px);
-}
-
-.volver:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 
 /* ---------- Resumen por estado ---------- */
 
@@ -530,3 +502,14 @@
   .volver:hover { transform: none; }
   .add-invitation:hover .add-invitation__icon { transform: none; }
 }
+
+/* ---------- Encabezado, KPIs y barra compartidos (StylesUI.css) ---------- */
+
+.ui-kpis .ui-kpi { min-height: 92px; }
+
+/* Franja por estado de la invitación */
+.invitation-item.ui-stripe { padding-left: 1.6rem; }
+.invitation-item[data-estado="pending"]  { --accent: var(--ui-warn); }
+.invitation-item[data-estado="accepted"] { --accent: var(--ui-ok); }
+.invitation-item[data-estado="expired"]  { --accent: var(--ui-purple); }
+.invitation-item[data-estado="revoked"]  { --accent: var(--ui-error); }
