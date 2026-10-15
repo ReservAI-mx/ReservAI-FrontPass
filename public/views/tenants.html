@@ -7,10 +7,11 @@
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
   <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="/static/estilos/StylesTenants.css" />
   <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
 </head>
-<body>
+<body class="ui-page">
   <div id="messageContainer" class="message-container"></div>
 
   <nav class="navbar">
@@ -90,38 +91,58 @@
       Volver a cuentas
     </a>
 
-    <div class="page-head">
-      <h2>Tenants</h2>
-      <span class="count-badge" id="totalTenants" hidden></span>
-    </div>
+    <header class="ui-head">
+      <div class="ui-head__titulo">
+        <span class="ui-head__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="4.5" width="17" height="6" rx="1.5"/>
+            <rect x="3.5" y="13.5" width="17" height="6" rx="1.5"/>
+            <path d="M7 7.5h.01M7 16.5h.01"/>
+          </svg>
+        </span>
+        <div>
+          <h2>Tenants <span class="count-badge" id="totalTenants" hidden></span></h2>
+          <p class="ui-head__sub">Instancias de cada cliente y en qué paso de la provisión van</p>
+        </div>
+      </div>
+      <div class="ui-head__acciones">
+        <button type="button" class="ui-icon-btn" id="reloadBtn" aria-label="Recargar" title="Recargar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>
+          </svg>
+        </button>
+      </div>
+    </header>
 
-    <!-- Filtros por estado: reemplazan al <select> -->
-    <div class="filtros" role="group" aria-label="Filtrar por estado">
-      <button type="button" class="filtro filtro--todos" data-status="all" aria-pressed="true">
-        <span class="filtro__punto" aria-hidden="true"></span>Todos
-      </button>
-      <button type="button" class="filtro filtro--pending" data-status="pending_provision" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>En provisión
-      </button>
-      <button type="button" class="filtro filtro--ready" data-status="ready_for_subscription" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>Lista para mensual
-      </button>
-      <button type="button" class="filtro filtro--active" data-status="active" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>Activo
-      </button>
-      <button type="button" class="filtro filtro--unpaid" data-status="unpaid" aria-pressed="false">
-        <span class="filtro__punto" aria-hidden="true"></span>Impago
-      </button>
-    </div>
+    <section class="ui-toolbar" aria-label="Filtros">
+      <div class="search-field ui-search">
+        <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+        </svg>
+        <input id="tenant-search" type="text" placeholder="Buscar por subdominio, cuenta o correo…"
+               aria-label="Buscar tenants" autocapitalize="none" spellcheck="false">
+        <kbd class="ui-kbd" aria-hidden="true">/</kbd>
+      </div>
 
-    <div class="search-field">
-      <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
-      </svg>
-      <input id="tenant-search" type="text" placeholder="Buscar por subdominio, cuenta o correo..."
-             aria-label="Buscar tenants" autocapitalize="none" spellcheck="false">
-    </div>
+      <div class="ui-seg" role="group" aria-label="Filtrar por estado" id="statusSeg">
+        <button type="button" class="ui-seg__btn" data-status="all" aria-pressed="true">Todos</button>
+        <button type="button" class="ui-seg__btn ui-seg__btn--warning" data-status="pending_provision" aria-pressed="false">
+          <span class="ui-dot" aria-hidden="true"></span>En provisión
+        </button>
+        <button type="button" class="ui-seg__btn ui-seg__btn--info" data-status="ready_for_subscription" aria-pressed="false">
+          <span class="ui-dot" aria-hidden="true"></span>Lista para mensual
+        </button>
+        <button type="button" class="ui-seg__btn ui-seg__btn--ok" data-status="active" aria-pressed="false">
+          <span class="ui-dot" aria-hidden="true"></span>Activo
+        </button>
+        <button type="button" class="ui-seg__btn ui-seg__btn--error" data-status="unpaid" aria-pressed="false">
+          <span class="ui-dot" aria-hidden="true"></span>Impago
+        </button>
+      </div>
+    </section>
 
     <p class="lista-error" id="listaError" role="alert"></p>
 
