@@ -51,7 +51,8 @@
 
 .ui-head__icono svg { width: 24px; height: 24px; }
 
-.ui-head h2 {
+.ui-head h2,
+.ui-head__h1 {
   margin: 0;
   font-size: 1.6rem;
   font-weight: 700;
@@ -62,7 +63,8 @@
   gap: 0.6rem;
 }
 
-.ui-head h2 .count-badge { font-size: 0.75rem; }
+.ui-head h2 .count-badge,
+.ui-head__h1 .count-badge { font-size: 0.75rem; }
 
 .ui-head__sub {
   margin-top: 0.15rem;
@@ -337,6 +339,20 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* StylesInicio.css estiliza estos buscadores por id (gana en especificidad);
+   dentro de la barra se igualan al resto. */
+.ui-search #account-search,
+.ui-search #search,
+.ui-search #search2 {
+  min-height: 42px;
+  margin: 0;
+  padding: 0 2.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--bg-dark);
+  font-size: 0.92rem;
+}
+
 .ui-search input::placeholder { color: var(--text-gray); }
 
 .ui-search input:focus {
@@ -547,6 +563,7 @@
 .ui-empty .ui-btn { margin-top: 0.6rem; }
 
 .ui-btn {
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -628,10 +645,149 @@
   opacity: 0.85;
 }
 
+/* ---------- Volver ---------- */
+
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  margin-bottom: 1.25rem;
+  padding: 0.6rem 1rem 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-light);
+  font-size: 0.94rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.volver svg { width: 18px; height: 18px; }
+
+.volver:hover {
+  background: rgba(9, 131, 214, 0.14);
+  border-color: var(--primary);
+  transform: translateX(-2px);
+}
+
+.volver:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+/* ---------- Accesos rápidos (inicio de admin) ---------- */
+
+.ui-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.ui-shortcut {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 76px;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-card);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  color: var(--text-light);
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.ui-shortcut:hover {
+  border-color: rgba(9, 131, 214, 0.55);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(9, 131, 214, 0.18);
+}
+
+.ui-shortcut:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.ui-shortcut__icono {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: rgba(9, 131, 214, 0.16);
+  border: 1px solid rgba(9, 131, 214, 0.35);
+  color: var(--primary);
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.ui-shortcut__icono svg { width: 20px; height: 20px; }
+
+.ui-shortcut:hover .ui-shortcut__icono { background: var(--primary); color: #fff; }
+
+.ui-shortcut__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.ui-shortcut__titulo { font-size: 0.98rem; font-weight: 700; }
+
+.ui-shortcut__hint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  color: var(--text-gray);
+}
+
+/* Indicador en la esquina: verde si todo bien, rojo si hay pendientes */
+.ui-shortcut__badge {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #0b2a16;
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  color: var(--ui-ok);
+}
+
+.ui-shortcut__badge.is-alert {
+  background: #2a0b0b;
+  border-color: rgba(255, 107, 107, 0.55);
+  color: var(--ui-error);
+}
+
+/* ---------- Cargando (texto con spinner) ---------- */
+
+.ui-loading {
+  margin: 1.5rem 0;
+  text-align: center;
+  color: var(--text-gray);
+  font-size: 0.92rem;
+}
+
+.ui-loading__spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 0.5rem;
+  vertical-align: -3px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--primary);
+  animation: ui-spin 0.8s linear infinite;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1200px) {
   .ui-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ui-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 700px) {
@@ -639,7 +795,9 @@
   .ui-kpi--todos { grid-column: 1 / -1; }
   .ui-kpi { min-height: 96px; }
   .ui-kpi__num { font-size: 1.6rem; }
-  .ui-head h2 { font-size: 1.3rem; }
+  .ui-head h2,
+  .ui-head__h1 { font-size: 1.3rem; }
+  .ui-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ui-head__sub { display: none; }
   .ui-toolbar { padding: 0.6rem; }
   .ui-seg { width: 100%; overflow-x: auto; }
@@ -655,4 +813,54 @@
   .ui-live__punto::after,
   .ui-icon-btn.is-spinning svg,
   .ui-btn.is-loading svg { animation: none; }
+}
+
+/* ---------- Detalle de cuenta (modal de pantalla completa en inicio de admin) ---------- */
+
+.modal-full-header .back-btn.volver {
+  margin-bottom: 0;
+  font-size: 0.94rem;
+}
+
+.account-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.account-head__avatar { width: 42px; height: 42px; }
+
+.account-head__texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.account-head__nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.account-head__nombre:empty { display: none; }
+
+.account-head #accountEmailTitle {
+  max-width: none;
+  font-size: 0.85rem;
+  color: var(--text-gray);
+}
+
+.account-search2 {
+  flex: none;
+  margin-bottom: 1rem;
+}
+
+.ui-empty__icono--neutral {
+  background: rgba(9, 131, 214, 0.12);
+  border-color: rgba(9, 131, 214, 0.35);
+  color: var(--primary);
 }
