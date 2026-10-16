@@ -31,7 +31,66 @@ const els = {
   prev: document.getElementById('paymentsPrev'),
   next: document.getElementById('paymentsNext'),
   pageInfo: document.getElementById('paymentsPageInfo'),
+  kpis: document.getElementById('paymentsKpis'),
+  kpiTotal: document.getElementById('kpiTotal'),
+  kpiFacturados: document.getElementById('kpiFacturados'),
+  kpiFacturables: document.getElementById('kpiFacturables'),
 };
+
+/** Estados de Stripe → etiqueta en español y color del chip. */
+const ESTADOS_PAGO = {
+  succeeded: { label: 'Pagado', mod: 'ok' },
+  paid: { label: 'Pagado', mod: 'ok' },
+  complete: { label: 'Pagado', mod: 'ok' },
+  pending: { label: 'Pendiente', mod: 'warn' },
+  processing: { label: 'En proceso', mod: 'warn' },
+  requires_payment_method: { label: 'Requiere pago', mod: 'warn' },
+  failed: { label: 'Fallido', mod: 'error' },
+  canceled: { label: 'Cancelado', mod: 'neutral' },
+  refunded: { label: 'Reembolsado', mod: 'purple' },
+};
+
+const ICONOS = {
+  ticket: '<path d="M6.5 3.5h11v17l-2.75-1.75L12 20.5l-2.75-1.75L6.5 20.5z"/><path d="M9.5 8h5M9.5 11.5h5"/>',
+  pdf: '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4"/>',
+  xml: '<path d="m8.5 9-3 3 3 3M15.5 9l3 3-3 3"/>',
+  factura: '<path d="M12 5.5v13M5.5 12h13"/>',
+};
+
+function icono(nombre) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = ICONOS[nombre] || '';
+  return svg;
+}
+
+function botonAccion(texto, nombreIcono, clase, onClick) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  if (clase) btn.className = clase;
+  btn.appendChild(icono(nombreIcono));
+  btn.appendChild(document.createTextNode(texto));
+  btn.addEventListener('click', onClick);
+  return btn;
+}
+
+function pintarKpis(payments) {
+  if (!els.kpis) return;
+  els.kpis.hidden = total === 0;
+  if (els.kpiTotal) els.kpiTotal.textContent = String(total);
+  if (els.kpiFacturados) els.kpiFacturados.textContent = String(payments.filter((p) => p.invoice_id).length);
+  if (els.kpiFacturables) els.kpiFacturables.textContent = String(payments.filter((p) => p.can_invoice && !p.invoice_id).length);
+  // Con varias páginas, facturados/por facturar solo cuentan la visible.
+  els.kpis.querySelectorAll('[data-alcance]').forEach((el) => {
+    el.textContent = total > PAGE_SIZE ? 'en esta página' : 'con CFDI emitido';
+  });
+}
 
 let offset = 0;
 let total = 0;
@@ -89,10 +148,23 @@ function formatDate(value) {
   });
 }
 
+const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+
 function formatAmount(amount) {
   const n = Number(amount);
   if (!Number.isFinite(n)) return '—';
-  return `MXN ${n.toFixed(2)}`;
+  return moneda.format(n);
+}
+
+/** Fecha y hora por separado, para mostrarlas en dos líneas. */
+function formatDateParts(value) {
+  const d = value ? new Date(value) : null;
+  if (!d || Number.isNaN(d.getTime())) return { fecha: formatDate(value), hora: '' };
+  const tz = { timeZone: 'America/Mexico_City' };
+  return {
+    fecha: d.toLocaleDateString('es-MX', { ...tz, day: 'numeric', month: 'short', year: 'numeric' }),
+    hora: d.toLocaleTimeString('es-MX', { ...tz, hour: '2-digit', minute: '2-digit' }),
+  };
 }
 
 function blockedLabel(reason) {
@@ -118,37 +190,20 @@ function renderRows(payments) {
     actions.className = 'payments-actions';
 
     if (p.ticket_available) {
-      const ticketBtn = document.createElement('button');
-      ticketBtn.type = 'button';
-      ticketBtn.textContent = 'Ticket';
-      ticketBtn.addEventListener('click', () => {
+      actions.appendChild(botonAccion('Ticket', 'ticket', '', () => {
         openBillingPath(`/billing/tickets/${encodeURIComponent(p.id)}/pdf`);
-      });
-      actions.appendChild(ticketBtn);
+      }));
     }
 
     if (p.invoice_id) {
-      const pdfBtn = document.createElement('button');
-      pdfBtn.type = 'button';
-      pdfBtn.textContent = 'PDF CFDI';
-      pdfBtn.addEventListener('click', () => {
+      actions.appendChild(botonAccion('PDF CFDI', 'pdf', '', () => {
         openBillingPath(`/billing/invoices/${encodeURIComponent(p.invoice_id)}/pdf`);
-      });
-      actions.appendChild(pdfBtn);
-
-      const xmlBtn = document.createElement('button');
-      xmlBtn.type = 'button';
-      xmlBtn.textContent = 'XML';
-      xmlBtn.addEventListener('click', () => {
+      }));
+      actions.appendChild(botonAccion('XML', 'xml', '', () => {
         openBillingPath(`/billing/invoices/${encodeURIComponent(p.invoice_id)}/xml`);
-      });
-      actions.appendChild(xmlBtn);
+      }));
     } else if (p.can_invoice) {
-      const invBtn = document.createElement('button');
-      invBtn.type = 'button';
-      invBtn.className = 'btn-invoice';
-      invBtn.textContent = 'Solicitar factura';
-      invBtn.addEventListener('click', () => requestInvoice(p.id, invBtn));
+      const invBtn = botonAccion('Solicitar factura', 'factura', 'btn-invoice', () => requestInvoice(p.id, invBtn));
       actions.appendChild(invBtn);
     }
 
@@ -162,11 +217,38 @@ function renderRows(payments) {
       actionsCell.appendChild(hintEl);
     }
 
-    tr.innerHTML = `
-      <td>${formatDate(p.created_at)}</td>
-      <td>${formatAmount(p.amount)}</td>
-      <td>${p.status || '—'}</td>
-    `;
+    // textContent en todo lo que viene del API.
+    const { fecha, hora } = formatDateParts(p.created_at);
+    const tdFecha = document.createElement('td');
+    const fechaEl = document.createElement('span');
+    fechaEl.className = 'pay-fecha';
+    fechaEl.textContent = fecha;
+    tdFecha.appendChild(fechaEl);
+    if (hora) {
+      const horaEl = document.createElement('span');
+      horaEl.className = 'pay-hora';
+      horaEl.textContent = hora;
+      tdFecha.appendChild(horaEl);
+    }
+
+    const tdMonto = document.createElement('td');
+    tdMonto.className = 'pay-monto';
+    tdMonto.textContent = formatAmount(p.amount);
+
+    const tdEstado = document.createElement('td');
+    const est = ESTADOS_PAGO[String(p.status || '').toLowerCase()] || { label: p.status || '—', mod: 'neutral' };
+    const chip = document.createElement('span');
+    chip.className = `fiscal-chip fiscal-chip--${est.mod}`;
+    chip.textContent = est.label;
+    tdEstado.appendChild(chip);
+    if (p.invoice_id) {
+      const fact = document.createElement('span');
+      fact.className = 'fiscal-chip fiscal-chip--info pay-facturado';
+      fact.textContent = 'Facturado';
+      tdEstado.appendChild(fact);
+    }
+
+    tr.append(tdFecha, tdMonto, tdEstado);
     tr.appendChild(actionsCell);
     els.body.appendChild(tr);
   }
@@ -242,6 +324,7 @@ async function loadPayments() {
     const payments = body.data || [];
     total = Number(body.total) || 0;
 
+    pintarKpis(payments);
     if (payments.length === 0) {
       if (els.empty) els.empty.hidden = false;
       if (els.table) els.table.hidden = true;
