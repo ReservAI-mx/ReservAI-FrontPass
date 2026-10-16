@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/static/estilos/StylesBilling.css" />
   <link rel="stylesheet" href="/static/estilos/StylesFiscal.css" />
   <link rel="stylesheet" href="/static/estilos/StylesPayments.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
@@ -89,12 +90,44 @@
       </div>
     </div>
 
-    <div id="paymentsLoading" class="fiscal-status" hidden>Cargando…</div>
-    <div id="paymentsError" class="fiscal-status fiscal-status--error" hidden></div>
+    <div id="paymentsLoading" class="ui-loading" role="status" hidden>
+      <span class="ui-loading__spinner" aria-hidden="true"></span>
+      Cargando tus cobros…
+    </div>
+    <div id="paymentsError" class="fiscal-status fiscal-status--error" role="alert" hidden></div>
     <div id="paymentsMessage" class="fiscal-status fiscal-status--ok" hidden></div>
 
+    <!-- Resumen: total del API; facturados y facturables, de la página visible -->
+    <div class="ui-kpis pay-kpis" id="paymentsKpis" hidden>
+      <div class="ui-kpi ui-kpi--todos">
+        <span class="ui-kpi__label">Cobros</span>
+        <span class="ui-kpi__num" id="kpiTotal">0</span>
+        <span class="ui-kpi__hint">en total</span>
+      </div>
+      <div class="ui-kpi ui-kpi--ok">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Facturados</span>
+        <span class="ui-kpi__num" id="kpiFacturados">0</span>
+        <span class="ui-kpi__hint" data-alcance>con CFDI emitido</span>
+      </div>
+      <div class="ui-kpi ui-kpi--warning">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Por facturar</span>
+        <span class="ui-kpi__num" id="kpiFacturables">0</span>
+        <span class="ui-kpi__hint">solo dentro del mes del cobro</span>
+      </div>
+    </div>
+
     <section class="fiscal-card payments-card">
-      <div id="paymentsEmpty" class="payments-empty" hidden>No hay cobros registrados.</div>
+      <div id="paymentsEmpty" class="ui-empty" hidden>
+        <span class="ui-empty__icono ui-empty__icono--neutral" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2"/><path d="M2.75 9.5h18.5M6.5 14.25h3.5"/>
+          </svg>
+        </span>
+        <span class="ui-empty__titulo">Aún no hay cobros</span>
+        <span class="ui-empty__sub">Cuando se cobre la instalación o la mensualidad de una sucursal aparecerá aquí con su ticket y, si la pides, su factura.</span>
+        <a class="ui-btn ui-btn--ghost" href="/billing">Ir a mis sucursales</a>
+      </div>
       <div class="payments-table-wrap">
         <table class="payments-table" id="paymentsTable" hidden>
           <thead>

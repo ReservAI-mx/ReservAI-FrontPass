@@ -69,6 +69,10 @@ const els = {
   disclaimer: document.getElementById('disclaimer'),
   disclaimerLabel: document.getElementById('disclaimerLabel'),
   saveBtn: document.getElementById('saveFiscalBtn'),
+  rfcEstado: document.getElementById('rfcEstado'),
+  pasos: document.getElementById('fiscalPasos'),
+  pasoSat: document.getElementById('fiscalPasoSat'),
+  guardarAyuda: document.getElementById('guardarAyuda'),
   toggleBtn: document.getElementById('toggleActiveBtn'),
   deleteBtn: document.getElementById('deleteFiscalBtn'),
 };
@@ -108,6 +112,44 @@ function showMessage(msg, type = 'success') {
 function syncSaveEnabled() {
   if (!els.saveBtn || !els.disclaimer) return;
   els.saveBtn.disabled = !els.disclaimer.checked;
+  if (els.guardarAyuda) els.guardarAyuda.hidden = els.disclaimer.checked;
+}
+
+/** Estado SAT del API → etiqueta, color del chip y texto del paso 2. */
+const SAT_ESTADOS = {
+  valid:   { label: 'SAT: validado',  mod: 'ok',      paso: 'Coincide con el SAT' },
+  pending: { label: 'SAT: pendiente', mod: 'warn',    paso: 'Validación pendiente' },
+  invalid: { label: 'SAT: rechazado', mod: 'error',   paso: 'El SAT rechazó los datos' },
+  error:   { label: 'SAT: sin validar', mod: 'error', paso: 'No se pudo validar; intenta de nuevo' },
+};
+
+/** Marca cada paso como hecho, actual o con problema. */
+function pintarPasos(data) {
+  if (!els.pasos) return;
+  const sat = data ? (data.sat_validation_status || 'pending') : null;
+  const estados = {
+    datos: data ? 'hecho' : 'actual',
+    sat: !data ? '' : sat === 'valid' ? 'hecho' : (sat === 'invalid' || sat === 'error') ? 'error' : 'actual',
+    activa: data && data.active ? 'hecho' : (data && sat === 'valid' ? 'actual' : ''),
+  };
+  els.pasos.querySelectorAll('[data-paso]').forEach((li) => {
+    li.dataset.estado = estados[li.dataset.paso] || '';
+  });
+  if (els.pasoSat) els.pasoSat.textContent = data ? (SAT_ESTADOS[sat]?.paso || sat) : 'Se valida al guardar';
+}
+
+/** Indica en vivo si el RFC tiene un formato válido. */
+function pintarEstadoRfc() {
+  if (!els.rfcEstado || !els.rfc) return;
+  const v = els.rfc.value.trim();
+  if (!v) {
+    els.rfcEstado.textContent = '';
+    els.rfcEstado.className = 'fiscal-campo__estado';
+    return;
+  }
+  const ok = RFC_RE.test(v);
+  els.rfcEstado.textContent = ok ? '✓ formato válido' : `${v.length}/12-13`;
+  els.rfcEstado.className = `fiscal-campo__estado ${ok ? 'is-ok' : 'is-pendiente'}`;
 }
 
 function regimenOptionsFor(isMoral) {
@@ -177,6 +219,7 @@ function formatSatDetail(detailRaw) {
 
 function fillForm(data) {
   current = data;
+  pintarPasos(data);
   if (!data) {
     els.meta.hidden = true;
     els.toggleBtn.hidden = true;
@@ -189,6 +232,7 @@ function fillForm(data) {
     if (els.uso) els.uso.value = 'G01';
     if (els.moral) els.moral.checked = false;
     populateRegimenSelect(false, '');
+    pintarEstadoRfc();
     syncSaveEnabled();
     return;
   }
@@ -202,9 +246,13 @@ function fillForm(data) {
   els.disclaimer.checked = false;
 
   els.meta.hidden = false;
-  els.activeBadge.textContent = data.active ? 'Activa' : 'Inactiva';
+  els.activeBadge.textContent = data.active ? 'Facturación activa' : 'Facturación inactiva';
+  els.activeBadge.className = `fiscal-chip fiscal-chip--${data.active ? 'ok' : 'neutral'}`;
   const satStatus = data.sat_validation_status || 'pending';
-  els.satBadge.textContent = `SAT: ${satStatus}`;
+  const satInfo = SAT_ESTADOS[satStatus] || { label: `SAT: ${satStatus}`, mod: 'neutral' };
+  els.satBadge.textContent = satInfo.label;
+  els.satBadge.className = `fiscal-chip fiscal-chip--${satInfo.mod}`;
+  pintarEstadoRfc();
 
   if (els.satDetail) {
     let sandboxNote = '';
@@ -232,7 +280,7 @@ function fillForm(data) {
   }
 
   els.toggleBtn.hidden = false;
-  els.toggleBtn.textContent = data.active ? 'Desactivar' : 'Activar';
+  els.toggleBtn.textContent = data.active ? 'Desactivar facturación' : 'Activar facturación';
   els.deleteBtn.hidden = false;
   syncSaveEnabled();
 }
@@ -270,6 +318,22 @@ els.razon?.addEventListener('input', () => {
 
 els.cp?.addEventListener('blur', () => {
   els.cp.value = sanitizeCp(els.cp.value);
+});
+
+// El CP solo admite dígitos; el RFC va en mayúsculas y muestra si su formato es válido.
+els.cp?.addEventListener('input', () => {
+  const limpio = els.cp.value.replace(/\D/g, '').slice(0, 5);
+  if (limpio !== els.cp.value) els.cp.value = limpio;
+});
+
+els.rfc?.addEventListener('input', () => {
+  const { selectionStart, selectionEnd } = els.rfc;
+  const upper = els.rfc.value.toUpperCase().replace(/\s/g, '');
+  if (upper !== els.rfc.value) {
+    els.rfc.value = upper;
+    els.rfc.setSelectionRange(selectionStart, selectionEnd);
+  }
+  pintarEstadoRfc();
 });
 
 els.moral?.addEventListener('change', () => {
@@ -314,8 +378,10 @@ els.form?.addEventListener('submit', async (e) => {
     return;
   }
 
-  const saveLabel = els.saveBtn.textContent;
+  // innerHTML: el botón lleva ícono y hay que restaurarlo completo.
+  const saveLabel = els.saveBtn.innerHTML;
   els.saveBtn.disabled = true;
+  els.saveBtn.classList.add('is-loading');
   els.saveBtn.textContent = 'Validando con SAT…';
   try {
     const res = await apiFetch('/billing/fiscal', {
@@ -371,7 +437,8 @@ els.form?.addEventListener('submit', async (e) => {
   } catch (err) {
     showError(err.message || 'Error al guardar');
   } finally {
-    els.saveBtn.textContent = saveLabel;
+    els.saveBtn.innerHTML = saveLabel;
+    els.saveBtn.classList.remove('is-loading');
     syncSaveEnabled();
   }
 });
