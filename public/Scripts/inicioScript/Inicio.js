@@ -9,6 +9,10 @@ const session = requireUiSession();
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!session) return; // requireUiSession ya redirigió
+    if (session.account_type === 'seller') {
+        window.location.href = '/invitations';
+        return;
+    }
 
     setupAccountMenu(session || SessionStorageManager.getSession());
     setupChangePassword();

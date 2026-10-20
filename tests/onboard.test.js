@@ -8,6 +8,10 @@ test('admin no redirige', () => {
   expect(shouldRedirectToBilling({ role: 'admin', dismissed: false, status: 404, setups: [] })).toBe(false);
 });
 
+test('seller no redirige', () => {
+  expect(shouldRedirectToBilling({ role: 'seller', dismissed: false, status: 404, setups: [] })).toBe(false);
+});
+
 test('dismissed no redirige', () => {
   expect(shouldRedirectToBilling({ role: 'client', dismissed: true, status: 404, setups: [] })).toBe(false);
 });

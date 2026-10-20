@@ -9,7 +9,8 @@ const ONBOARD_COPY = {
 };
 
 function shouldRedirectToBilling({ role, dismissed, status, setups }) {
-  if (String(role || '').toLowerCase() === 'admin' || dismissed) return false;
+  const tipo = String(role || '').toLowerCase();
+  if (tipo === 'admin' || tipo === 'seller' || dismissed) return false;
   if (status === 404) return true;
   if (status !== 200) return false;
   return !(setups && setups.length);

@@ -10,6 +10,9 @@ const BILLING_HEADERS = {
 };
 
 const session = requireUiSession();
+if (session && session.account_type === 'seller') {
+  window.location.href = '/invitations';
+}
 
 // Mapeo de iconos para diferentes planes
 const planIcons = {

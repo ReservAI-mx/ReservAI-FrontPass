@@ -30,15 +30,12 @@
         <p class="field-error" id="emailError" role="alert"></p>
 
         <div class="account-type">
-          <div class="account-type__control">
-            <span class="account-type__side is-active" id="labelClient">Cliente</span>
-            <label class="switch">
-              <input type="checkbox" id="accountType" role="switch"
-                     aria-label="Cambiar entre cuenta cliente y admin">
-              <span class="slider"></span>
-            </label>
-            <span class="account-type__side" id="labelAdmin">Admin</span>
-          </div>
+          <label class="account-type__title" for="accountType">Tipo de cuenta</label>
+          <select id="accountType">
+            <option value="client">Cliente</option>
+            <option value="admin">Admin</option>
+            <option value="seller">Vendedor</option>
+          </select>
         </div>
 
         <button type="submit" id="registerBtn" class="btn">Enviar invitación</button>

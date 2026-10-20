@@ -554,7 +554,16 @@ input:checked + .slider:before {
   user-select: none;
 }
 
-.account-type__side.is-active { color: var(--text-light); }
+.account-type select {
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--bg-card);
+  color: var(--text-light, #fff);
+  font-size: 1rem;
+}
 
 .account-type__hint {
   min-height: 1.2rem;

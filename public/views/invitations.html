@@ -31,7 +31,7 @@
       </button>
       <div class="dropdown" role="menu">
         <p class="dropdown__account" id="accountName"></p>
-        <a href="/inicioAdmin" role="menuitem">
+        <a href="/inicioAdmin" class="js-admin-only" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
@@ -39,7 +39,7 @@
           </svg>
           Gestión de cuentas
         </a>
-        <a href="/admin/tenants" role="menuitem">
+        <a href="/admin/tenants" class="js-admin-only" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3.75" y="5.25" width="16.5" height="13.5" rx="2"/>
@@ -47,27 +47,35 @@
           </svg>
           Tenants
         </a>
-        <a href="/admin/jobs" role="menuitem">
+        <a href="/admin/jobs" class="js-admin-only" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
           </svg>
           Jobs
         </a>
-        <a href="/admin/traces" role="menuitem">
+        <a href="/admin/traces" class="js-admin-only" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
           </svg>
           Traces
         </a>
-        <a href="/admin/products" role="menuitem">
+        <a href="/admin/products" class="js-admin-only" role="menuitem">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4.5 7.5 12 3.75 19.5 7.5 12 11.25 4.5 7.5z"/>
             <path d="M4.5 12 12 15.75 19.5 12M4.5 16.5 12 20.25 19.5 16.5"/>
           </svg>
           Productos
+        </a>
+        <a href="#" id="changePasswordLink" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Cambiar contraseña
         </a>
         <a href="#" id="logout" role="menuitem" class="dropdown__danger">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -82,7 +90,7 @@
   </nav>
 
   <main class="container">
-    <a class="volver" href="/inicioAdmin">
+    <a class="volver js-admin-only" href="/inicioAdmin">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M14.5 6.5 9 12l5.5 5.5"/>
@@ -178,16 +186,13 @@
           </div>
           <p class="field-error" id="nuevoEmailError" role="alert"></p>
 
-          <div class="account-type">
-            <div class="account-type__control">
-              <span class="account-type__side is-active" id="labelClient">Cliente</span>
-              <label class="switch">
-                <input type="checkbox" id="nuevoRol" role="switch"
-                       aria-label="Cambiar entre cuenta cliente y admin">
-                <span class="slider"></span>
-              </label>
-              <span class="account-type__side" id="labelAdmin">Admin</span>
-            </div>
+          <div class="account-type" id="rolGroup">
+            <label for="nuevoRol">Tipo de cuenta</label>
+            <select id="nuevoRol">
+              <option value="client">Cliente</option>
+              <option value="admin">Admin</option>
+              <option value="seller">Vendedor</option>
+            </select>
           </div>
         </form>
       </div>
@@ -218,6 +223,24 @@
         <button type="button" class="close-btn" data-cerrar="revocarModal">Cancelar</button>
         <button type="button" class="delete-btn" id="confirmarRevocarBtn">Revocar</button>
       </div>
+    </div>
+  </div>
+
+  <div id="changePasswordModal" class="modalcreate">
+    <div class="modal-content2">
+      <div class="modal-header2">
+        <span class="closecreate" data-close="changePasswordModal" aria-label="Cerrar">&times;</span>
+        <h2>Cambiar contraseña</h2>
+      </div>
+      <form id="changePasswordForm">
+        <input type="password" id="currentPassword" placeholder="Contraseña actual" autocomplete="current-password">
+        <input type="password" id="newPassword" placeholder="Nueva contraseña" autocomplete="new-password">
+        <input type="password" id="confirmNewPassword" placeholder="Confirmar nueva contraseña" autocomplete="new-password">
+        <p class="error-message" id="changePasswordError"></p>
+        <div class="modal-actions2">
+          <button type="submit" class="close-btn">Guardar</button>
+        </div>
+      </form>
     </div>
   </div>
 

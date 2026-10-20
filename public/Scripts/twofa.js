@@ -57,6 +57,10 @@ async function goHome() {
     window.location.href = '/inicioAdmin';
     return;
   }
+  if (type === 'seller') {
+    window.location.href = '/invitations';
+    return;
+  }
   let dest = '/inicio';
   try {
     const onboard = globalThis.PassOnboard;

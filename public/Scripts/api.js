@@ -31,6 +31,16 @@ export function requireAdminSession() {
   const session = requireUiSession();
   if (!session) return null;
   if (session.account_type !== 'admin') {
+    window.location.href = session.account_type === 'seller' ? '/invitations' : '/inicio';
+    return null;
+  }
+  return session;
+}
+
+export function requireInvitationSession() {
+  const session = requireUiSession();
+  if (!session) return null;
+  if (session.account_type !== 'admin' && session.account_type !== 'seller') {
     window.location.href = '/inicio';
     return null;
   }

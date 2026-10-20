@@ -1,6 +1,7 @@
-import { goLogout, requireAdminSession } from '../api.js';
+import { goLogout, requireInvitationSession } from '../api.js';
 import SessionStorageManager from '../AppStorage.js';
 import { setupAccountMenu } from '../accountMenu.js';
+import { setupChangePassword } from '../changePassword.js';
 import { setButtonLoading, shakeElement } from '../buttonLoading.js';
 import {
   fetchInvitations,
@@ -20,7 +21,14 @@ import {
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const DEBOUNCE_MS = 350;
 
-const session = requireAdminSession();
+const session = requireInvitationSession();
+const esVendedor = session && session.account_type === 'seller';
+
+function etiquetaRol(role) {
+  if (role === 'admin') return 'administrador';
+  if (role === 'seller') return 'vendedor';
+  return 'cliente';
+}
 
 function escapa(valor) {
   return String(valor ?? '')
@@ -55,9 +63,17 @@ function aviso(texto, tipo = 'info', duracion = 3800) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!session) return; // requireAdminSession ya redirigió
+  if (!session) return; // requireInvitationSession ya redirigió
 
   setupAccountMenu(session);
+  setupChangePassword();
+  if (esVendedor) {
+    document.querySelectorAll('.js-admin-only').forEach((el) => { el.hidden = true; });
+    const logo = document.querySelector('.logo-text');
+    if (logo) logo.textContent = 'ReservAI';
+    const rolGroup = document.getElementById('rolGroup');
+    if (rolGroup) rolGroup.hidden = true;
+  }
 
   const listaEl = document.getElementById('invitation-list');
   const searchEl = document.getElementById('search');
@@ -103,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const estado = estadoEfectivo(inv);
     const id = escapa(inv.id ?? inv.invitation_id ?? '');
     const correo = escapa(inv.email || 'Sin correo');
-    const rol = String(inv.role || '').toLowerCase() === 'admin' ? 'Admin' : 'Cliente';
+    const rol = etiquetaRol(String(inv.role || '').toLowerCase());
 
     const vence = estado === 'pending'
       ? `Vence ${tiempoRelativo(inv.expires_at)}`
@@ -293,20 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const nuevoEmailError = document.getElementById('nuevoEmailError');
   const nuevoRol = document.getElementById('nuevoRol');
   const enviarBtn = document.getElementById('enviarInvitacionBtn');
-  const labelClient = document.getElementById('labelClient');
-  const labelAdmin = document.getElementById('labelAdmin');
-
-  function pintarRol() {
-    labelClient.classList.toggle('is-active', !nuevoRol.checked);
-    labelAdmin.classList.toggle('is-active', nuevoRol.checked);
-  }
-  nuevoRol.addEventListener('change', pintarRol);
-  labelClient.addEventListener('click', () => { nuevoRol.checked = false; pintarRol(); });
-  labelAdmin.addEventListener('click', () => { nuevoRol.checked = true; pintarRol(); });
 
   document.getElementById('nuevaInvitacionBtn').addEventListener('click', () => {
     crearForm.reset();
-    pintarRol();
     nuevoEmailError.textContent = '';
     nuevoEmail.closest('.input-group').classList.remove('has-error');
     abrirModal('crearModal');
@@ -332,12 +337,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const role = nuevoRol.checked ? 'admin' : 'client';
+    const role = esVendedor ? 'client' : (nuevoRol.value || 'client');
     setButtonLoading(enviarBtn, true, 'Enviando...');
     try {
       await createInvitation({ email, role });
       cerrarModal('crearModal');
-      aviso(`Invitación enviada a ${email} como ${role === 'admin' ? 'administrador' : 'cliente'}`, 'success', 4500);
+      aviso(`Invitación enviada a ${email} como ${etiquetaRol(role)}`, 'success', 4500);
       searchEl.value = '';
       busqueda = '';
       filtro = 'todas';

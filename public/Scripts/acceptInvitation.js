@@ -27,7 +27,7 @@ function traducir(mensaje) {
 
 function roleFromQuery() {
   const role = new URLSearchParams(window.location.search).get('role');
-  return role === 'admin' ? 'admin' : role === 'client' ? 'client' : null;
+  return role === 'admin' || role === 'client' || role === 'seller' ? role : null;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // El rol viene en la query; sin él se prueban los dos, como antes.
     const preferido = roleFromQuery();
-    const intentos = preferido ? [preferido] : ['client', 'admin'];
+    const intentos = preferido ? [preferido] : ['client', 'admin', 'seller'];
     let ultimoError = 'No se pudo crear la cuenta';
 
     setButtonLoading(submitBtn, true, 'Creando cuenta...');

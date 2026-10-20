@@ -393,7 +393,17 @@
 .modal-content--new .field-error:empty { display: none; }
 
 /* Switch de rol, igual que en la pantalla de invitar. */
-.account-type { display: flex; justify-content: center; margin: 1.5rem 0 0.25rem; }
+.account-type[hidden],
+.volver[hidden] { display: none; }
+.account-type { display: flex; flex-direction: column; gap: 0.4rem; margin: 1.5rem 0 0.25rem; }
+.account-type label { color: var(--text-muted, #a0a0a0); font-size: 0.85rem; }
+.account-type select {
+  background: #101010;
+  color: #fff;
+  border: 1px solid #242424;
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+}
 .account-type__control { display: flex; align-items: center; gap: 1rem; }
 
 .account-type__side {

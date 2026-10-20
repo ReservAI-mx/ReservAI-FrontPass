@@ -16,15 +16,10 @@ export function setupAccountMenu(session) {
 
   // Facturación / fiscal / cobros se ocultan solo para admin.
   const rol = String(session?.account_type || '').trim().toLowerCase();
-  if (billingLink) {
-    billingLink.hidden = rol === 'admin';
-  }
-  if (fiscalLink) {
-    fiscalLink.hidden = rol === 'admin';
-  }
-  if (paymentsLink) {
-    paymentsLink.hidden = rol === 'admin';
-  }
+  const ocultarCobros = rol === 'admin' || rol === 'seller';
+  if (billingLink) billingLink.hidden = ocultarCobros;
+  if (fiscalLink) fiscalLink.hidden = ocultarCobros;
+  if (paymentsLink) paymentsLink.hidden = ocultarCobros;
 
   if (!profile || !btn) return;
 

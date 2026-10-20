@@ -41,6 +41,9 @@ function sanitizeCp(value) {
 }
 
 const session = requireUiSession();
+if (session && session.account_type === 'seller') {
+  window.location.href = '/invitations';
+}
 setupAccountMenu(session);
 
 const logout = document.getElementById('logout');

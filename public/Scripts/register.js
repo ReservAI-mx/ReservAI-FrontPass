@@ -48,24 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Switch de tipo de cuenta ---
   const accountType = document.getElementById('accountType');
-  const labelClient = document.getElementById('labelClient');
-  const labelAdmin = document.getElementById('labelAdmin');
 
   function rolSeleccionado() {
-    return accountType.checked ? 'admin' : 'client';
+    return accountType.value || 'client';
   }
-
-  function pintarRol() {
-    const rol = rolSeleccionado();
-    labelClient.classList.toggle('is-active', rol === 'client');
-    labelAdmin.classList.toggle('is-active', rol === 'admin');
-  }
-
-  accountType.addEventListener('change', pintarRol);
-  // Los rótulos también cambian el switch, para no obligar a atinarle.
-  labelClient.addEventListener('click', () => { accountType.checked = false; pintarRol(); });
-  labelAdmin.addEventListener('click', () => { accountType.checked = true; pintarRol(); });
-  pintarRol();
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -93,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setError(data.error || data.message || 'No se pudo enviar la invitación');
         return;
       }
-      const comoQue = role === 'admin' ? 'administrador' : 'cliente';
+      const comoQue = role === 'admin' ? 'administrador' : role === 'seller' ? 'vendedor' : 'cliente';
       showMessage(`Invitación enviada a ${email} como ${comoQue}`, 'success', 4500);
       emailInput.value = '';
       clearError();

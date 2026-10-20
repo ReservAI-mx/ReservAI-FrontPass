@@ -3,7 +3,7 @@ import { apiFetch } from "./api.js";
 
 function roleFromQuery() {
   const role = new URLSearchParams(window.location.search).get('role');
-  return role === 'admin' ? 'admin' : role === 'client' ? 'client' : null;
+  return role === 'admin' || role === 'client' || role === 'seller' ? role : null;
 }
 
 function consumeVerifyToken() {
