@@ -367,6 +367,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  pintarRol();
   cargar(1);
 });

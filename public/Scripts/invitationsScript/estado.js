@@ -22,13 +22,13 @@ export const ETIQUETAS = {
   expired: 'Vencida',
 };
 
-/** Reenviar: pending o expired. Revocar: solo pending vigente. */
+/** Reenviar y revocar: pending vigente o ya vencida. */
 export function puedeReenviar(estado) {
   return estado === 'pending' || estado === 'expired';
 }
 
 export function puedeRevocar(estado) {
-  return estado === 'pending';
+  return estado === 'pending' || estado === 'expired';
 }
 
 const DIA = 24 * 60 * 60 * 1000;

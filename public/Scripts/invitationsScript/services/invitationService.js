@@ -92,7 +92,7 @@ export async function revokeInvitation(id) {
   });
   if (!ok) {
     throw new Error(mensajeError(status, data, {
-      409: 'Solo se pueden revocar invitaciones pendientes y vigentes.',
+      409: 'Solo se pueden revocar invitaciones pendientes o vencidas.',
     }));
   }
   return data.data ?? data;
