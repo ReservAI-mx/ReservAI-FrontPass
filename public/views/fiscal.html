@@ -7,6 +7,7 @@
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesBilling.css" />
   <link rel="stylesheet" href="/static/estilos/StylesFiscal.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
@@ -76,7 +77,11 @@
     </a>
 
     <div class="billing-header">
-      <div class="billing-info">
+      <div class="billing-info billing-info--icono">
+        <span class="billing-icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.75h7.5L18.25 7.5V20.25a1.5 1.5 0 0 1-1.5 1.5H7.5a1.5 1.5 0 0 1-1.5-1.5V5.25a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M14.5 3.75V7.5H18.25M8.5 11h7M8.5 14.5h7M8.5 18h4.5"/></svg>
+        </span>
         <h1>Información fiscal</h1>
         <p class="billing-description">
           Datos para facturación CFDI. Eres responsable de proporcionar un RFC autorizado.
@@ -84,65 +89,121 @@
       </div>
     </div>
 
-    <div id="fiscalLoading" class="fiscal-status" hidden>Cargando…</div>
-    <div id="fiscalError" class="fiscal-status fiscal-status--error" hidden></div>
+    <div id="fiscalLoading" class="ui-loading" role="status" hidden>
+      <span class="ui-loading__spinner" aria-hidden="true"></span>
+      Cargando tu información fiscal…
+    </div>
+    <div id="fiscalError" class="fiscal-status fiscal-status--error" role="alert" hidden></div>
     <div id="fiscalMessage" class="fiscal-status fiscal-status--ok" hidden></div>
+
+    <!-- Progreso: capturado → validado SAT → facturación activa -->
+    <ol class="fiscal-pasos" id="fiscalPasos" aria-label="Progreso de tu información fiscal">
+      <li class="fiscal-paso" data-paso="datos">
+        <span class="fiscal-paso__num" aria-hidden="true">1</span>
+        <span class="fiscal-paso__texto">
+          <strong>Datos capturados</strong>
+          <span>RFC, razón social y régimen</span>
+        </span>
+      </li>
+      <li class="fiscal-paso" data-paso="sat">
+        <span class="fiscal-paso__num" aria-hidden="true">2</span>
+        <span class="fiscal-paso__texto">
+          <strong>Validado ante el SAT</strong>
+          <span id="fiscalPasoSat">Se valida al guardar</span>
+        </span>
+      </li>
+      <li class="fiscal-paso" data-paso="activa">
+        <span class="fiscal-paso__num" aria-hidden="true">3</span>
+        <span class="fiscal-paso__texto">
+          <strong>Facturación activa</strong>
+          <span>Podrás pedir CFDI de tus cobros</span>
+        </span>
+      </li>
+    </ol>
 
     <section class="fiscal-card" id="fiscalPanel">
       <div class="fiscal-meta" id="fiscalMeta" hidden>
-        <span id="fiscalActiveBadge"></span>
-        <span id="fiscalSatBadge"></span>
+        <span id="fiscalActiveBadge" class="fiscal-chip"></span>
+        <span id="fiscalSatBadge" class="fiscal-chip"></span>
       </div>
       <p id="fiscalSatDetail" class="fiscal-status fiscal-status--error" hidden></p>
 
       <form id="fiscalForm" class="fiscal-form" novalidate>
-        <label>
-          RFC
-          <input id="rfc" name="rfc" type="text" maxlength="13" autocomplete="off" required />
-        </label>
-        <label>
-          Razón social / Nombre
-          <input id="razon_social" name="razon_social" type="text" maxlength="300" required style="text-transform: uppercase" />
-        </label>
-        <label>
-          Código postal fiscal
-          <input id="codigo_postal" name="codigo_postal" type="text" maxlength="5" inputmode="numeric" required />
-        </label>
-        <label class="fiscal-check">
-          <input id="persona_moral" name="persona_moral" type="checkbox" />
-          Persona moral
-        </label>
-        <label>
-          Régimen fiscal
-          <select id="regimen_fiscal" name="regimen_fiscal" required>
-            <option value="">Selecciona régimen fiscal</option>
-          </select>
-        </label>
-        <label>
-          Uso CFDI
-          <input id="uso_cfdi" name="uso_cfdi" type="text" maxlength="10" value="G01" />
-        </label>
+        <div class="fiscal-grid">
+          <label class="fiscal-campo">
+            <span class="fiscal-campo__label">RFC <span class="fiscal-campo__estado" id="rfcEstado" aria-live="polite"></span></span>
+            <input id="rfc" name="rfc" type="text" maxlength="13" autocomplete="off" required
+                   autocapitalize="characters" spellcheck="false" placeholder="XAXX010101000"
+                   aria-describedby="rfcAyuda" />
+            <span class="fiscal-campo__ayuda" id="rfcAyuda">12 caracteres persona moral, 13 persona física</span>
+          </label>
+          <label class="fiscal-campo">
+            <span class="fiscal-campo__label">Código postal fiscal</span>
+            <input id="codigo_postal" name="codigo_postal" type="text" maxlength="5" inputmode="numeric"
+                   required placeholder="44100" aria-describedby="cpAyuda" />
+            <span class="fiscal-campo__ayuda" id="cpAyuda">El de tu Constancia de Situación Fiscal</span>
+          </label>
+          <label class="fiscal-campo fiscal-campo--ancho">
+            <span class="fiscal-campo__label">Razón social / Nombre</span>
+            <input id="razon_social" name="razon_social" type="text" maxlength="300" required
+                   style="text-transform: uppercase" placeholder="TAL COMO APARECE EN EL SAT, SIN RÉGIMEN SOCIETARIO" />
+          </label>
 
-        <p class="fiscal-disclaimer-note">
-          Al guardar, autorizas el uso de estos datos para emitir CFDI de los servicios ReservAI.
-          Debes contar con autorización del titular del RFC.
-        </p>
+          <label class="fiscal-switch fiscal-campo--ancho">
+            <input id="persona_moral" name="persona_moral" type="checkbox" role="switch" />
+            <span class="fiscal-switch__pista" aria-hidden="true"></span>
+            <span class="fiscal-switch__texto">
+              <strong>Persona moral</strong>
+              <span>Actívalo si facturas a nombre de una empresa; cambia los regímenes disponibles.</span>
+            </span>
+          </label>
 
-        <label class="fiscal-check fiscal-disclaimer">
-          <input id="disclaimer" name="disclaimer" type="checkbox" />
-          <span id="disclaimerLabel">
-            Confirmo que los datos fiscales proporcionados son correctos y que cuento con autorización
-            para utilizarlos para la emisión de CFDI relacionados con los servicios contratados con ReservAI.
-            Entiendo que es mi responsabilidad proporcionar información autorizada y que ReservAI no responde
-            por el uso de un RFC ajeno o no autorizado.
-          </span>
-        </label>
+          <label class="fiscal-campo">
+            <span class="fiscal-campo__label">Régimen fiscal</span>
+            <select id="regimen_fiscal" name="regimen_fiscal" required>
+              <option value="">Selecciona régimen fiscal</option>
+            </select>
+          </label>
+          <label class="fiscal-campo">
+            <span class="fiscal-campo__label">Uso CFDI</span>
+            <input id="uso_cfdi" name="uso_cfdi" type="text" maxlength="10" value="G01"
+                   list="usosCfdi" autocapitalize="characters" spellcheck="false" />
+            <datalist id="usosCfdi">
+              <option value="G01">Adquisición de mercancías</option>
+              <option value="G03">Gastos en general</option>
+              <option value="S01">Sin efectos fiscales</option>
+              <option value="CP01">Pagos</option>
+            </datalist>
+          </label>
+        </div>
+
+        <div class="fiscal-aviso">
+          <p class="fiscal-disclaimer-note">
+            Al guardar, autorizas el uso de estos datos para emitir CFDI de los servicios ReservAI.
+            Debes contar con autorización del titular del RFC.
+          </p>
+
+          <label class="fiscal-check fiscal-disclaimer">
+            <input id="disclaimer" name="disclaimer" type="checkbox" />
+            <span id="disclaimerLabel">
+              Confirmo que los datos fiscales proporcionados son correctos y que cuento con autorización
+              para utilizarlos para la emisión de CFDI relacionados con los servicios contratados con ReservAI.
+              Entiendo que es mi responsabilidad proporcionar información autorizada y que ReservAI no responde
+              por el uso de un RFC ajeno o no autorizado.
+            </span>
+          </label>
+        </div>
 
         <div class="fiscal-actions">
-          <button type="submit" id="saveFiscalBtn" class="btn-manage" disabled>Guardar</button>
-          <button type="button" id="toggleActiveBtn" class="btn-secondary" hidden>Activar</button>
-          <button type="button" id="deleteFiscalBtn" class="btn-danger" hidden>Eliminar</button>
+          <button type="submit" id="saveFiscalBtn" class="ui-btn ui-btn--primary" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5.5 12.5 4 4 9-9"/></svg>
+            Guardar y validar
+          </button>
+          <button type="button" id="toggleActiveBtn" class="ui-btn ui-btn--ghost" hidden>Activar</button>
+          <button type="button" id="deleteFiscalBtn" class="ui-btn fiscal-btn-danger" hidden>Eliminar</button>
         </div>
+        <p class="fiscal-guardar-ayuda" id="guardarAyuda">Marca la casilla de autorización para poder guardar.</p>
       </form>
     </section>
   </main>

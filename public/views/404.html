@@ -2,73 +2,36 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Página no encontrada - ReservAI</title>
-  <link rel="icon" type="image/x-icon" href="static/Images/ReservAiLogo.png" />
-  <link rel="stylesheet" href="static/estilos/Styles.css">
-  <style>
-    .login-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #0d1117;
-    }
-
-    .login-box {
-      background: #161b22;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-      padding: 2.5em 2em;
-      max-width: 350px;
-      width: 100%;
-      text-align: center;
-    }
-    .logo img {
-      width: 48px;
-      margin-bottom: 0.5em;
-    }
-    .logo h1 {
-      font-size: 1.5em;
-      color: #fff;
-      margin: 0;
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
-    .error-title {
-      font-size: 2.5em;
-      color: #ff5555;
-      margin-bottom: 0.3em;
-      font-weight: bold;
-    }
-    .error-msg {
-      color: #fff;
-      margin-bottom: 1.5em;
-      font-size: 1.1em;
-    }
-    .back-link {
-      color: #58a6ff;
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 1em;
-      transition: color 0.2s;
-    }
-    .back-link:hover {
-      color: #79c0ff;
-      text-decoration: underline;
-    }
-  </style>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/Styles.css">
+  <link rel="stylesheet" href="/static/estilos/StylesStatus.css">
 </head>
 <body>
   <div class="login-container">
-    <div class="login-box">
+    <div class="login-box status-box">
       <div class="logo">
-        <img src="static/Images/ReservAiLogo.png" alt="ReservAI Logo">
+        <img src="/static/Images/ReservAiLogo.png" alt="ReservAI Logo">
         <h1>ReservAI</h1>
       </div>
-      <div class="error-title">404</div>
-      <div class="error-msg">Página no encontrada</div>
-      <a href="/" class="back-link">Volver al inicio</a>
+
+      <span class="status-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/><path d="M9 9l4 4M13 9l-4 4"/>
+        </svg>
+      </span>
+      <p class="status-codigo">404</p>
+      <h2 class="status-titulo">Página no encontrada</h2>
+      <p class="status-msg">La dirección no existe o cambió de lugar. Revisa el enlace o vuelve al inicio.</p>
+
+      <div class="status-acciones">
+        <a href="/" class="loginbtn">Ir al inicio</a>
+        <button type="button" class="status-secundario" id="backBtn" hidden>Regresar a la página anterior</button>
+      </div>
     </div>
   </div>
+  <script src="/static/Scripts/notFound.js"></script>
 </body>
 </html>

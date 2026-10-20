@@ -97,3 +97,90 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+
+/* ============================================================
+   Rediseño: resumen, chips de estado y acciones con ícono
+   ============================================================ */
+
+.ui-kpis.pay-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pay-kpis .ui-kpi { cursor: default; min-height: 96px; }
+.pay-kpis .ui-kpi:hover { transform: none; border-color: rgba(255, 255, 255, 0.08); }
+
+.payments-card .ui-empty { border: none; padding: 2rem 1rem; }
+
+.payments-table td { padding: 0.9rem 0.6rem; }
+.payments-table tbody tr { transition: background 0.15s ease; }
+.payments-table tbody tr:hover { background: rgba(9, 131, 214, 0.06); }
+.payments-table tbody tr:last-child td { border-bottom: none; }
+
+.pay-fecha { display: block; font-weight: 600; }
+.pay-hora { display: block; font-size: 0.78rem; color: var(--text-gray); }
+
+.pay-monto {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.payments-table td .fiscal-chip + .fiscal-chip { margin-left: 0.35rem; }
+.fiscal-chip--info { --c: #7cc4f5; }
+.fiscal-chip--purple { --c: #a78bfa; }
+.pay-facturado::before { display: none; }
+
+.payments-actions button {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 32px;
+  border-radius: 8px !important;
+  background: transparent !important;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.payments-actions button svg { width: 15px; height: 15px; }
+
+.payments-actions button:hover:not(:disabled) {
+  background: rgba(9, 131, 214, 0.14) !important;
+  border-color: var(--primary) !important;
+}
+
+.payments-actions .btn-invoice {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  font-weight: 600;
+}
+
+.payments-actions .btn-invoice:hover:not(:disabled) { background: #15803d !important; border-color: #15803d !important; }
+
+.payments-hint {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  font-size: 0.74rem;
+}
+
+.payments-pager {
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-gray);
+  font-size: 0.85rem;
+}
+
+.payments-pager .btn-secondary:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: rgba(9, 131, 214, 0.14);
+}
+
+@media (max-width: 640px) {
+  .ui-kpis.pay-kpis { grid-template-columns: 1fr; }
+  .pay-kpis .ui-kpi--todos { grid-column: auto; }
+}
+
+/* Sin tabla, sin vacío y sin paginador (p. ej. tras un error): no dejar la tarjeta negra vacía */
+.payments-card:has(#paymentsTable[hidden]):has(#paymentsEmpty[hidden]):has(#paymentsPager[hidden]) {
+  display: none;
+}

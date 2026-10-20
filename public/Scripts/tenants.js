@@ -2,6 +2,7 @@ import SessionStorageManager from './AppStorage.js';
 import { apiFetch, goLogout, requireAdminSession } from './api.js';
 import { setupAccountMenu } from './accountMenu.js';
 import { setButtonLoading } from './buttonLoading.js';
+import { bindSearchShortcut, readQuery, writeQuery, syncPressed } from './uiShell.js';
 
 const session = requireAdminSession();
 const HEADERS = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
@@ -9,10 +10,10 @@ const DEBOUNCE_MS = 350;
 
 /** Estados que devuelve el API, con su etiqueta y su modificador de color. */
 const ESTADOS = {
-  pending_provision:     { label: 'En provisión',       mod: 'estado--pending' },
-  ready_for_subscription:{ label: 'Lista para mensual', mod: 'estado--ready' },
-  active:                { label: 'Activo',             mod: 'estado--active' },
-  unpaid:                { label: 'Impago',             mod: 'estado--unpaid' },
+  pending_provision:     { label: 'En provisión',       mod: 'estado--pending', accent: 'warn' },
+  ready_for_subscription:{ label: 'Lista para mensual', mod: 'estado--ready',   accent: 'info' },
+  active:                { label: 'Activo',             mod: 'estado--active',  accent: 'ok' },
+  unpaid:                { label: 'Impago',             mod: 'estado--unpaid',  accent: 'error' },
 };
 
 function escapeHtml(value) {
@@ -79,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const prevBtn = document.getElementById('prevTenant');
   const nextBtn = document.getElementById('nextTenant');
   const confirmarBorrarBtn = document.getElementById('confirmarBorrarBtn');
+  const reloadBtn = document.getElementById('reloadBtn');
+  const statusBtns = Array.from(document.querySelectorAll('#statusSeg .ui-seg__btn'));
 
   const logoutBtn = document.getElementById('logout');
   if (logoutBtn) {
@@ -93,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function filaTenant(row) {
     const id = escapeHtml(row.id);
     const subdomain = escapeHtml(row.subdomain || 'sin-subdominio');
-    const estado = ESTADOS[row.status] || { label: row.status || 'desconocido', mod: '' };
+    const estado = ESTADOS[row.status] || { label: row.status || 'desconocido', mod: '', accent: '' };
 
     const cuenta = row.account_name
       ? `<span class="tenant-item__cuenta">${escapeHtml(row.account_name)}</span>`
@@ -132,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
       : '<span class="accion-hueco accion-hueco--borrar" aria-hidden="true"></span>';
 
     return `
-      <li class="tenant-item">
+      <li class="tenant-item ui-stripe${estado.accent ? ` tenant-item--${estado.accent}` : ''}">
         <span class="tenant-item__avatar" aria-hidden="true">${escapeHtml(iniciales(row.subdomain))}</span>
         <span class="tenant-item__body">
           <span class="tenant-item__subdomain">${subdomain}</span>
@@ -141,6 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ${plan}
             ${fechaEl}
           </span>
+          ${row.provision_error
+            ? `<span class="tenant-item__error" title="${escapeHtml(row.provision_error)}">${escapeHtml(row.provision_error)}</span>`
+            : ''}
         </span>
         <span class="tenant-item__estado">
           <span class="estado ${estado.mod}">
@@ -226,6 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
     programarEsqueleto();
 
     const search = searchEl.value.trim() || 'all';
+    writeQuery({ status, q: searchEl.value.trim(), page }, { status: 'all', page: 1 });
+    reloadBtn.classList.add('is-spinning');
     const qs = new URLSearchParams({ page: String(page), search, status });
 
     let res;
@@ -236,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       cancelarEsqueleto();
       if (id !== cargaId) return;
+      reloadBtn.classList.remove('is-spinning');
       listaEl.innerHTML = '';
       errorEl.textContent = 'Error de red al cargar los tenants.';
       totalEl.hidden = true;
@@ -245,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cancelarEsqueleto();
     if (id !== cargaId) return; // ya hay una carga más reciente en curso
+    reloadBtn.classList.remove('is-spinning');
     await esperarMinimoEsqueleto();
     if (id !== cargaId) return;
 
@@ -507,15 +517,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ---------- Filtros, búsqueda y paginación ----------
 
-  document.querySelectorAll('.filtro').forEach((btn) => {
+  statusBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       status = btn.dataset.status;
-      document.querySelectorAll('.filtro').forEach((f) => {
-        f.setAttribute('aria-pressed', String(f === btn));
-      });
+      syncPressed(statusBtns, 'status', status);
       cargar(1);
     });
   });
+
+  reloadBtn.addEventListener('click', () => cargar());
+  bindSearchShortcut(searchEl);
 
   searchEl.addEventListener('input', () => {
     if (debounce) clearTimeout(debounce);
@@ -534,5 +545,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   nextBtn.addEventListener('click', () => cargar(page + 1));
 
-  cargar(1);
+  // Filtros desde la URL, para que un enlace abra la misma vista.
+  const inicial = readQuery(['status', 'q', 'page']);
+  if (inicial.status && (inicial.status === 'all' || ESTADOS[inicial.status])) status = inicial.status;
+  if (inicial.q) searchEl.value = inicial.q;
+  syncPressed(statusBtns, 'status', status);
+  cargar(Math.max(1, Number(inicial.page) || 1));
 });

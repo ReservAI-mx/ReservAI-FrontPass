@@ -351,6 +351,16 @@ export async function openAccountPasswordsModal(account) {
     const loadingEl = document.getElementById('passwords-loading');
 
     emailTitle.textContent = account.email || account.name || account.id;
+    // Nombre y avatar del encabezado (si el marcado los trae).
+    const nameTitle = document.getElementById('accountNameTitle');
+    const avatarTitle = document.getElementById('accountAvatarTitle');
+    const nombreCuenta = account.name || account.nombre || '';
+    if (nameTitle) nameTitle.textContent = nombreCuenta;
+    if (avatarTitle) {
+      avatarTitle.textContent = String(nombreCuenta || account.email || '?')
+        .trim().split(/[^A-Za-z0-9]+/).filter(Boolean).slice(0, 2)
+        .map((p) => p.charAt(0).toUpperCase()).join('') || '?';
+    }
 
     let currentPage = 1;
     let nextPage = null;
@@ -383,7 +393,9 @@ export async function openAccountPasswordsModal(account) {
             if (pageInfo) pageInfo.textContent = '';
         } finally {
             if (loadingEl) loadingEl.style.display = 'none';
-            const searchbar2 = document.getElementById('search2');
+            const searchInput2 = document.getElementById('search2');
+            // Se muestra/oculta el bloque completo (lupa incluida), no solo el input.
+            const searchbar2 = searchInput2 ? (searchInput2.closest('.account-search2') || searchInput2) : null;
             const pagination1 = document.querySelector('.pagination');
 
             if (pagination1 && passwordList.children.length > 0 && !passwordList.innerHTML.includes('Error')) {
@@ -392,7 +404,9 @@ export async function openAccountPasswordsModal(account) {
                 pagination1.style.display = 'none';
             }
 
-            if (searchbar2 && passwordList.children.length > 0 && !passwordList.innerHTML.includes('Error')) {
+            // Con búsqueda activa sin resultados el buscador sigue visible, para poder corregirla.
+            const buscando = Boolean(searchInput2 && searchInput2.value.trim());
+            if (searchbar2 && (buscando || passwordList.querySelector('.password-item')) && !passwordList.innerHTML.includes('Error')) {
                 searchbar2.style.display = 'block';
             } else if (searchbar2) {
                 searchbar2.style.display = 'none';
@@ -452,10 +466,12 @@ export async function openAccountPasswordsModal(account) {
             document.removeEventListener('click', accountContextMenuDocHandler);
             accountContextMenuDocHandler = null;
         }
-        const searchbar2 = document.getElementById('search2');
-        if (searchbar2){
+        const searchInput2 = document.getElementById('search2');
+        if (searchInput2){
+            // Se oculta el bloque (lupa incluida); el input queda visible dentro.
+            const searchbar2 = searchInput2.closest('.account-search2') || searchInput2;
             searchbar2.style.display = 'none';
-            searchbar2.value = '';
+            searchInput2.value = '';
         }
         const pagination1 = document.querySelector('.pagination');
         if (pagination1) pagination1.style.display = 'none';

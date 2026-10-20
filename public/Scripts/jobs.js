@@ -1,6 +1,8 @@
 import { apiFetch, goLogout, requireAdminSession } from './api.js';
 import { setupAccountMenu } from './accountMenu.js';
 import { setButtonLoading } from './buttonLoading.js';
+import { bindSearchShortcut, syncPressed } from './uiShell.js';
+import { showToast } from './toast.js';
 
 const session = requireAdminSession();
 
@@ -8,13 +10,16 @@ const HEADERS = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHt
 const DEBOUNCE_MS = 350;
 const DEFAULT_STATUS = 'failed,dead';
 const DEFAULT_ACTION = 'all';
+const LIVE_KEY = 'jobs.live';
+const LIVE_EVERY_MS = 15 * 1000;
+const KPI_STATUSES = ['failed,dead', 'queued', 'in_flight', 'succeeded', 'all'];
 
 const ESTADOS = {
-  queued: { label: 'En cola', mod: 'estado--pending' },
-  in_flight: { label: 'En vuelo', mod: 'estado--ready' },
-  succeeded: { label: 'OK', mod: 'estado--active' },
-  failed: { label: 'Fallido', mod: 'estado--unpaid' },
-  dead: { label: 'Dead', mod: 'estado--unpaid' },
+  queued: { label: 'En cola', mod: 'estado--pending', accent: 'warn' },
+  in_flight: { label: 'En vuelo', mod: 'estado--ready', accent: 'info' },
+  succeeded: { label: 'OK', mod: 'estado--active', accent: 'ok' },
+  failed: { label: 'Fallido', mod: 'estado--unpaid', accent: 'error' },
+  dead: { label: 'Dead', mod: 'estado--unpaid', accent: 'error' },
 };
 
 const ACTIONS = {
@@ -67,24 +72,22 @@ function readUrlState() {
 }
 
 function writeUrlState({ page, status, action, search }) {
+  // Solo lo que difiere del default, para que el enlace limpio siga igual.
   const params = new URLSearchParams();
-  params.set('page', String(page || 1));
-  params.set('status', status || DEFAULT_STATUS);
-  params.set('action', action || DEFAULT_ACTION);
-  params.set('search', search || '');
-  const next = `${window.location.pathname}?${params.toString()}`;
+  if (page > 1) params.set('page', String(page));
+  if (status && status !== DEFAULT_STATUS) params.set('status', status);
+  if (action && action !== DEFAULT_ACTION) params.set('action', action);
+  if (search) params.set('search', search);
+  const qs = params.toString();
+  const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
   if (`${window.location.pathname}${window.location.search}` !== next) {
     window.history.replaceState(null, '', next);
   }
 }
 
 function syncFilterButtons(status, action) {
-  document.querySelectorAll('.filtros[aria-label="Filtrar por estado"] .filtro').forEach((btn) => {
-    btn.setAttribute('aria-pressed', btn.dataset.status === status ? 'true' : 'false');
-  });
-  document.querySelectorAll('.filtros--action .filtro').forEach((btn) => {
-    btn.setAttribute('aria-pressed', btn.dataset.action === action ? 'true' : 'false');
-  });
+  syncPressed(document.querySelectorAll('.ui-kpi[data-status]'), 'status', status);
+  syncPressed(document.querySelectorAll('#actionSeg .ui-seg__btn'), 'action', action);
 }
 
 let page = 1;
@@ -105,6 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const infoEl = document.getElementById('pageinfoJob');
   const prevBtn = document.getElementById('prevJob');
   const nextBtn = document.getElementById('nextJob');
+  const reloadBtn = document.getElementById('reloadBtn');
+  const liveBtn = document.getElementById('liveBtn');
+  const updatedEl = document.getElementById('updatedLabel');
+  let lastUpdated = 0;
+  let liveTimer = null;
 
   const initial = readUrlState();
   page = initial.page;
@@ -121,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  document.querySelectorAll('.filtros[aria-label="Filtrar por estado"] .filtro').forEach((btn) => {
+  document.querySelectorAll('.ui-kpi[data-status]').forEach((btn) => {
     btn.addEventListener('click', () => {
       status = btn.dataset.status;
       page = 1;
@@ -130,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.querySelectorAll('.filtros--action .filtro').forEach((btn) => {
+  document.querySelectorAll('#actionSeg .ui-seg__btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       action = btn.dataset.action;
       page = 1;
@@ -168,6 +176,77 @@ document.addEventListener('DOMContentLoaded', () => {
     cargar({ skipUrl: true });
   });
 
+  reloadBtn.addEventListener('click', () => cargar());
+  bindSearchShortcut(searchEl);
+
+  // ---------- En vivo ----------
+
+  function tickUpdated() {
+    if (!lastUpdated) return;
+    const seg = Math.round((Date.now() - lastUpdated) / 1000);
+    updatedEl.textContent = seg < 5 ? 'Actualizado ahora'
+      : seg < 60 ? `Actualizado hace ${seg} s`
+      : `Actualizado hace ${Math.round(seg / 60)} min`;
+  }
+  setInterval(tickUpdated, 5000);
+
+  function setLive(on) {
+    liveBtn.setAttribute('aria-pressed', String(on));
+    try { localStorage.setItem(LIVE_KEY, on ? '1' : '0'); } catch { /* sin storage */ }
+    clearInterval(liveTimer);
+    liveTimer = on
+      ? setInterval(() => { if (!document.hidden) cargar(); }, LIVE_EVERY_MS)
+      : null;
+  }
+
+  liveBtn.addEventListener('click', () => {
+    const on = liveBtn.getAttribute('aria-pressed') !== 'true';
+    setLive(on);
+    if (on) cargar();
+  });
+
+  let liveGuardado = false;
+  try { liveGuardado = localStorage.getItem(LIVE_KEY) === '1'; } catch { /* sin storage */ }
+  setLive(liveGuardado);
+
+  // ---------- KPIs ----------
+
+  let kpiId = 0;
+
+  /** Un conteo por estado (solo interesa "total") con la acción y búsqueda actuales. */
+  async function cargarKpis() {
+    const id = ++kpiId;
+    const search = searchEl.value.trim();
+    const totales = await Promise.all(KPI_STATUSES.map(async (st) => {
+      try {
+        const qs = new URLSearchParams({ page: '1', status: st, action, search });
+        const res = await apiFetch(`/billing/jobs?${qs}`, { headers: HEADERS });
+        if (!res.ok) return null;
+        const data = await res.json().catch(() => ({}));
+        return Number(data.total) || 0;
+      } catch {
+        return null;
+      }
+    }));
+    if (id !== kpiId) return;
+    KPI_STATUSES.forEach((st, i) => {
+      const el = document.querySelector(`[data-num="${st}"]`);
+      if (el) el.textContent = totales[i] == null ? '—' : String(totales[i]);
+    });
+  }
+
+  // Clic en el id del job lo copia.
+  listaEl.addEventListener('click', async (e) => {
+    const idEl = e.target.closest('.js-copy-id');
+    if (!idEl) return;
+    try {
+      await navigator.clipboard.writeText(idEl.dataset.id);
+      showToast('ID del job copiado.', 'success', 2200);
+    } catch {
+      showToast('No se pudo copiar el ID.', 'error');
+    }
+  });
+
   listaEl.addEventListener('click', async (e) => {
     const retryBtn = e.target.closest('.js-retry-job');
     if (!retryBtn) return;
@@ -195,6 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = ++cargaId;
     errorEl.textContent = '';
     const search = searchEl.value.trim();
+    reloadBtn.classList.add('is-spinning');
+    cargarKpis();
 
     if (!opts.skipUrl) {
       writeUrlState({ page, status, action, search });
@@ -212,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
       res = await apiFetch(`/billing/jobs?${qs}`, { headers: HEADERS });
     } catch {
       if (id !== cargaId) return;
+      reloadBtn.classList.remove('is-spinning');
       errorEl.textContent = 'Error de red al cargar los jobs.';
       listaEl.innerHTML = '';
       return;
@@ -219,6 +301,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const data = await res.json().catch(() => ({}));
     if (id !== cargaId) return;
+    reloadBtn.classList.remove('is-spinning');
+    lastUpdated = Date.now();
+    tickUpdated();
 
     if (!res.ok) {
       errorEl.textContent = data.error || `No se pudieron cargar los jobs (${res.status}).`;
@@ -256,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderJob(row) {
-    const st = ESTADOS[row.status] || { label: row.status, mod: '' };
+    const st = ESTADOS[row.status] || { label: row.status, mod: '', accent: '' };
     const act = ACTIONS[row.action] || row.action;
     const canRetry = row.status === 'failed' || row.status === 'dead';
     const hasError = Boolean(row.last_error);
@@ -270,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
       : '<span class="accion-hueco accion-hueco--retry" aria-hidden="true"></span>';
 
     return `
-      <li class="tenant-item job-item">
+      <li class="tenant-item job-item ui-stripe${st.accent ? ` tenant-item--${st.accent}` : ''}">
         <span class="tenant-item__avatar job-item__avatar" aria-hidden="true">${actionInitials(row.action)}</span>
         <span class="tenant-item__body">
           <span class="tenant-item__subdomain">${escapeHtml(act)}</span>
@@ -288,7 +373,8 @@ document.addEventListener('DOMContentLoaded', () => {
                  </span>`
               : ''}
           </span>
-          <span class="job-item__id" title="${escapeHtml(row.id)}">${escapeHtml(row.id)}</span>
+          <button type="button" class="job-item__id js-copy-id" data-id="${escapeHtml(row.id)}"
+                  title="Copiar ID">${escapeHtml(row.id)}</button>
           ${hasError
             ? `<span class="job-item__error" title="${escapeHtml(row.last_error)}">${err}</span>`
             : ''}

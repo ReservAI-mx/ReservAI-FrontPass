@@ -202,3 +202,235 @@
   font-size: 0.9rem;
   line-height: 1.4;
 }
+
+
+/* ============================================================
+   Rediseño: progreso, campos en dos columnas, chips y aviso
+   ============================================================ */
+
+/* Varias clases de esta hoja ponen display: flex y le ganaban al
+   atributo hidden (salían insignias vacías y el paginador sin datos). */
+.fiscal-page [hidden] { display: none !important; }
+
+.fiscal-pasos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.fiscal-paso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--text-gray);
+  --accent: rgba(255, 255, 255, 0.25);
+}
+
+.fiscal-paso__num {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  color: var(--text-light);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.fiscal-paso__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.fiscal-paso__texto strong { color: var(--text-light); font-size: 0.88rem; }
+
+.fiscal-paso[data-estado="actual"] { --accent: var(--primary); border-color: rgba(9, 131, 214, 0.5); background: rgba(9, 131, 214, 0.1); }
+.fiscal-paso[data-estado="hecho"] { --accent: #4ade80; }
+.fiscal-paso[data-estado="hecho"] .fiscal-paso__num { background: #16a34a; border-color: #16a34a; font-size: 0; }
+.fiscal-paso[data-estado="hecho"] .fiscal-paso__num::before { content: '✓'; font-size: 0.85rem; }
+.fiscal-paso[data-estado="error"] { --accent: #ff8484; border-color: rgba(255, 107, 107, 0.45); background: rgba(255, 107, 107, 0.08); }
+.fiscal-paso[data-estado="error"] .fiscal-paso__texto span { color: #ffb4b4; }
+
+/* Tarjeta del formulario: mismo negro que las tarjetas del resto */
+.fiscal-card {
+  background: #000;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.fiscal-meta { gap: 0.45rem; }
+
+.fiscal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 26px;
+  padding: 0 0.7rem !important;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 0.76rem !important;
+  font-weight: 700;
+  --c: #A0A0A0;
+  color: var(--c);
+  border-color: color-mix(in srgb, var(--c) 40%, transparent);
+  background: color-mix(in srgb, var(--c) 13%, transparent) !important;
+}
+
+.fiscal-chip::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.fiscal-chip--ok { --c: #4ade80; }
+.fiscal-chip--warn { --c: #fbbf24; }
+.fiscal-chip--error { --c: #ff8484; }
+.fiscal-chip--neutral { --c: #A0A0A0; }
+
+.fiscal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.1rem;
+}
+
+.fiscal-campo--ancho { grid-column: 1 / -1; }
+
+.fiscal-campo__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.fiscal-campo__estado { font-size: 0.75rem; font-weight: 600; }
+.fiscal-campo__estado.is-ok { color: #4ade80; }
+.fiscal-campo__estado.is-pendiente { color: var(--text-gray); font-variant-numeric: tabular-nums; }
+
+.fiscal-campo__ayuda { font-size: 0.76rem; color: rgba(255, 255, 255, 0.45); }
+
+.fiscal-form input[type="text"],
+.fiscal-form select {
+  min-height: 44px;
+  border-radius: 10px;
+  background: #0D0D0D;
+  border-color: rgba(255, 255, 255, 0.14);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fiscal-form input[type="text"]:focus,
+.fiscal-form select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(9, 131, 214, 0.15);
+}
+
+.fiscal-form input::placeholder { color: rgba(255, 255, 255, 0.28); text-transform: none; }
+
+/* Persona moral como interruptor (sigue siendo el mismo checkbox) */
+.fiscal-switch {
+  position: relative;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.8rem !important;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b0b0b;
+  cursor: pointer;
+}
+
+.fiscal-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.fiscal-switch__pista {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #3A3A3A;
+  transition: background 0.2s ease;
+}
+
+.fiscal-switch__pista::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+.fiscal-switch input:checked + .fiscal-switch__pista { background: var(--primary); }
+.fiscal-switch input:checked + .fiscal-switch__pista::after { transform: translateX(20px); }
+.fiscal-switch input:focus-visible + .fiscal-switch__pista { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.fiscal-switch__texto { display: flex; flex-direction: column; gap: 0.1rem; }
+.fiscal-switch__texto span { font-size: 0.8rem; color: var(--text-gray); }
+
+/* Aviso legal en su recuadro */
+.fiscal-aviso {
+  margin-top: 0.4rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: rgba(251, 191, 36, 0.06);
+}
+
+.fiscal-aviso .fiscal-disclaimer-note { margin: 0 0 0.6rem; }
+
+.fiscal-disclaimer input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.fiscal-actions { align-items: center; }
+
+.fiscal-btn-danger {
+  margin-left: auto;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  background: transparent;
+  color: #ff8484;
+}
+
+.fiscal-btn-danger:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+
+#saveFiscalBtn:disabled { box-shadow: none; }
+
+.fiscal-guardar-ayuda {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+@media (max-width: 640px) {
+  .fiscal-pasos { grid-template-columns: 1fr; }
+  .fiscal-grid { grid-template-columns: 1fr; }
+  .fiscal-btn-danger { margin-left: 0; }
+}

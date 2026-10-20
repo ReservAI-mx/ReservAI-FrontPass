@@ -6,10 +6,11 @@
   <title>ReservAI - Invitaciones</title>
   <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
   <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
   <link rel="stylesheet" href="/static/estilos/StylesInvitations.css" />
   <link rel="stylesheet" href="/static/estilos/buttonLoading.css" />
 </head>
-<body>
+<body class="ui-page">
   <div id="messageContainer" class="message-container"></div>
 
   <nav class="navbar">
@@ -98,42 +99,63 @@
       Volver a cuentas
     </a>
 
-    <div class="page-head">
-      <h2>Invitaciones</h2>
-      <span class="count-badge" id="totalInvitaciones" hidden></span>
-    </div>
+    <header class="ui-head">
+      <div class="ui-head__titulo">
+        <span class="ui-head__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/>
+            <path d="m3.5 7 8.5 6 8.5-6"/>
+          </svg>
+        </span>
+        <div>
+          <h2>Invitaciones <span class="count-badge" id="totalInvitaciones" hidden></span></h2>
+          <p class="ui-head__sub">Enlaces de un solo uso para crear cuentas de cliente o admin</p>
+        </div>
+      </div>
+      <div class="ui-head__acciones">
+        <button type="button" class="ui-btn ui-btn--primary" id="nuevaInvitacionHeadBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+               stroke-linecap="round" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"/></svg>
+          Nueva invitación
+        </button>
+      </div>
+    </header>
 
     <!-- Resumen por estado -->
-    <div class="resumen" id="resumen" hidden>
-      <button type="button" class="resumen__card" data-filtro="todas" aria-pressed="true">
-        <span class="resumen__num" id="numTodas">0</span>
-        <span class="resumen__label">En esta página</span>
+    <div class="ui-kpis" id="resumen" hidden>
+      <button type="button" class="ui-kpi ui-kpi--todos" data-filtro="todas" aria-pressed="true">
+        <span class="ui-kpi__label">En esta página</span>
+        <span class="ui-kpi__num" id="numTodas">0</span>
       </button>
-      <button type="button" class="resumen__card resumen__card--pending" data-filtro="pending" aria-pressed="false">
-        <span class="resumen__num" id="numPending">0</span>
-        <span class="resumen__label">Pendientes</span>
+      <button type="button" class="ui-kpi ui-kpi--warning" data-filtro="pending" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Pendientes</span>
+        <span class="ui-kpi__num" id="numPending">0</span>
       </button>
-      <button type="button" class="resumen__card resumen__card--accepted" data-filtro="accepted" aria-pressed="false">
-        <span class="resumen__num" id="numAccepted">0</span>
-        <span class="resumen__label">Aceptadas</span>
+      <button type="button" class="ui-kpi ui-kpi--ok" data-filtro="accepted" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Aceptadas</span>
+        <span class="ui-kpi__num" id="numAccepted">0</span>
       </button>
-      <button type="button" class="resumen__card resumen__card--expired" data-filtro="expired" aria-pressed="false">
-        <span class="resumen__num" id="numExpired">0</span>
-        <span class="resumen__label">Vencidas</span>
+      <button type="button" class="ui-kpi ui-kpi--purple" data-filtro="expired" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Vencidas</span>
+        <span class="ui-kpi__num" id="numExpired">0</span>
       </button>
-      <button type="button" class="resumen__card resumen__card--revoked" data-filtro="revoked" aria-pressed="false">
-        <span class="resumen__num" id="numRevoked">0</span>
-        <span class="resumen__label">Revocadas</span>
+      <button type="button" class="ui-kpi ui-kpi--error" data-filtro="revoked" aria-pressed="false">
+        <span class="ui-kpi__label"><span class="ui-dot" aria-hidden="true"></span>Revocadas</span>
+        <span class="ui-kpi__num" id="numRevoked">0</span>
       </button>
     </div>
 
-    <div class="search-field">
-      <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
-      </svg>
-      <input id="search" type="text" placeholder="Buscar por correo..." aria-label="Buscar invitaciones">
-    </div>
+    <section class="ui-toolbar" aria-label="Búsqueda">
+      <div class="search-field ui-search">
+        <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+        </svg>
+        <input id="search" type="text" placeholder="Buscar por correo…" aria-label="Buscar invitaciones">
+        <kbd class="ui-kbd" aria-hidden="true">/</kbd>
+      </div>
+    </section>
 
     <p class="lista-error" id="listaError" role="alert"></p>
 

@@ -2,27 +2,44 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Activar Doble Factor</title>
-  <link rel="icon" type="image/x-icon" href="static/Images/ReservAiLogo.png" />
-  <link rel="stylesheet" href="static/estilos/QR.css">
-  <link rel="stylesheet" href="static/estilos/buttonLoading.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activar doble factor - ReservAI</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/Styles.css">
+  <link rel="stylesheet" href="/static/estilos/QR.css">
+  <link rel="stylesheet" href="/static/estilos/buttonLoading.css">
 </head>
 <body>
-  <div class="qr-container">
-    <div class="qr-title">⚠ Paso importante</div>
-    
-    <div class="qr-code"></div>
-    
-    <div class="qr-message">
-      Escanea este código QR para usar el doble factor de autenticación.
-    </div>
-    
-    <div class="qr-warning">
-      Sin este paso, no podrás ingresar a tu cuenta.
-    </div>
+  <div class="login-container">
+    <div class="login-box qr-box">
+      <div class="logo">
+        <img src="/static/Images/ReservAiLogo.png" alt="ReservAI Logo">
+        <h1>ReservAI</h1>
+      </div>
 
-    <button id="nextBtn" class="qr-next-btn">Siguiente</button>
+      <div class="qr-layout">
+        <div class="qr-texto">
+          <h2>Activa la verificación en dos pasos</h2>
+          <p class="qr-intro">Es obligatorio: sin este paso no podrás entrar a tu cuenta.</p>
+
+          <ol class="qr-pasos">
+            <li>Abre una app autenticadora (Google Authenticator, Microsoft Authenticator o Authy).</li>
+            <li>Escanea el código con la app.</li>
+            <li>Pulsa <strong>Siguiente</strong> y escribe el código de 6 dígitos que te muestre.</li>
+          </ol>
+
+          <p class="qr-error" role="alert" hidden></p>
+
+          <button id="nextBtn" class="loginbtn qr-next-btn" type="button">Siguiente</button>
+        </div>
+
+        <div class="qr-lado">
+          <div class="qr-code" aria-live="polite"></div>
+          <p class="qr-message" hidden></p>
+        </div>
+      </div>
+    </div>
   </div>
-  <script type="module" src="static/Scripts/qr.js"></script>
+  <script type="module" src="/static/Scripts/qr.js"></script>
 </body>
 </html>
