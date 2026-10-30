@@ -807,3 +807,39 @@ input:-webkit-autofill:active {
     gap: 0.45rem 0.9rem;
   }
 }
+
+/* ============================================================
+   Teléfono: la tarjeta ocupa el ancho, centrada en la pantalla, sin
+   scroll de sobra. Va al final para ganarle a los bloques de arriba.
+   Los campos usan 16px: con menos, iPhone hace zoom al tocarlos.
+   ============================================================ */
+@media (max-width: 600px) {
+  body {
+    align-items: center;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 1.75rem 1.25rem 1.5rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(9, 131, 214, 0.12);
+  }
+
+  .logo { margin-bottom: 0.5rem; }
+  .logo img { width: 44px; height: 44px; margin-right: 4px; }
+  .logo h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.35rem; margin-bottom: 1.4rem; color: var(--text-gray); font-weight: 600; }
+
+  .input-group input { height: 58px; padding: 24px 14px 8px; font-size: 16px; }
+  .loginbtn { height: 54px; font-size: 1.05rem; border-radius: 12px; }
+  .login-box br { display: none; }
+  .login-box form .terms { margin-top: 1rem; }
+  .terms { font-size: 0.85rem; line-height: 1.5; }
+}
