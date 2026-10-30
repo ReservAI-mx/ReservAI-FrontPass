@@ -22,8 +22,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.22.1"
-          cache: npm
-          cache-dependency-path: package-lock.json
+          # Sin cache: npm. El proyecto baja ~70 paquetes en segundos, y cuando
+          # la cuenta pasa el límite de transferencia del caché de Actions,
+          # restaurarlo se queda colgado varios minutos.
 
       - name: Install dependencies
         run: npm ci
