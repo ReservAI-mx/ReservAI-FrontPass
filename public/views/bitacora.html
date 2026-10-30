@@ -288,22 +288,32 @@
 
     <!-- Ajustes -->
     <section id="tab-ajustes" class="bt-panel" hidden>
-      <h3 class="bt-subtitulo">Ajustes</h3>
-      <label class="bt-campo">
-        <span class="bt-campo__etiqueta">Meta de puertas al día</span>
-        <input type="number" inputmode="numeric" min="1" max="200" id="inputMeta" />
-      </label>
+      <div class="bt-ajustes">
+        <section class="bt-ajustes__grupo">
+          <h3 class="bt-subtitulo">Meta del día</h3>
+          <label class="bt-campo">
+            <span class="bt-campo__etiqueta">Puertas al día</span>
+            <input type="number" inputmode="numeric" min="1" max="200" id="inputMeta" />
+          </label>
+          <p class="bt-nota">Es la barra de Hoy y la línea punteada de las gráficas. Se guarda en este dispositivo.</p>
+        </section>
 
-      <h3 class="bt-subtitulo">Funcionamiento sin conexión</h3>
-      <div class="bt-fila"><span>App guardada en este dispositivo</span><strong id="estadoOffline">Revisando…</strong></div>
-      <p class="bt-nota" id="notaOffline"></p>
+        <section class="bt-ajustes__grupo">
+          <h3 class="bt-subtitulo">Funcionamiento sin conexión</h3>
+          <div class="bt-fila"><span>App guardada en este dispositivo</span><strong id="estadoOffline">Revisando…</strong></div>
+          <p class="bt-nota" id="notaOffline"></p>
+          <div class="bt-fila"><span>Visitas por subir</span><strong id="ajustesPendientes">0</strong></div>
+        </section>
 
-      <h3 class="bt-subtitulo">Cuenta</h3>
-      <div class="bt-fila"><span>Nombre</span><strong id="cuentaNombre"></strong></div>
-      <div class="bt-fila"><span>Papel</span><strong id="cuentaPapel"></strong></div>
-      <div class="bt-fila"><span>Sesión en este dispositivo</span><strong id="cuentaSesion"></strong></div>
-      <button type="button" class="ui-btn ui-btn--ghost bt-salir" id="btnSalir">Cerrar sesión</button>
-      <p class="bt-nota">Antes de cerrar, revisa que el indicador diga «Al día»: lo pendiente vive sólo en este dispositivo.</p>
+        <section class="bt-ajustes__grupo">
+          <h3 class="bt-subtitulo">Cuenta</h3>
+          <div class="bt-fila"><span>Nombre</span><strong id="cuentaNombre"></strong></div>
+          <div class="bt-fila"><span>Papel</span><strong id="cuentaPapel"></strong></div>
+          <div class="bt-fila"><span>Sesión en este dispositivo</span><strong id="cuentaSesion"></strong></div>
+          <button type="button" class="ui-btn ui-btn--ghost bt-salir" id="btnSalir">Cerrar sesión</button>
+          <p class="bt-nota">Antes de cerrar, revisa que el indicador diga «Al día»: lo pendiente vive sólo en este dispositivo.</p>
+        </section>
+      </div>
     </section>
   </main>
 

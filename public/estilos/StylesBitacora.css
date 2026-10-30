@@ -223,6 +223,11 @@ body.bt {
 .bt-badge--error { color: var(--ui-error); }
 
 .bt-vacio {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
   padding: 1.5rem 0.5rem;
   text-align: center;
   color: var(--text-gray);
@@ -230,7 +235,21 @@ body.bt {
   line-height: 1.5;
 }
 
-.bt-vacio strong { display: block; color: var(--text-light); margin-bottom: 0.25rem; }
+.bt-vacio strong { color: var(--text-light); }
+
+.bt-vacio__icono {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: rgba(9, 131, 214, 0.15);
+  border: 1px solid rgba(9, 131, 214, 0.4);
+  color: var(--ui-info);
+}
+
+.bt-vacio__icono svg { width: 22px; height: 22px; }
 
 .bt-seg { display: flex; width: 100%; }
 .bt-seg .ui-seg__btn { flex: 1; justify-content: center; }
@@ -565,7 +584,7 @@ body.bt {
 .bt-embudo__dif.abajo { color: var(--ui-error); }
 
 /* Puertas por día. */
-.bt-barras { --alto: 150px; }
+.bt-barras { --alto: 150px; --eje: 2.7rem; }
 
 .bt-barras__area {
   position: relative;
@@ -573,19 +592,49 @@ body.bt {
   align-items: flex-end;
   gap: 3px;
   height: var(--alto);
-  padding-top: 1.1rem;
+  padding: 1.1rem 0 0 var(--eje);
   border-bottom: 1px solid var(--ui-line-2);
 }
 
+/* Guías de escala: una raya tenue a lo ancho y el valor a la izquierda. */
+.bt-barras__guia {
+  position: absolute;
+  left: var(--eje);
+  right: 0;
+  border-top: 1px solid var(--ui-line);
+  pointer-events: none;
+}
+
+.bt-barras__valor {
+  position: absolute;
+  right: 100%;
+  top: 0;
+  padding-right: 0.35rem;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  font-size: 0.62rem;
+  line-height: 1;
+  color: var(--text-gray);
+  font-variant-numeric: tabular-nums;
+}
+
+.bt-barras__guia--meta { border-top: 1px dashed rgba(251, 191, 36, 0.75); }
+.bt-barras__guia--meta .bt-barras__valor { color: var(--ui-warn); }
+
 .bt-barras__col {
   position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 2px;
   border-radius: 4px 4px 0 0;
-  background: rgba(9, 131, 214, 0.55);
+  background: rgba(9, 131, 214, 0.6);
+  transition: background 0.15s ease;
 }
 
-.bt-barras__col.is-hoy { background: var(--primary); }
+.bt-barras__col.is-finde { background: rgba(9, 131, 214, 0.35); }
+.bt-barras__col.is-cero { background: var(--ui-line-2); }
+.bt-barras__col.is-hoy { background: var(--primary); box-shadow: 0 0 12px rgba(9, 131, 214, 0.45); }
+.bt-barras__col:hover { background: var(--ui-info); }
 
 .bt-barras__num {
   position: absolute;
@@ -598,23 +647,42 @@ body.bt {
   font-variant-numeric: tabular-nums;
 }
 
-.bt-barras__meta {
-  position: absolute;
-  left: 0;
-  right: 0;
-  border-top: 1px dashed rgba(251, 191, 36, 0.7);
-  pointer-events: none;
-}
-
-.bt-barras__ejes { display: flex; gap: 3px; margin-top: 0.3rem; }
+.bt-barras__ejes { display: flex; gap: 3px; margin-top: 0.35rem; padding-left: var(--eje); }
 
 .bt-barras__ejes span {
   flex: 1;
+  min-width: 0;
   text-align: center;
-  font-size: 0.62rem;
+  white-space: nowrap;
+  overflow: visible;
+  font-size: 0.66rem;
   color: var(--text-gray);
   font-variant-numeric: tabular-nums;
 }
+
+.bt-barras--vacia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: var(--alto);
+  border: 1px dashed var(--ui-line-2);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: var(--text-gray);
+  text-align: center;
+}
+
+.bt-barras--vacia strong { color: var(--text-light); font-size: 0.92rem; }
+
+/* La gráfica del tablero crece hasta la altura de la tarjeta de al lado. */
+.bt-card--grafica { display: flex; flex-direction: column; }
+.bt-card--grafica .bt-barras { flex: 1; display: flex; flex-direction: column; }
+.bt-card--grafica .bt-barras__area { flex: 1; height: auto; min-height: var(--alto); }
+
+/* Ajustes: en el teléfono, una columna; en escritorio, tarjetas. */
+.bt-ajustes__grupo .bt-campo { margin-bottom: 0.4rem; }
 
 /* Tablas con filas que se abren. */
 .bt-tabla--filas th, .bt-tabla--filas td { padding: 0.6rem 0.55rem; }
@@ -716,6 +784,7 @@ body.bt {
   .bt-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
   .bt-card--ancha { grid-column: 1 / -1; }
   .bt-barras { --alto: 190px; }
+  .bt-hoy__lado .bt-barras { --alto: 150px; }
 
   #tab-seguir .bt-lista,
   #tab-todas .bt-lista:not(:has(.bt-card)) {
@@ -723,7 +792,34 @@ body.bt {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  #tab-ajustes { max-width: 640px; }
+  .bt-ajustes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .bt-ajustes__grupo {
+    display: flex;
+    flex-direction: column;
+    padding: 1.1rem 1.2rem;
+    border-radius: 16px;
+    border: 1px solid var(--ui-line);
+    background: var(--ui-card);
+  }
+
+  .bt-ajustes__grupo .bt-subtitulo { margin-top: 0; }
+  .bt-ajustes__grupo .bt-salir { margin-top: auto; }
+  .bt-ajustes__grupo .bt-fila:last-of-type { margin-bottom: 1rem; }
+
+  /* Vacíos: una tarjeta punteada al centro, a todo lo ancho. */
+  .bt-panel > .bt-lista > .bt-vacio,
+  #listaHoy > .bt-vacio {
+    padding: 2.75rem 1rem;
+    border: 1px dashed var(--ui-line-2);
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.35);
+  }
 
   /* La ficha sale como panel a la derecha, sobre un velo. Los dos van
      encima de la barra del pass (z-index 60 en StylesInicio.css). */
@@ -748,5 +844,7 @@ body.bt {
 
 @media (min-width: 900px) and (max-width: 1180px) {
   .bt-hoy { grid-template-columns: minmax(0, 1fr) 320px; }
+  .bt-ajustes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bt-ajustes__grupo:last-child { grid-column: 1 / -1; }
   .bt-kpis--tablero { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
