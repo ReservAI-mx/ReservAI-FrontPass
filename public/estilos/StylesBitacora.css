@@ -1,0 +1,472 @@
+/* ============================================================
+   Bitácora de visitas (/bitacora/). Pensada para el teléfono en
+   la calle: una columna, botones grandes, pestañas abajo.
+   Usa los tokens de StylesInicio.css y StylesUI.css.
+   ============================================================ */
+
+body.bt {
+  background: var(--bg-dark);
+  min-height: 100dvh;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+}
+
+/* ---------- Encabezado ---------- */
+
+.bt-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: calc(0.7rem + env(safe-area-inset-top)) 1rem 0.7rem;
+  background: rgba(13, 13, 13, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--ui-line);
+}
+
+.bt-top__marca {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-light);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.bt-top__marca .logo-img { width: 30px; height: 30px; }
+
+.bt-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 34px;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--ui-card-2);
+  color: var(--text-light);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  --punto: var(--text-gray);
+}
+
+.bt-sync__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--punto);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--punto) 25%, transparent);
+}
+
+.bt-sync[data-estado="al-dia"] { --punto: var(--ui-ok); }
+.bt-sync[data-estado="pendientes"] { --punto: var(--ui-warn); }
+.bt-sync[data-estado="sin-red"],
+.bt-sync[data-estado="sin-sesion"],
+.bt-sync[data-estado="error"] { --punto: var(--ui-error); }
+.bt-sync[data-estado="subiendo"] { --punto: var(--ui-info); }
+.bt-sync[data-estado="subiendo"] .bt-sync__punto { animation: bt-latido 1s ease-in-out infinite; }
+
+@keyframes bt-latido { 50% { opacity: 0.35; } }
+
+/* ---------- Avisos ---------- */
+
+.bt-aviso {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.75rem 1rem 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  border: 1px solid var(--ui-line-2);
+  background: var(--ui-card-2);
+}
+
+.bt-aviso--info { border-color: rgba(124, 196, 245, 0.45); }
+.bt-aviso--warn { border-color: rgba(251, 191, 36, 0.5); }
+.bt-aviso .ui-btn { flex-shrink: 0; min-height: 34px; }
+
+/* ---------- Cuerpo ---------- */
+
+.bt-main {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.bt-subtitulo {
+  margin: 1.4rem 0 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-gray);
+}
+
+.bt-nota, .bt-alcance {
+  margin: 0.6rem 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text-gray);
+}
+
+.bt-alcance { margin-top: 0; color: var(--text-light); font-weight: 600; }
+
+/* Meta del día */
+.bt-meta {
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-card);
+}
+
+.bt-meta__fila { display: flex; justify-content: space-between; align-items: baseline; }
+.bt-meta__titulo { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: var(--text-gray); }
+.bt-meta__cuenta { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.bt-meta__barra {
+  height: 8px;
+  margin-top: 0.6rem;
+  border-radius: 999px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.bt-meta__barra span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.bt-meta.is-cumplida .bt-meta__barra span { background: var(--ui-ok); }
+.bt-meta__nota { margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-gray); }
+
+.bt-kpis { margin: 0.85rem 0 0; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.bt-kpis .ui-kpi { min-height: 0; padding: 0.7rem 0.8rem; cursor: default; }
+.bt-kpis .ui-kpi__num { font-size: 1.4rem; }
+.bt-kpis .ui-kpi__label { font-size: 0.66rem; letter-spacing: 0; white-space: nowrap; }
+@media (max-width: 420px) {
+  .bt-kpis { gap: 0.45rem; }
+  .bt-kpis .ui-kpi { padding: 0.6rem 0.55rem; }
+  .bt-kpis .ui-kpi__label { font-size: 0.6rem; }
+}
+
+.bt-registrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 58px;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 16px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(9, 131, 214, 0.35);
+}
+
+.bt-registrar svg { width: 22px; height: 22px; }
+.bt-registrar:active { transform: scale(0.99); }
+
+/* Listas */
+.bt-lista { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.bt-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-card);
+  color: var(--text-light);
+  text-align: left;
+  cursor: pointer;
+}
+
+.bt-item:hover { border-color: var(--ui-line-2); }
+.bt-item__top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.bt-item__nombre { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bt-item__meta { font-size: 0.8rem; color: var(--text-gray); }
+.bt-item__aviso { font-size: 0.78rem; color: var(--ui-warn); }
+.bt-item__aviso--error { color: var(--ui-error); }
+
+.bt-badge {
+  flex-shrink: 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  border: 1px solid currentColor;
+  color: var(--text-gray);
+}
+
+.bt-badge--ok { color: var(--ui-ok); }
+.bt-badge--info { color: var(--ui-info); }
+.bt-badge--warn { color: var(--ui-warn); }
+.bt-badge--error { color: var(--ui-error); }
+
+.bt-vacio {
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+  color: var(--text-gray);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.bt-vacio strong { display: block; color: var(--text-light); margin-bottom: 0.25rem; }
+
+.bt-seg { display: flex; width: 100%; }
+.bt-seg .ui-seg__btn { flex: 1; justify-content: center; }
+
+.bt-buscar {
+  width: 100%;
+  margin: 0.75rem 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--bg-input);
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+/* Tablero */
+.bt-tabla { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.bt-tabla th, .bt-tabla td { padding: 0.45rem 0.4rem; border-bottom: 1px solid var(--ui-line); text-align: left; }
+.bt-tabla th { color: var(--text-gray); font-weight: 600; font-size: 0.75rem; }
+.bt-tabla .n { text-align: right; font-variant-numeric: tabular-nums; }
+.bt-tabla .abajo { color: var(--ui-error); }
+.bt-tabla .arriba { color: var(--ui-ok); }
+.bt-scroll { overflow-x: auto; }
+
+.bt-acciones { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+/* Ajustes */
+.bt-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--ui-line);
+  font-size: 0.92rem;
+}
+
+.bt-fila span { color: var(--text-gray); }
+.bt-salir { margin-top: 1rem; width: 100%; }
+
+/* ---------- Pestañas ---------- */
+
+.bt-tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: space-around;
+  padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom));
+  background: rgba(13, 13, 13, 0.96);
+  border-top: 1px solid var(--ui-line-2);
+}
+
+.bt-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex: 1;
+  min-height: 52px;
+  border: none;
+  background: transparent;
+  color: var(--text-gray);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-tab svg { width: 21px; height: 21px; }
+.bt-tab.is-active { color: var(--text-light); }
+.bt-tab.is-active svg { color: var(--primary); }
+
+/* ---------- Hoja de captura ---------- */
+
+.bt-hoja {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-dark);
+}
+
+.bt-hoja[hidden] { display: none; }
+
+.bt-hoja__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: calc(0.9rem + env(safe-area-inset-top)) 1rem 0.9rem;
+  border-bottom: 1px solid var(--ui-line);
+}
+
+.bt-hoja__titulo { font-size: 1.15rem; font-weight: 700; }
+.bt-hoja__pasos { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: var(--text-gray); margin-top: 0.15rem; }
+
+.bt-hoja__cuerpo {
+  flex: 1;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.1rem 1rem 1.5rem;
+}
+
+.bt-hoja__pie {
+  display: flex;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--ui-line);
+}
+
+.bt-hoja__pie .ui-btn { flex: 1; min-height: 50px; font-size: 1rem; }
+
+.bt-link {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.4rem 0;
+}
+
+.bt-seccion {
+  margin: 1.6rem 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.bt-campo { display: block; margin-bottom: 1.05rem; }
+
+.bt-campo__etiqueta {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.bt-campo__etiqueta em { font-style: normal; font-weight: 400; color: var(--text-gray); }
+
+.bt-campo input,
+.bt-campo textarea {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--bg-input);
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+.bt-campo textarea { min-height: 96px; resize: vertical; }
+.bt-campo input:focus, .bt-campo textarea:focus { outline: 2px solid var(--primary); outline-offset: 0; }
+
+.bt-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem; }
+
+.bt-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.bt-chip {
+  min-height: 38px;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--ui-card-2);
+  color: var(--text-light);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.bt-chip--num { min-width: 46px; }
+
+.bt-chip[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.bt-opcion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  margin-bottom: 0.55rem;
+  padding: 0 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--ui-card);
+  color: var(--text-light);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-opcion--principal { border-color: var(--primary); background: rgba(9, 131, 214, 0.18); }
+.bt-opcion__pista { font-size: 0.78rem; font-weight: 500; color: var(--text-gray); }
+
+.bt-caja-nota {
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-left: 3px solid var(--primary);
+  border-radius: 6px;
+  background: var(--ui-card-2);
+  font-size: 0.85rem;
+  color: var(--text-gray);
+}
+
+.ui-btn--peligro { border: 1px solid var(--ui-error); background: transparent; color: var(--ui-error); }
+
+@media (min-width: 900px) {
+  /* En escritorio (admin), las pestañas quedan arriba del contenido. */
+  body.bt { padding-bottom: 0; }
+  .bt-tabs {
+    position: sticky;
+    top: 57px;
+    bottom: auto;
+    max-width: 720px;
+    margin: 0 auto;
+    border: 1px solid var(--ui-line-2);
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+  }
+}
+
+@media (min-width: 900px) {
+  /* body es flex en columna (StylesInicio.css): las pestañas suben sobre el contenido. */
+  .bt-top { order: 0; }
+  .bt-aviso { order: 1; }
+  .bt-tabs { order: 2; width: 100%; }
+  .bt-main { order: 3; }
+}
