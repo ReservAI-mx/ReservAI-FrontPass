@@ -94,6 +94,7 @@ function pintarSync() {
 }
 
 let relojSync = null;
+let ultimaSync = 0;
 function programarSync(ms = 3000) {
   clearTimeout(relojSync);
   relojSync = setTimeout(sincronizarAhora, ms);
@@ -128,6 +129,7 @@ async function sincronizarAhora() {
     }
   } finally {
     estado.sincronizando = false;
+    ultimaSync = Date.now();
   }
   await recargar();
 }
@@ -177,8 +179,19 @@ function item(v, { fecha = false, seguimiento = false, vendedor = false } = {}) 
     !v._rechazo && v._pendiente && h('span', { class: 'bt-item__aviso', text: 'Por subir' }));
 }
 
+/* Ícono fijo (no lleva datos), por eso se arma desde texto una sola vez. */
+const ICONO_VACIO = (() => {
+  const t = document.createElement('template');
+  t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+    + 'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.3 2.3 2.3 4.7-5"/></svg>';
+  return t.content.firstElementChild;
+})();
+
 function vacio(titulo, texto) {
-  return h('div', { class: 'bt-vacio' }, h('strong', { text: titulo }), texto);
+  return h('div', { class: 'bt-vacio' },
+    h('span', { class: 'bt-vacio__icono', 'aria-hidden': 'true' }, ICONO_VACIO.cloneNode(true)),
+    h('strong', { text: titulo }),
+    h('span', { text: texto }));
 }
 
 function pintarHoy() {
@@ -211,7 +224,7 @@ function pintarHoy() {
 
   // Columna derecha (sólo escritorio): actividad y lo que hay que seguir.
   const dias = K.porDia(propias, 14, hoy);
-  $('actividadTotal').textContent = `${dias.reduce((s, d) => s + d.n, 0)} puertas`;
+  $('actividadTotal').textContent = resumenDias(dias);
   $('actividadHoy').replaceChildren(barras(dias, meta));
   const seguir = K.porSeguir(mias());
   $('tituloSeguirLado').textContent = `Por seguir · ${seguir.length}`;
@@ -220,24 +233,55 @@ function pintarHoy() {
     : [vacio('Nada pendiente.', 'Las visitas en propuesta, demo o reagendar aparecen aquí.')]));
 }
 
-/* Barras verticales de puertas por día. La línea punteada es la meta. */
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const diaMes = (iso) => `${Number(iso.slice(8))} ${MESES[Number(iso.slice(5, 7)) - 1]}`;
+const esFinde = (iso) => [0, 6].includes(new Date(`${iso}T12:00:00`).getDay());
+
+/* "45 puertas · 1.5 al día" para el encabezado de una gráfica. */
+function resumenDias(dias) {
+  const total = dias.reduce((s, d) => s + d.n, 0);
+  return `${total} ${total === 1 ? 'puerta' : 'puertas'} · ${dec(total / dias.length)} al día`;
+}
+
+/* Barras verticales de puertas por día, con guías de escala a la izquierda.
+   La línea punteada es la meta; sábado y domingo van más tenues. */
 function barras(dias, meta) {
+  const total = dias.reduce((s, d) => s + d.n, 0);
+  if (!total) {
+    return h('div', { class: 'bt-barras bt-barras--vacia' },
+      h('strong', { text: 'Sin puertas en estos días' }),
+      h('span', { text: `Del ${diaMes(dias[0].fecha)} al ${diaMes(dias[dias.length - 1].fecha)}.` }));
+  }
   const tope = Math.max(meta || 0, ...dias.map((d) => d.n), 1);
-  const lineaMeta = meta ? h('span', { class: 'bt-barras__meta', title: `Meta: ${meta}` }) : null;
-  if (lineaMeta) lineaMeta.style.bottom = `${(100 * meta) / tope}%`;
+  const guia = (valor, clase, texto) => {
+    const linea = h('span', { class: `bt-barras__guia ${clase}` }, h('span', { class: 'bt-barras__valor', text: texto }));
+    linea.style.bottom = `${(100 * valor) / tope}%`;
+    return linea;
+  };
+  const guias = [];
+  if (meta) guias.push(guia(meta, 'bt-barras__guia--meta', `meta ${meta}`));
+  if (tope !== meta) guias.push(guia(tope, '', String(tope)));
+  const mitad = Math.round(tope / 2);
+  if (mitad > 0 && mitad !== meta && mitad !== tope) guias.push(guia(mitad, '', String(mitad)));
+
+  // Fecha cada tantos días, contando desde hoy hacia atrás para que hoy siempre salga.
+  const paso = dias.length > 14 ? 5 : dias.length > 7 ? 2 : 1;
+  const hoy = C.hoy();
   return h('div', { class: 'bt-barras' },
     h('div', { class: 'bt-barras__area' },
-      lineaMeta,
+      guias,
       dias.map((d) => {
+        const clases = ['bt-barras__col', d.fecha === hoy && 'is-hoy', esFinde(d.fecha) && 'is-finde', !d.n && 'is-cero']
+          .filter(Boolean).join(' ');
         const col = h('span', {
-          class: `bt-barras__col${d.fecha === C.hoy() ? ' is-hoy' : ''}`,
-          title: `${C.fechaCorta(d.fecha)}: ${d.n} puertas${d.cerrados ? `, ${d.cerrados} cerrados` : ''}`,
-        }, h('span', { class: 'bt-barras__num', text: d.n || '' }));
+          class: clases,
+          title: `${diaMes(d.fecha)}: ${d.n} ${d.n === 1 ? 'puerta' : 'puertas'}${d.cerrados ? `, ${d.cerrados} cerrados` : ''}`,
+        }, d.n ? h('span', { class: 'bt-barras__num', text: d.n }) : null);
         col.style.height = `${(100 * d.n) / tope}%`;
         return col;
       })),
     h('div', { class: 'bt-barras__ejes' },
-      dias.map((d) => h('span', { text: d.fecha.slice(8) }))));
+      dias.map((d, i) => h('span', { text: (dias.length - 1 - i) % paso === 0 ? diaMes(d.fecha) : '' }))));
 }
 
 function pintarSeguir() {
@@ -356,6 +400,15 @@ function tarjeta(titulo, ...contenido) {
   return h('section', { class: 'bt-card' }, h('h3', { class: 'bt-card__titulo', text: titulo }), ...contenido);
 }
 
+/* Tarjeta cuyo contenido crece hasta la altura de su vecina en la rejilla. */
+function tarjetaGrafica(titulo, dato, contenido) {
+  return h('section', { class: 'bt-card bt-card--grafica' },
+    h('div', { class: 'bt-card__cabeza' },
+      h('h3', { class: 'bt-card__titulo', text: titulo }),
+      h('span', { class: 'bt-card__dato', text: dato })),
+    contenido);
+}
+
 function embudo(r) {
   const etapas = [
     ['Puertas tocadas', r.puertas],
@@ -432,7 +485,7 @@ function pintarTablero() {
   $('tablero').replaceChildren(...[
     tarjeta('El embudo', embudo(r),
       h('p', { class: 'bt-nota', text: 'Las metas son supuestos de venta en frío, no datos de ReservAI. Cámbialas cuando tengas unas 200 visitas propias.' })),
-    tarjeta(`Puertas por día · últimos ${diasGrafica}`, barras(actividad, metaGrafica)),
+    tarjetaGrafica(`Puertas por día · últimos ${diasGrafica} días`, resumenDias(actividad), barras(actividad, metaGrafica)),
     porVendedor,
     tarjeta('Indicadores', tabla(['Indicador', 'Valor'], [
       ['Conversión total', pct(r.conv.total)],
@@ -535,6 +588,7 @@ function pintarEquipo() {
 
 function pintarAjustes() {
   $('inputMeta').value = estado.config.meta;
+  $('ajustesPendientes').textContent = estado.visitas.filter((v) => v._pendiente || v._rechazo).length;
   $('cuentaNombre').textContent = estado.cuenta.nombre || estado.cuenta.correo || '';
   $('cuentaPapel').textContent = esAdmin() ? 'Administrador' : 'Vendedor';
   $('cuentaSesion').textContent = estado.cuenta.sesion === 'dispositivo' || estado.cuenta.dispositivo
@@ -1086,8 +1140,10 @@ document.addEventListener('keydown', (e) => {
 });
 window.addEventListener('online', () => sincronizarAhora());
 window.addEventListener('offline', () => { estado.sync = 'sin-red'; pintarSync(); });
+// Al volver a la pestaña o a la app. Algunos navegadores disparan el evento
+// muchas veces seguidas: con una vuelta cada 30 s basta.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') sincronizarAhora();
+  if (document.visibilityState === 'visible' && Date.now() - ultimaSync > 30000) sincronizarAhora();
 });
 setInterval(() => sincronizarAhora(), 5 * 60 * 1000);
 
