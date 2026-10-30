@@ -71,6 +71,33 @@ describe('calculos', () => {
     const lista = K.porSeguir(visitas);
     expect(lista.map((v) => v.resultado)).toEqual(['Reagendar visita', 'Demo hecha']);
   });
+
+  test('haceDias cruza meses y años', () => {
+    expect(K.haceDias('2026-11-02', 2)).toBe('2026-10-31');
+    expect(K.haceDias('2027-01-01', 1)).toBe('2026-12-31');
+    expect(K.haceDias('2026-10-30', 0)).toBe('2026-10-30');
+  });
+
+  test('enPeriodo: los últimos n días contando hoy; 0 es todo', () => {
+    const fechas = ['2026-10-30', '2026-10-24', '2026-10-23', '2026-11-01', ''].map((fecha) => visita({ fecha }));
+    expect(K.enPeriodo(fechas, 7, '2026-10-30').map((v) => v.fecha)).toEqual(['2026-10-30', '2026-10-24']);
+    expect(K.enPeriodo(fechas, 1, '2026-10-30').map((v) => v.fecha)).toEqual(['2026-10-30']);
+    expect(K.enPeriodo(fechas, 0, '2026-10-30')).toHaveLength(5);
+  });
+
+  test('porDia: un día por fila con ceros, sin eliminadas', () => {
+    const dias = K.porDia([
+      visita({ fecha: '2026-10-30', resultado: 'Cerrado' }),
+      visita({ fecha: '2026-10-30' }),
+      visita({ fecha: '2026-10-28', eliminada: true }),
+      visita({ fecha: '2026-10-01' }),
+    ], 3, '2026-10-30');
+    expect(dias).toEqual([
+      { fecha: '2026-10-28', n: 0, cerrados: 0 },
+      { fecha: '2026-10-29', n: 0, cerrados: 0 },
+      { fecha: '2026-10-30', n: 2, cerrados: 1 },
+    ]);
+  });
 });
 
 describe('excel', () => {

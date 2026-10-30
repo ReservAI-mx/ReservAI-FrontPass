@@ -19,14 +19,107 @@
 <body class="ui-page bt">
   <div id="messageContainer" class="message-container" aria-live="polite"></div>
 
-  <header class="bt-top">
+  <!-- Escritorio: la misma barra que el resto del pass, con su menú. -->
+  <nav class="navbar bt-escritorio" id="barraPass">
+    <a class="logo bt-logo" id="logoPass" href="/">
+      <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
+      <span class="logo-text" id="logoTexto">ReservAI</span>
+    </a>
+
+    <div class="bt-navbar__der">
+      <button type="button" class="bt-sync" aria-label="Estado de sincronización">
+        <span class="bt-sync__punto" aria-hidden="true"></span>
+        <span class="bt-sync__texto">Revisando…</span>
+      </button>
+
+      <div class="profile">
+        <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+                aria-expanded="false" aria-label="Menú de cuenta">
+          <span class="profile-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8.5" r="3.75"/>
+              <path d="M4.5 20.25c0-3.6 3.36-6.25 7.5-6.25s7.5 2.65 7.5 6.25"/>
+            </svg>
+          </span>
+        </button>
+        <div class="dropdown" role="menu">
+          <p class="dropdown__account" id="accountName"></p>
+          <a href="/inicioAdmin" class="js-admin-only" role="menuitem" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+              <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+            </svg>
+            Gestión de cuentas
+          </a>
+          <a href="/invitations" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/>
+              <path d="m3.5 7 8.5 6 8.5-6"/>
+            </svg>
+            Invitaciones
+          </a>
+          <a href="/admin/tenants" class="js-admin-only" role="menuitem" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3.75" y="5.25" width="16.5" height="13.5" rx="2"/>
+              <path d="M8 9h8M8 12.5h8M8 16h5"/>
+            </svg>
+            Tenants
+          </a>
+          <a href="/admin/jobs" class="js-admin-only" role="menuitem" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+            </svg>
+            Jobs
+          </a>
+          <a href="/admin/traces" class="js-admin-only" role="menuitem" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+            </svg>
+            Traces
+          </a>
+          <a href="/admin/products" class="js-admin-only" role="menuitem" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.5 7.5 12 3.75 19.5 7.5 12 11.25 4.5 7.5z"/>
+              <path d="M4.5 12 12 15.75 19.5 12M4.5 16.5 12 20.25 19.5 16.5"/>
+            </svg>
+            Productos
+          </a>
+          <a href="/bitacora/" role="menuitem" aria-current="page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 3.75h9.5L19 7.25v13H6z"/><path d="M9 11h7M9 14.5h7M9 18h4"/>
+            </svg>
+            Bitácora de visitas
+          </a>
+          <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+              <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+            </svg>
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Teléfono: barra compacta. -->
+  <header class="bt-top bt-movil">
     <a class="bt-top__marca" id="volverPass" href="/" aria-label="Volver al pass">
       <img src="/static/Images/ReservAiLogo.png" alt="" class="logo-img" />
       <span>Bitácora</span>
     </a>
-    <button type="button" class="bt-sync" id="syncPill" aria-label="Estado de sincronización">
+    <button type="button" class="bt-sync" aria-label="Estado de sincronización">
       <span class="bt-sync__punto" aria-hidden="true"></span>
-      <span id="syncTexto">Revisando…</span>
+      <span class="bt-sync__texto">Revisando…</span>
     </button>
   </header>
 
@@ -39,84 +132,29 @@
     <a class="ui-btn ui-btn--primary" id="btnEntrar" href="/login?return_to=%2Fbitacora%2F">Entrar</a>
   </div>
 
-  <main class="bt-main" id="main">
-    <!-- Arranque / sin cuenta -->
-    <section id="pantallaInicio" class="bt-panel">
-      <div class="ui-loading"><span class="ui-loading__spinner" aria-hidden="true"></span> Abriendo la bitácora…</div>
-    </section>
-
-    <!-- Hoy -->
-    <section id="tab-hoy" class="bt-panel" hidden>
-      <div class="bt-meta" id="metaDia">
-        <div class="bt-meta__fila">
-          <span class="bt-meta__titulo" id="metaTitulo">META DEL DÍA</span>
-          <span class="bt-meta__cuenta" id="metaCuenta">0 / 20</span>
-        </div>
-        <div class="bt-meta__barra"><span id="metaBarra"></span></div>
-        <p class="bt-meta__nota" id="metaNota"></p>
+  <!-- Escritorio: encabezado como el de las demás pantallas del pass. -->
+  <header class="ui-head bt-cabeza bt-escritorio" id="cabeza" hidden>
+    <div class="ui-head__titulo">
+      <span class="ui-head__icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3.75h9.5L19 7.25v13H6z"/><path d="M9 11h7M9 14.5h7M9 18h4"/>
+        </svg>
+      </span>
+      <div>
+        <h2>Bitácora de visitas</h2>
+        <p class="ui-head__sub" id="cabezaSub"></p>
       </div>
-
-      <div class="ui-kpis bt-kpis" id="kpisHoy"></div>
-
-      <button type="button" class="bt-registrar" id="btnRegistrar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    </div>
+    <div class="ui-head__acciones">
+      <button type="button" class="ui-btn ui-btn--ghost" id="btnExcelCabeza">Descargar Excel</button>
+      <button type="button" class="ui-btn ui-btn--primary" id="btnRegistrarCabeza">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"/></svg>
         Registrar puerta
       </button>
-
-      <h3 class="bt-subtitulo" id="tituloHoy">Hoy</h3>
-      <div class="bt-lista" id="listaHoy"></div>
-    </section>
-
-    <!-- Por seguir -->
-    <section id="tab-seguir" class="bt-panel" hidden>
-      <h3 class="bt-subtitulo" id="tituloSeguir">Por seguir</h3>
-      <div class="bt-lista" id="listaSeguir"></div>
-    </section>
-
-    <!-- Todas -->
-    <section id="tab-todas" class="bt-panel" hidden>
-      <div class="ui-seg bt-seg" id="segTodas">
-        <button type="button" class="ui-seg__btn" data-filtro="activas" aria-pressed="true">Activas</button>
-        <button type="button" class="ui-seg__btn" data-filtro="pendientes" aria-pressed="false">Por subir</button>
-        <button type="button" class="ui-seg__btn" data-filtro="archivadas" aria-pressed="false">Archivadas</button>
-      </div>
-      <input type="search" class="bt-buscar" id="buscar" placeholder="Buscar negocio, colonia, contacto…" autocomplete="off" />
-      <div class="bt-lista" id="listaTodas"></div>
-    </section>
-
-    <!-- Tablero -->
-    <section id="tab-tablero" class="bt-panel" hidden>
-      <p class="bt-alcance" id="tableroAlcance"></p>
-      <div id="tablero"></div>
-
-      <h3 class="bt-subtitulo">Descargar</h3>
-      <div class="bt-acciones">
-        <button type="button" class="ui-btn ui-btn--primary" id="btnCompartir">Compartir Excel</button>
-        <button type="button" class="ui-btn ui-btn--ghost" id="btnDescargar">Sólo descargar</button>
-      </div>
-      <p class="bt-nota">Libro de dos hojas: <strong>Tablero</strong> con estas mismas tablas y <strong>Bitacora</strong> con las 38 columnas. Al exportar, tus visitas en <em>Cerrado</em>, <em>Perdido</em> o <em>No interesado</em> se archivan: salen de "Activas" y siguen contando aquí.</p>
-    </section>
-
-    <!-- Ajustes -->
-    <section id="tab-ajustes" class="bt-panel" hidden>
-      <h3 class="bt-subtitulo">Ajustes</h3>
-      <label class="bt-campo">
-        <span class="bt-campo__etiqueta">Meta de puertas al día</span>
-        <input type="number" inputmode="numeric" min="1" max="200" id="inputMeta" />
-      </label>
-
-      <h3 class="bt-subtitulo">Funcionamiento sin conexión</h3>
-      <div class="bt-fila"><span>App guardada en el teléfono</span><strong id="estadoOffline">Revisando…</strong></div>
-      <p class="bt-nota" id="notaOffline"></p>
-
-      <h3 class="bt-subtitulo">Cuenta</h3>
-      <div class="bt-fila"><span>Nombre</span><strong id="cuentaNombre"></strong></div>
-      <div class="bt-fila"><span>Papel</span><strong id="cuentaPapel"></strong></div>
-      <div class="bt-fila"><span>Sesión en este teléfono</span><strong id="cuentaSesion"></strong></div>
-      <button type="button" class="ui-btn ui-btn--ghost bt-salir" id="btnSalir">Cerrar sesión</button>
-      <p class="bt-nota">Antes de cerrar, revisa que el indicador diga «Al día»: lo pendiente vive sólo en este teléfono.</p>
-    </section>
-  </main>
+    </div>
+  </header>
 
   <nav class="bt-tabs" id="tabs" aria-label="Secciones" hidden>
     <button type="button" class="bt-tab is-active" data-tab="hoy">
@@ -135,13 +173,142 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M3 20h18"/></svg>
       <span>Tablero</span>
     </button>
+    <button type="button" class="bt-tab" data-tab="equipo" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.25"/><path d="M3.5 19.5c0-3 2.5-5.25 5.5-5.25s5.5 2.25 5.5 5.25"/><path d="M15.5 5.6a3.25 3.25 0 0 1 0 5.8"/><path d="M17.5 14.6c1.8.7 3 2.5 3 4.9"/></svg>
+      <span>Equipo</span>
+    </button>
     <button type="button" class="bt-tab" data-tab="ajustes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>Ajustes</span>
     </button>
   </nav>
 
-  <!-- Hoja de captura / edición -->
+  <main class="bt-main" id="main">
+    <!-- Arranque / sin cuenta -->
+    <section id="pantallaInicio" class="bt-panel">
+      <div class="ui-loading"><span class="ui-loading__spinner" aria-hidden="true"></span> Abriendo la bitácora…</div>
+    </section>
+
+    <!-- Hoy -->
+    <section id="tab-hoy" class="bt-panel" hidden>
+      <div class="bt-hoy">
+        <div class="bt-hoy__principal">
+          <div class="bt-meta" id="metaDia">
+            <div class="bt-meta__fila">
+              <span class="bt-meta__titulo" id="metaTitulo">META DEL DÍA</span>
+              <span class="bt-meta__cuenta" id="metaCuenta">0 / 20</span>
+            </div>
+            <div class="bt-meta__barra"><span id="metaBarra"></span></div>
+            <p class="bt-meta__nota" id="metaNota"></p>
+          </div>
+
+          <div class="ui-kpis bt-kpis" id="kpisHoy"></div>
+
+          <button type="button" class="bt-registrar bt-movil" id="btnRegistrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Registrar puerta
+          </button>
+
+          <h3 class="bt-subtitulo" id="tituloHoy">Hoy</h3>
+          <div class="bt-lista" id="listaHoy"></div>
+        </div>
+
+        <aside class="bt-hoy__lado bt-escritorio">
+          <div class="bt-card">
+            <div class="bt-card__cabeza">
+              <h3 class="bt-card__titulo">Tus últimos 14 días</h3>
+              <span class="bt-card__dato" id="actividadTotal"></span>
+            </div>
+            <div id="actividadHoy"></div>
+          </div>
+          <div class="bt-card">
+            <div class="bt-card__cabeza">
+              <h3 class="bt-card__titulo" id="tituloSeguirLado">Por seguir</h3>
+              <button type="button" class="bt-link" data-ir="seguir">Ver todas →</button>
+            </div>
+            <div class="bt-lista" id="listaSeguirLado"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Por seguir -->
+    <section id="tab-seguir" class="bt-panel" hidden>
+      <h3 class="bt-subtitulo" id="tituloSeguir">Por seguir</h3>
+      <div class="bt-lista" id="listaSeguir"></div>
+    </section>
+
+    <!-- Todas -->
+    <section id="tab-todas" class="bt-panel" hidden>
+      <div class="bt-barra">
+        <div class="ui-seg bt-seg" id="segTodas">
+          <button type="button" class="ui-seg__btn" data-filtro="activas" aria-pressed="true">Activas</button>
+          <button type="button" class="ui-seg__btn" data-filtro="pendientes" aria-pressed="false">Por subir</button>
+          <button type="button" class="ui-seg__btn" data-filtro="archivadas" aria-pressed="false">Archivadas</button>
+        </div>
+        <input type="search" class="bt-buscar" id="buscar" placeholder="Buscar negocio, colonia, contacto…" autocomplete="off" />
+      </div>
+      <div class="bt-lista" id="listaTodas"></div>
+    </section>
+
+    <!-- Tablero -->
+    <section id="tab-tablero" class="bt-panel" hidden>
+      <div class="bt-barra">
+        <div class="ui-seg bt-seg" id="segPeriodo" role="group" aria-label="Periodo">
+          <button type="button" class="ui-seg__btn" data-dias="1" aria-pressed="false">Hoy</button>
+          <button type="button" class="ui-seg__btn" data-dias="7" aria-pressed="false">7 días</button>
+          <button type="button" class="ui-seg__btn" data-dias="30" aria-pressed="false">30 días</button>
+          <button type="button" class="ui-seg__btn" data-dias="0" aria-pressed="true">Todo</button>
+        </div>
+        <label class="bt-select" id="filtroVendedorCaja" hidden>
+          <span>Vendedor</span>
+          <select id="filtroVendedor"></select>
+        </label>
+      </div>
+      <p class="bt-alcance" id="tableroAlcance"></p>
+      <div class="ui-kpis bt-kpis bt-kpis--tablero" id="tableroKpis"></div>
+      <div id="tablero" class="bt-rejilla"></div>
+
+      <div class="bt-movil">
+        <h3 class="bt-subtitulo">Descargar</h3>
+        <div class="bt-acciones">
+          <button type="button" class="ui-btn ui-btn--primary" id="btnCompartir">Compartir Excel</button>
+          <button type="button" class="ui-btn ui-btn--ghost" id="btnDescargar">Sólo descargar</button>
+        </div>
+      </div>
+      <p class="bt-nota">El Excel trae dos hojas: <strong>Tablero</strong> con estas tablas y <strong>Bitacora</strong> con las 38 columnas, sin importar el periodo elegido. Al exportar, tus visitas en <em>Cerrado</em>, <em>Perdido</em> o <em>No interesado</em> se archivan: salen de "Activas" y siguen contando aquí.</p>
+    </section>
+
+    <!-- Equipo (admin) -->
+    <section id="tab-equipo" class="bt-panel" hidden>
+      <p class="bt-alcance" id="equipoAlcance"></p>
+      <div id="equipo"></div>
+      <p class="bt-nota">Salen todas las cuentas de vendedor, también las que no han capturado nada. Toca una fila para ver su tablero.</p>
+    </section>
+
+    <!-- Ajustes -->
+    <section id="tab-ajustes" class="bt-panel" hidden>
+      <h3 class="bt-subtitulo">Ajustes</h3>
+      <label class="bt-campo">
+        <span class="bt-campo__etiqueta">Meta de puertas al día</span>
+        <input type="number" inputmode="numeric" min="1" max="200" id="inputMeta" />
+      </label>
+
+      <h3 class="bt-subtitulo">Funcionamiento sin conexión</h3>
+      <div class="bt-fila"><span>App guardada en este dispositivo</span><strong id="estadoOffline">Revisando…</strong></div>
+      <p class="bt-nota" id="notaOffline"></p>
+
+      <h3 class="bt-subtitulo">Cuenta</h3>
+      <div class="bt-fila"><span>Nombre</span><strong id="cuentaNombre"></strong></div>
+      <div class="bt-fila"><span>Papel</span><strong id="cuentaPapel"></strong></div>
+      <div class="bt-fila"><span>Sesión en este dispositivo</span><strong id="cuentaSesion"></strong></div>
+      <button type="button" class="ui-btn ui-btn--ghost bt-salir" id="btnSalir">Cerrar sesión</button>
+      <p class="bt-nota">Antes de cerrar, revisa que el indicador diga «Al día»: lo pendiente vive sólo en este dispositivo.</p>
+    </section>
+  </main>
+
+  <!-- Hoja de captura / edición. En escritorio sale como panel a la derecha. -->
+  <div class="bt-velo" id="velo" hidden></div>
   <div class="bt-hoja" id="hoja" role="dialog" aria-modal="true" aria-labelledby="hojaTitulo" hidden>
     <div class="bt-hoja__top">
       <div>

@@ -42,6 +42,11 @@ export function yo() {
   return pedir('/bitacora/yo');
 }
 
+/** Una fila por vendedor, también los que no han capturado nada. Sólo admin. */
+export function equipo() {
+  return pedir('/bitacora/resumen');
+}
+
 /** Deja en el teléfono la sesión larga (30 días). Sólo con la sesión del pass. */
 export function pedirSesionDispositivo() {
   return pedir('/bitacora/sesion', { method: 'POST', body: '{}' });
