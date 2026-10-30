@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0D0D0D" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Bitácora" />
+  <title>ReservAI - Bitácora</title>
+  <link rel="manifest" href="/bitacora/manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="/static/Images/bitacora/favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="/static/Images/bitacora/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesBitacora.css" />
+</head>
+<body class="ui-page bt">
+  <div id="messageContainer" class="message-container" aria-live="polite"></div>
+
+  <header class="bt-top">
+    <a class="bt-top__marca" id="volverPass" href="/" aria-label="Volver al pass">
+      <img src="/static/Images/ReservAiLogo.png" alt="" class="logo-img" />
+      <span>Bitácora</span>
+    </a>
+    <button type="button" class="bt-sync" id="syncPill" aria-label="Estado de sincronización">
+      <span class="bt-sync__punto" aria-hidden="true"></span>
+      <span id="syncTexto">Revisando…</span>
+    </button>
+  </header>
+
+  <div class="bt-aviso bt-aviso--info" id="avisoVersion" hidden>
+    <span>Hay una versión nueva lista.</span>
+    <button type="button" class="ui-btn ui-btn--primary" id="btnActualizar">Actualizar</button>
+  </div>
+  <div class="bt-aviso bt-aviso--warn" id="avisoSesion" hidden>
+    <span id="avisoSesionTexto">Tu sesión terminó. Entra de nuevo para subir lo que capturaste; mientras, sigue capturando.</span>
+    <a class="ui-btn ui-btn--primary" id="btnEntrar" href="/login?return_to=%2Fbitacora%2F">Entrar</a>
+  </div>
+
+  <main class="bt-main" id="main">
+    <!-- Arranque / sin cuenta -->
+    <section id="pantallaInicio" class="bt-panel">
+      <div class="ui-loading"><span class="ui-loading__spinner" aria-hidden="true"></span> Abriendo la bitácora…</div>
+    </section>
+
+    <!-- Hoy -->
+    <section id="tab-hoy" class="bt-panel" hidden>
+      <div class="bt-meta" id="metaDia">
+        <div class="bt-meta__fila">
+          <span class="bt-meta__titulo" id="metaTitulo">META DEL DÍA</span>
+          <span class="bt-meta__cuenta" id="metaCuenta">0 / 20</span>
+        </div>
+        <div class="bt-meta__barra"><span id="metaBarra"></span></div>
+        <p class="bt-meta__nota" id="metaNota"></p>
+      </div>
+
+      <div class="ui-kpis bt-kpis" id="kpisHoy"></div>
+
+      <button type="button" class="bt-registrar" id="btnRegistrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Registrar puerta
+      </button>
+
+      <h3 class="bt-subtitulo" id="tituloHoy">Hoy</h3>
+      <div class="bt-lista" id="listaHoy"></div>
+    </section>
+
+    <!-- Por seguir -->
+    <section id="tab-seguir" class="bt-panel" hidden>
+      <h3 class="bt-subtitulo" id="tituloSeguir">Por seguir</h3>
+      <div class="bt-lista" id="listaSeguir"></div>
+    </section>
+
+    <!-- Todas -->
+    <section id="tab-todas" class="bt-panel" hidden>
+      <div class="ui-seg bt-seg" id="segTodas">
+        <button type="button" class="ui-seg__btn" data-filtro="activas" aria-pressed="true">Activas</button>
+        <button type="button" class="ui-seg__btn" data-filtro="pendientes" aria-pressed="false">Por subir</button>
+        <button type="button" class="ui-seg__btn" data-filtro="archivadas" aria-pressed="false">Archivadas</button>
+      </div>
+      <input type="search" class="bt-buscar" id="buscar" placeholder="Buscar negocio, colonia, contacto…" autocomplete="off" />
+      <div class="bt-lista" id="listaTodas"></div>
+    </section>
+
+    <!-- Tablero -->
+    <section id="tab-tablero" class="bt-panel" hidden>
+      <p class="bt-alcance" id="tableroAlcance"></p>
+      <div id="tablero"></div>
+
+      <h3 class="bt-subtitulo">Descargar</h3>
+      <div class="bt-acciones">
+        <button type="button" class="ui-btn ui-btn--primary" id="btnCompartir">Compartir Excel</button>
+        <button type="button" class="ui-btn ui-btn--ghost" id="btnDescargar">Sólo descargar</button>
+      </div>
+      <p class="bt-nota">Libro de dos hojas: <strong>Tablero</strong> con estas mismas tablas y <strong>Bitacora</strong> con las 38 columnas. Al exportar, tus visitas en <em>Cerrado</em>, <em>Perdido</em> o <em>No interesado</em> se archivan: salen de "Activas" y siguen contando aquí.</p>
+    </section>
+
+    <!-- Ajustes -->
+    <section id="tab-ajustes" class="bt-panel" hidden>
+      <h3 class="bt-subtitulo">Ajustes</h3>
+      <label class="bt-campo">
+        <span class="bt-campo__etiqueta">Meta de puertas al día</span>
+        <input type="number" inputmode="numeric" min="1" max="200" id="inputMeta" />
+      </label>
+
+      <h3 class="bt-subtitulo">Funcionamiento sin conexión</h3>
+      <div class="bt-fila"><span>App guardada en el teléfono</span><strong id="estadoOffline">Revisando…</strong></div>
+      <p class="bt-nota" id="notaOffline"></p>
+
+      <h3 class="bt-subtitulo">Cuenta</h3>
+      <div class="bt-fila"><span>Nombre</span><strong id="cuentaNombre"></strong></div>
+      <div class="bt-fila"><span>Papel</span><strong id="cuentaPapel"></strong></div>
+      <div class="bt-fila"><span>Sesión en este teléfono</span><strong id="cuentaSesion"></strong></div>
+      <button type="button" class="ui-btn ui-btn--ghost bt-salir" id="btnSalir">Cerrar sesión</button>
+      <p class="bt-nota">Antes de cerrar, revisa que el indicador diga «Al día»: lo pendiente vive sólo en este teléfono.</p>
+    </section>
+  </main>
+
+  <nav class="bt-tabs" id="tabs" aria-label="Secciones" hidden>
+    <button type="button" class="bt-tab is-active" data-tab="hoy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M15.2 12h.01"/></svg>
+      <span>Hoy</span>
+    </button>
+    <button type="button" class="bt-tab" data-tab="seguir">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z"/><path d="M12 8v4.4l3 1.8"/></svg>
+      <span>Seguir</span>
+    </button>
+    <button type="button" class="bt-tab" data-tab="todas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
+      <span>Todas</span>
+    </button>
+    <button type="button" class="bt-tab" data-tab="tablero">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M3 20h18"/></svg>
+      <span>Tablero</span>
+    </button>
+    <button type="button" class="bt-tab" data-tab="ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Ajustes</span>
+    </button>
+  </nav>
+
+  <!-- Hoja de captura / edición -->
+  <div class="bt-hoja" id="hoja" role="dialog" aria-modal="true" aria-labelledby="hojaTitulo" hidden>
+    <div class="bt-hoja__top">
+      <div>
+        <div class="bt-hoja__titulo" id="hojaTitulo">Registrar visita</div>
+        <div class="bt-hoja__pasos" id="hojaPasos"></div>
+      </div>
+      <button type="button" class="bt-link" id="hojaCerrar">Cerrar</button>
+    </div>
+    <div class="bt-hoja__cuerpo" id="hojaCuerpo"></div>
+    <div class="bt-hoja__pie" id="hojaPie"></div>
+  </div>
+
+  <script src="/static/Scripts/bitacoraScript/campos.js"></script>
+  <script src="/static/Scripts/bitacoraScript/calculos.js"></script>
+  <script src="/static/Scripts/bitacoraScript/excel.js"></script>
+  <script type="module" src="/static/Scripts/bitacoraScript/app.js"></script>
+</body>
+</html>

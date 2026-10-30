@@ -26,6 +26,28 @@ router.get('/admin/tenants', (req, res) => res.sendFile(path.resolve(__dirname +
 router.get('/admin/jobs', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/jobs.html")));
 router.get('/admin/traces', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/traces.html")));
 router.get('/admin/products', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/products.html")));
+
+/**
+ * Bitácora de visitas (ventas). Vive bajo /bitacora/ con barra final porque el
+ * service worker sólo controla lo que está debajo de su carpeta: servido en
+ * /bitacora/sw.js, su alcance es /bitacora/, y /bitacora a secas quedaría
+ * fuera (sin modo sin conexión).
+ */
+const BITACORA_NO_CACHE = { headers: { 'Cache-Control': 'no-cache' } };
+// Sin strict routing, '/bitacora' y '/bitacora/' caen en la misma ruta: se
+// distingue por la URL original para no redirigir en círculo.
+router.get(['/bitacora', '/bitacora/tablero'], (req, res) => {
+    if (req.originalUrl.split('?')[0] === '/bitacora') return res.redirect(302, '/bitacora/');
+    return res.sendFile(path.resolve(__dirname + "/../views/bitacora.html"), BITACORA_NO_CACHE);
+});
+router.get('/bitacora/sw.js', (req, res) =>
+    res.sendFile(path.resolve(__dirname + "/bitacoraScript/sw.js"), {
+        headers: { 'Cache-Control': 'no-cache', 'Content-Type': 'text/javascript; charset=utf-8' },
+    }));
+router.get('/bitacora/manifest.webmanifest', (req, res) =>
+    res.sendFile(path.resolve(__dirname + "/bitacoraScript/manifest.webmanifest"), {
+        headers: { 'Cache-Control': 'no-cache', 'Content-Type': 'application/manifest+json' },
+    }));
 router.get('/404', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/404.html")));
 router.get('/unauthorized', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/unauthorized.html")));
 /**
