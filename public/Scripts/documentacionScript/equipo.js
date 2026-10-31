@@ -161,8 +161,22 @@ export function crearEquipo(op) {
     const ul = $('eqSugerencias');
     ul.replaceChildren();
     const cuentas = r.ok ? r.data.cuentas || [] : [];
-    if (!cuentas.length) ul.appendChild(el('li', 'dv-eq__sin', r.ok ? 'Sin resultados' : 'No se pudo buscar'));
+    if (!cuentas.length) {
+      ul.appendChild(el('li', 'dv-eq__sin', r.ok
+        ? 'Nadie del equipo con ese nombre o correo (los clientes no salen). Si no tiene cuenta, invítala desde Invitaciones.'
+        : 'No se pudo buscar'));
+    }
     for (const c of cuentas) {
+      // Los admins salen para que se sepa que existen, pero no se eligen:
+      // ya pueden todo.
+      if (c.type === 'admin') {
+        const li = el('li', 'dv-eq__sugerencia is-admin');
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-disabled', 'true');
+        li.append(el('span', 'dv-eq__nombre', c.name), el('span', 'dv-eq__correo', `${c.email} · Admin: ya puede todo, no necesita permiso`));
+        ul.appendChild(li);
+        continue;
+      }
       const li = el('li', 'dv-eq__sugerencia');
       li.setAttribute('role', 'option');
       li.tabIndex = -1;
@@ -190,19 +204,19 @@ export function crearEquipo(op) {
 
   function enlazarBuscador() {
     const input = $('eqBuscar');
+    // Al entrar al campo sale todo el equipo (sin clientes); al escribir, se filtra.
+    input.addEventListener('focus', () => {
+      if (!estado.elegida) buscar(input.value.trim());
+    });
     input.addEventListener('input', () => {
       estado.elegida = null;
       clearTimeout(temporizador);
       const t = input.value.trim();
-      if (!t) {
-        cerrarSugerencias();
-        return;
-      }
       temporizador = setTimeout(() => buscar(t), BUSCAR_MS);
     });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown') {
-        const primero = $('eqSugerencias').querySelector('[role="option"]');
+        const primero = $('eqSugerencias').querySelector('[role="option"]:not([aria-disabled])');
         if (primero) {
           e.preventDefault();
           primero.focus();
