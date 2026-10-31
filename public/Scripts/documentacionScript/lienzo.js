@@ -13,88 +13,11 @@ const XHTML = 'http://www.w3.org/1999/xhtml';
 const ZOOM_MIN = 0.2;
 const ZOOM_MAX = 2.5;
 const UMBRAL_ARRASTRE = 4;
-// Fondo del lienzo: base de la mezcla del relleno de los nodos (node-colors.ts).
-const BASE = '#0d1119';
-
 function svg(tag, attrs) {
   const el = document.createElementNS(SVG, tag);
   if (attrs) for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
   return el;
 }
-
-function hex(h) {
-  const c = h.replace('#', '');
-  return [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16));
-}
-
-function mezcla(color, ratio) {
-  const a = hex(color);
-  const b = hex(BASE);
-  const m = a.map((v, i) => Math.round(v * ratio + b[i] * (1 - ratio)));
-  return `rgb(${m.join(', ')})`;
-}
-
-function alfa(color, v) {
-  return `rgba(${hex(color).join(', ')}, ${v})`;
-}
-
-// ---------- Siluetas (NodeShape.tsx) ----------
-
-const I = 3; // margen para que el trazo no se recorte
-const CIL_RY = 13;
-const SEMI_PLANO = 0.34;
-
-function figura(shape, w, h) {
-  const cx = w / 2;
-  const cy = h / 2;
-  switch (shape) {
-    case 'diamond':
-      return [svg('path', { d: `M ${cx} ${I} L ${w - I} ${cy} L ${cx} ${h - I} L ${I} ${cy} Z` })];
-    case 'hexagon': {
-      const k = Math.min(26, w / 4);
-      return [svg('path', { d: `M ${k} ${I} L ${w - k} ${I} L ${w - I} ${cy} L ${w - k} ${h - I} L ${k} ${h - I} L ${I} ${cy} Z` })];
-    }
-    case 'semicircle': {
-      const plano = I + (h - I * 2) * SEMI_PLANO;
-      const rx = (w - I * 2) / 2;
-      const ry = h - I - plano;
-      return [svg('path', { d: `M ${I} ${I} L ${w - I} ${I} L ${w - I} ${plano} A ${rx} ${ry} 0 0 1 ${I} ${plano} Z` })];
-    }
-    case 'cylinder': {
-      const rx = (w - I * 2) / 2;
-      const arriba = I + CIL_RY;
-      const abajo = h - I - CIL_RY;
-      return [
-        svg('path', { d: `M ${I} ${arriba} A ${rx} ${CIL_RY} 0 0 1 ${w - I} ${arriba} L ${w - I} ${abajo} A ${rx} ${CIL_RY} 0 0 1 ${I} ${abajo} Z` }),
-        svg('ellipse', { cx, cy: arriba, rx, ry: CIL_RY, class: 'dv-detalle' }),
-      ];
-    }
-    case 'stadium':
-      return [svg('rect', { x: I, y: I, width: w - I * 2, height: h - I * 2, rx: (h - I * 2) / 2 })];
-    case 'rack': {
-      const partes = [svg('rect', { x: I, y: I, width: w - I * 2, height: h - I * 2, rx: 12 })];
-      for (const i of [-1, 0, 1]) {
-        partes.push(svg('line', { x1: w - 26, x2: w - 13, y1: cy + i * 8, y2: cy + i * 8, class: 'dv-detalle' }));
-      }
-      partes.push(svg('circle', { cx: 16, cy: cy - 5, r: 2.2, class: 'dv-detalle' }));
-      partes.push(svg('circle', { cx: 16, cy: cy + 5, r: 2.2, class: 'dv-detalle' }));
-      return partes;
-    }
-    default:
-      return [svg('rect', { x: I, y: I, width: w - I * 2, height: h - I * 2, rx: 14 })];
-  }
-}
-
-// Zona de texto dentro de cada silueta (fracciones de ancho y alto).
-const AREA_TEXTO = {
-  diamond: [0.24, 0.2, 0.52, 0.6],
-  hexagon: [0.13, 0.08, 0.74, 0.84],
-  semicircle: [0.07, 0.06, 0.86, 0.6],
-  cylinder: [0.07, 0.25, 0.86, 0.66],
-  stadium: [0.12, 0.08, 0.76, 0.84],
-  rect: [0.06, 0.08, 0.88, 0.84],
-  rack: [0.1, 0.08, 0.74, 0.84],
-};
 
 export class Lienzo {
   /**
@@ -267,21 +190,16 @@ export class Lienzo {
     });
 
     const forma = svg('g', { class: 'dv-forma' });
-    for (const p of figura(cfg.shape, w, h)) {
-      if (p.getAttribute('class') === 'dv-detalle') {
-        p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', alfa(cfg.accent, 0.38));
-      } else {
-        p.setAttribute('fill', mezcla(cfg.accent, 0.13));
-        p.setAttribute('stroke', sel ? cfg.accent : alfa(cfg.accent, 0.58));
-        p.setAttribute('stroke-width', sel ? '2.4' : '1.5');
-      }
-      forma.appendChild(p);
+    const color = M.pintura(cfg.accent, sel);
+    for (const f of M.siluetas(cfg.shape, w, h)) {
+      forma.appendChild(svg(f.tag, f.detalle
+        ? { ...f.attrs, class: 'dv-detalle', fill: 'none', stroke: color.detalle }
+        : { ...f.attrs, fill: color.relleno, stroke: color.trazo, 'stroke-width': color.grosor }));
     }
     g.appendChild(forma);
 
     // Texto en HTML dentro del SVG: así se ajusta en varias líneas.
-    const [fx, fy, fw, fh] = AREA_TEXTO[cfg.shape];
+    const [fx, fy, fw, fh] = M.AREA_TEXTO[cfg.shape];
     const fo = svg('foreignObject', { x: w * fx, y: h * fy, width: w * fw, height: h * fh });
     const caja = document.createElementNS(XHTML, 'div');
     caja.className = `dv-nodo__texto dv-nodo__texto--${cfg.shape}`;

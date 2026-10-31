@@ -345,7 +345,7 @@ function enlazarEditor() {
   $('encuadrar').addEventListener('click', () => lienzo.encuadrar());
   $('alejar').addEventListener('click', () => lienzo.acercar(1 / 1.2));
   $('acercar').addEventListener('click', () => lienzo.acercar(1.2));
-  $('exportarJson').addEventListener('click', exportarJson);
+  enlazarExportar();
   $('recargarConflicto').addEventListener('click', () => abrirProyecto(estado.slug, true));
   $('sobrescribirConflicto').addEventListener('click', sobrescribir);
 
@@ -582,15 +582,119 @@ function teclado(e) {
   }
 }
 
-function exportarJson() {
-  const blob = new Blob([JSON.stringify(estado.doc, null, 2)], { type: 'application/json' });
+/* ==================================================================
+   Exportar
+   ================================================================== */
+
+const X = globalThis.DocExportar;
+
+function descargar(contenido, nombre, tipo) {
+  const blob = contenido instanceof Blob ? contenido : new Blob([contenido], { type: tipo });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${estado.slug}.json`;
+  a.download = nombre;
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/** "proyecto" o "proyecto-login" para un diagrama de detalle. */
+function nombreArchivo() {
+  if (estado.pila.length === 1) return estado.slug;
+  const nodo = M.nodoQueAbre(estado.doc, estado.pila[estado.pila.length - 2], idActual());
+  const sufijo = M.slugDesdeNombre(nodo ? nodo.data.name : 'detalle') || 'detalle';
+  return `${estado.slug}-${sufijo}`;
+}
+
+function tituloImagen() {
+  const ruta = M.rutasDiagramas(estado.doc).get(idActual());
+  return ruta ? ruta.join(' · ') : estado.doc.meta.name;
+}
+
+// Lado máximo del PNG: más grande, algunos navegadores no pueden con el canvas.
+const LADO_MAX = 8192;
+
+async function exportarPng() {
+  const r = X.svgDiagrama(diagramaActual(), { titulo: tituloImagen() });
+  if (!r) {
+    showToast('El diagrama no tiene nodos que exportar.', 'warning');
+    return;
+  }
+  const escala = Math.min(2, LADO_MAX / Math.max(r.ancho, r.alto));
+  const img = new Image();
+  // data: y no blob:, que la CSP del pass (img-src) no permite.
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(r.svg)}`;
+  await img.decode();
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(r.ancho * escala);
+  canvas.height = Math.round(r.alto * escala);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(escala, escala);
+  ctx.drawImage(img, 0, 0, r.ancho, r.alto);
+  const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+  if (!blob) throw new Error('canvas vacío');
+  descargar(blob, `${nombreArchivo()}.png`);
+}
+
+async function exportar(formato) {
+  try {
+    if (formato === 'png') {
+      await exportarPng();
+    } else if (formato === 'svg') {
+      const r = X.svgDiagrama(diagramaActual(), { titulo: tituloImagen() });
+      if (!r) {
+        showToast('El diagrama no tiene nodos que exportar.', 'warning');
+        return;
+      }
+      descargar(r.svg, `${nombreArchivo()}.svg`, 'image/svg+xml');
+    } else if (formato === 'md') {
+      const fecha = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City', dateStyle: 'long', timeStyle: 'short' });
+      descargar(X.markdownProyecto(estado.doc, fecha), `${estado.slug}.md`, 'text/markdown;charset=utf-8');
+    } else if (formato === 'json') {
+      descargar(JSON.stringify(estado.doc, null, 2), `${estado.slug}.json`, 'application/json');
+    }
+  } catch {
+    showToast('No se pudo exportar.', 'error');
+  }
+}
+
+function enlazarExportar() {
+  const boton = $('exportar');
+  const menu = $('menuExportar');
+  const cerrar = () => {
+    menu.hidden = true;
+    boton.setAttribute('aria-expanded', 'false');
+  };
+  boton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.hidden = !menu.hidden;
+    boton.setAttribute('aria-expanded', String(!menu.hidden));
+    if (!menu.hidden) menu.querySelector('button').focus();
+  });
+  menu.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-formato]');
+    if (!item) return;
+    cerrar();
+    exportar(item.dataset.formato);
+  });
+  menu.addEventListener('keydown', (e) => {
+    const items = [...menu.querySelectorAll('[data-formato]')];
+    const i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[(i + 1) % items.length].focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[(i - 1 + items.length) % items.length].focus();
+    } else if (e.key === 'Escape') {
+      cerrar();
+      boton.focus();
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (!menu.hidden && !menu.contains(e.target)) cerrar();
+  });
 }
 
 /* ==================================================================

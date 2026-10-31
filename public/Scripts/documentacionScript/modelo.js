@@ -413,6 +413,117 @@
     };
   }
 
+  // ---------- Dibujo (lo comparten el lienzo y la exportación) ----------
+
+  // Fondo del lienzo: base de la mezcla del relleno (node-colors.ts).
+  const FONDO = '#0d1119';
+  const COLOR_ARISTA = '#6b7a93';
+  const COLOR_ESTADO = {
+    'TO DO': '#9aa3b2', 'IN PROGRESS': '#7cc4f5', 'ON HOLD': '#fbbf24', TESTING: '#c4b5fd', COMPLETE: '#4ade80',
+  };
+
+  function rgb(hex) {
+    const c = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16));
+  }
+
+  /** Relleno, trazo y detalle de un nodo (colores planos: también sirven en la imagen). */
+  function pintura(acento, seleccionado) {
+    const a = rgb(acento);
+    const b = rgb(FONDO);
+    const mezcla = a.map((v, i) => Math.round(v * 0.13 + b[i] * 0.87));
+    const alfa = (v) => `rgba(${a.join(', ')}, ${v})`;
+    return {
+      relleno: `rgb(${mezcla.join(', ')})`,
+      trazo: seleccionado ? acento : alfa(0.58),
+      grosor: seleccionado ? 2.4 : 1.5,
+      detalle: alfa(0.38),
+    };
+  }
+
+  const MARGEN_TRAZO = 3;
+  const CIL_RY = 13;
+  const SEMI_PLANO = 0.34;
+
+  /**
+   * Silueta de un nodo como lista de figuras SVG (NodeShape.tsx).
+   * @returns {Array<{ tag, attrs, detalle: boolean }>}
+   */
+  function siluetas(shape, w, h) {
+    const I = MARGEN_TRAZO;
+    const cx = w / 2;
+    const cy = h / 2;
+    const f = (tag, attrs, detalle) => ({ tag, attrs, detalle: Boolean(detalle) });
+    switch (shape) {
+      case 'diamond':
+        return [f('path', { d: `M ${cx} ${I} L ${w - I} ${cy} L ${cx} ${h - I} L ${I} ${cy} Z` })];
+      case 'hexagon': {
+        const k = Math.min(26, w / 4);
+        return [f('path', { d: `M ${k} ${I} L ${w - k} ${I} L ${w - I} ${cy} L ${w - k} ${h - I} L ${k} ${h - I} L ${I} ${cy} Z` })];
+      }
+      case 'semicircle': {
+        const plano = I + (h - I * 2) * SEMI_PLANO;
+        const rx = (w - I * 2) / 2;
+        return [f('path', { d: `M ${I} ${I} L ${w - I} ${I} L ${w - I} ${plano} A ${rx} ${h - I - plano} 0 0 1 ${I} ${plano} Z` })];
+      }
+      case 'cylinder': {
+        const rx = (w - I * 2) / 2;
+        const arriba = I + CIL_RY;
+        const abajo = h - I - CIL_RY;
+        return [
+          f('path', { d: `M ${I} ${arriba} A ${rx} ${CIL_RY} 0 0 1 ${w - I} ${arriba} L ${w - I} ${abajo} A ${rx} ${CIL_RY} 0 0 1 ${I} ${abajo} Z` }),
+          f('ellipse', { cx, cy: arriba, rx, ry: CIL_RY }, true),
+        ];
+      }
+      case 'stadium':
+        return [f('rect', { x: I, y: I, width: w - I * 2, height: h - I * 2, rx: (h - I * 2) / 2 })];
+      case 'rack': {
+        const partes = [f('rect', { x: I, y: I, width: w - I * 2, height: h - I * 2, rx: 12 })];
+        for (const i of [-1, 0, 1]) partes.push(f('line', { x1: w - 26, x2: w - 13, y1: cy + i * 8, y2: cy + i * 8 }, true));
+        partes.push(f('circle', { cx: 16, cy: cy - 5, r: 2.2 }, true));
+        partes.push(f('circle', { cx: 16, cy: cy + 5, r: 2.2 }, true));
+        return partes;
+      }
+      default:
+        return [f('rect', { x: I, y: I, width: w - I * 2, height: h - I * 2, rx: 14 })];
+    }
+  }
+
+  // Zona del texto dentro de cada silueta: [x, y, ancho, alto] en fracciones.
+  const AREA_TEXTO = {
+    diamond: [0.24, 0.2, 0.52, 0.6],
+    hexagon: [0.13, 0.08, 0.74, 0.84],
+    semicircle: [0.07, 0.06, 0.86, 0.6],
+    cylinder: [0.07, 0.25, 0.86, 0.66],
+    stadium: [0.12, 0.08, 0.76, 0.84],
+    rect: [0.06, 0.08, 0.88, 0.84],
+    rack: [0.1, 0.08, 0.74, 0.84],
+  };
+
+  /**
+   * Dónde está cada diagrama: los nombres de la raíz al diagrama, siguiendo
+   * los nodos que lo abren (node-search.ts buildDiagramPaths). Los diagramas
+   * a los que no llega nadie no aparecen.
+   * @returns {Map<string, string[]>}
+   */
+  function rutasDiagramas(doc) {
+    const out = new Map();
+    const cola = [{ id: doc.rootDiagramId, nombres: [String(doc.meta.name || '').trim() || 'Principal'] }];
+    while (cola.length) {
+      const actual = cola.shift();
+      if (out.has(actual.id)) continue;
+      out.set(actual.id, actual.nombres);
+      const d = doc.diagrams[actual.id];
+      if (!d) continue;
+      for (const n of d.nodes) {
+        const hijo = n.data.childDiagramId;
+        if (!hijo || out.has(hijo) || !doc.diagrams[hijo]) continue;
+        cola.push({ id: hijo, nombres: [...actual.nombres, String(n.data.name || '').trim() || TIPOS[n.type].label] });
+      }
+    }
+    return out;
+  }
+
   // ---------- Lectura ----------
 
   const HTTP = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE']);
@@ -453,6 +564,7 @@
     agregarNodo, moverNodos, quitar, conectar, cambiarDatos,
     abrirHijo, quitarHijo, nodoQueAbre, podarPila, subarbol,
     puertos, puerto, rutaArista, caja, encuadre,
+    FONDO, COLOR_ARISTA, COLOR_ESTADO, AREA_TEXTO, pintura, siluetas, rutasDiagramas,
     datosHttp, conteoEstados,
   };
 });

@@ -419,6 +419,42 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
 .dv-btn-peligro { color: var(--ui-error); }
 .dv-btn-peligro:hover { border-color: var(--ui-error); background: rgba(255, 132, 132, 0.1); }
 
+/* ---------- Menú de exportar ---------- */
+
+.dv-exportar { position: relative; }
+
+.dv-menu {
+  position: absolute;
+  z-index: 70; /* sobre la .navbar (60) */
+  top: calc(100% + 6px);
+  right: 0;
+  width: 280px;
+  padding: 0.35rem;
+  border: 1px solid var(--ui-line-2);
+  border-radius: 12px;
+  background: var(--bg-card);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+}
+
+.dv-menu__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-light);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dv-menu__item:hover,
+.dv-menu__item:focus-visible { background: var(--bg-input); outline: none; }
+.dv-menu__nombre { font-size: 0.88rem; font-weight: 600; }
+.dv-menu__hint { font-size: 0.76rem; color: var(--text-gray); }
+
 /* ---------- Chat ---------- */
 
 .dv-btn-chat { min-height: 36px; padding: 0 0.8rem; }
@@ -579,7 +615,7 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
   .dv-guardado { order: 2; }
   .dv-lectura { order: 2; }
   .dv-barra__acciones { order: 3; margin-left: auto; }
-  #deshacer, #rehacer, #exportarJson { display: none; }
+  #deshacer, #rehacer { display: none; }
 
   .dv-inspector {
     position: absolute;

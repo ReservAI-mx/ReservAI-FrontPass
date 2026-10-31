@@ -204,9 +204,30 @@
         <button type="button" class="ui-icon-btn" id="encuadrar" title="Ver todo el diagrama" aria-label="Ver todo el diagrama">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15"/></svg>
         </button>
-        <button type="button" class="ui-icon-btn" id="exportarJson" title="Descargar JSON" aria-label="Descargar JSON">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5v10.5M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>
-        </button>
+        <div class="dv-exportar">
+          <button type="button" class="ui-icon-btn" id="exportar" title="Exportar" aria-label="Exportar"
+                  aria-haspopup="menu" aria-expanded="false" aria-controls="menuExportar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5v10.5M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>
+          </button>
+          <div class="dv-menu" id="menuExportar" role="menu" hidden>
+            <button type="button" role="menuitem" class="dv-menu__item" data-formato="png">
+              <span class="dv-menu__nombre">Imagen PNG</span>
+              <span class="dv-menu__hint">El diagrama que tienes abierto, completo.</span>
+            </button>
+            <button type="button" role="menuitem" class="dv-menu__item" data-formato="svg">
+              <span class="dv-menu__nombre">Imagen SVG</span>
+              <span class="dv-menu__hint">Lo mismo, en vectores: se ve nítido a cualquier tamaño.</span>
+            </button>
+            <button type="button" role="menuitem" class="dv-menu__item" data-formato="md">
+              <span class="dv-menu__nombre">Documentación Markdown</span>
+              <span class="dv-menu__hint">Todo el proyecto: índice de endpoints y una ficha por nodo.</span>
+            </button>
+            <button type="button" role="menuitem" class="dv-menu__item" data-formato="json">
+              <span class="dv-menu__nombre">JSON del proyecto</span>
+              <span class="dv-menu__hint">Con todos los diagramas; se puede volver a importar.</span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -311,6 +332,7 @@
 
   <script src="/static/Scripts/documentacionScript/modelo.js"></script>
   <script src="/static/Scripts/documentacionScript/markdown.js"></script>
+  <script src="/static/Scripts/documentacionScript/exportar.js"></script>
   <script type="module" src="/static/Scripts/documentacionScript/app.js"></script>
 </body>
 </html>
