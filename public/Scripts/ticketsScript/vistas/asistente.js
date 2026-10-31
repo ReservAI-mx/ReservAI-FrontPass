@@ -3,6 +3,7 @@ import { h, vaciar, error, avatar, puntos } from "../ui.js";
 import { datos } from "../datos.js";
 import { verTicket, ir } from "../rutas.js";
 import { llamarIA } from "../ia.js";
+import { icono } from "../iconos.js";
 
 // La conversación se queda mientras la pestaña esté abierta.
 const conversacion = [];
@@ -31,8 +32,8 @@ function conEnlaces(texto) {
 
 export async function render(cont) {
   const mensajes = h("div.mensajes");
-  const caja = h("textarea", { rows: 1, placeholder: "Pregunta lo que quieras sobre los tickets…" });
-  const boton = h("button.btn.primario", { title: "Enviar (Enter)" }, "Enviar ➤");
+  const caja = h("textarea", { rows: 1, placeholder: "Pregunta lo que quieras sobre los tickets…", enterkeyhint: "send" });
+  const boton = h("button.btn.primario", { title: "Enviar (Enter)", "aria-label": "Enviar" }, icono("enviar", { tam: 18 }), h("span.solo-escritorio", "Enviar"));
   const nombre = datos.yo.nombre.split(" ")[0];
 
   const fila = (rol, contenido) => h("div.fila-msg", { class: rol === "user" ? "yo" : "ia" },
@@ -56,6 +57,10 @@ export async function render(cont) {
     caja.style.height = "44px";
     caja.style.height = Math.min(caja.scrollHeight + 2, 160) + "px";
   };
+
+  // En el teléfono Enter es salto de línea (el teclado no tiene Shift a la
+  // mano); se envía con el botón.
+  const enviarConEnter = () => !window.matchMedia("(pointer: coarse)").matches;
 
   const enviar = async (texto) => {
     texto = (texto ?? caja.value).trim();
@@ -82,7 +87,7 @@ export async function render(cont) {
   boton.addEventListener("click", () => enviar());
   caja.addEventListener("input", ajustarAltura);
   caja.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && enviarConEnter()) {
       e.preventDefault();
       enviar();
     }
@@ -114,5 +119,6 @@ export async function render(cont) {
             h("li", "✦ Crear con IA en cada área"),
             h("li", "✦ Resumir y desglosar dentro de cada ticket"))))));
   pintar();
-  caja.focus();
+  // En el teléfono no se abre el teclado solo: taparía las sugerencias.
+  if (enviarConEnter()) caja.focus();
 }

@@ -92,4 +92,59 @@ describe('ruta /tickets', () => {
     expect(res.headers.get('cache-control')).toBe('no-cache');
     expect(await res.text()).toContain('ticketsScript/pagina.js');
   });
+
+  test('/tickets/sw.js y el manifest se sirven con su tipo, sin caché', async () => {
+    const sw = await pedir('/tickets/sw.js');
+    expect(sw.status).toBe(200);
+    expect(sw.headers.get('content-type')).toMatch(/javascript/);
+    expect(sw.headers.get('cache-control')).toBe('no-cache');
+    const m = await pedir('/tickets/manifest.webmanifest');
+    expect(m.status).toBe(200);
+    expect(m.headers.get('content-type')).toMatch(/manifest\+json/);
+    const manifest = await m.json();
+    expect(manifest).toMatchObject({ scope: '/tickets/', display: 'standalone' });
+  });
+});
+
+describe('app instalable (service worker)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const RAIZ = path.join(__dirname, '../public');
+  const sw = fs.readFileSync(path.join(RAIZ, 'Scripts/ticketsScript/sw.js'), 'utf8');
+  const listado = (nombre) => {
+    const m = sw.match(new RegExp(`const ${nombre} = \\[([\\s\\S]*?)\\];`));
+    return [...m[1].matchAll(/(S \+ )?'([^']+)'/g)].map(([, s, ruta]) => (s ? '/static/Scripts/ticketsScript/' : '') + ruta);
+  };
+  const archivos = [...listado('CRITICOS'), ...listado('OPCIONALES')];
+
+  // Si un módulo nuevo no está en la lista, la app instalada no abre sin señal.
+  test('lista cada módulo de ticketsScript', () => {
+    const modulos = [];
+    const recorrer = (dir) => {
+      for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+        const ruta = path.join(dir, f.name);
+        if (f.isDirectory()) recorrer(ruta);
+        else if (f.name.endsWith('.js') && f.name !== 'sw.js') modulos.push(ruta);
+      }
+    };
+    recorrer(path.join(RAIZ, 'Scripts/ticketsScript'));
+    const faltan = modulos
+      .map((r) => '/static/' + path.relative(RAIZ, r).split(path.sep).join('/'))
+      .filter((url) => !archivos.includes(url));
+    expect(faltan).toEqual([]);
+  });
+
+  test('todo lo que lista existe', () => {
+    const noExisten = archivos.filter((url) => {
+      if (url === '/tickets/') return !fs.existsSync(path.join(RAIZ, 'views/tickets.html'));
+      if (url === '/tickets/manifest.webmanifest') return !fs.existsSync(path.join(RAIZ, 'Scripts/ticketsScript/manifest.webmanifest'));
+      return !fs.existsSync(path.join(RAIZ, url.replace(/^\/static\//, '')));
+    });
+    expect(noExisten).toEqual([]);
+  });
+
+  test('no guarda nada de /api', () => {
+    expect(archivos.some((u) => u.startsWith('/api'))).toBe(false);
+    expect(sw).toMatch(/startsWith\('\/api\/'\)\) return;/);
+  });
 });
