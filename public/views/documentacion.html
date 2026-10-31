@@ -214,6 +214,10 @@
         <input id="tituloProyecto" class="dv-titulo" aria-label="Nombre del proyecto" maxlength="200">
         <div class="dv-barra__sub">
           <nav class="dv-migas" id="migas" aria-label="Diagramas abiertos"></nav>
+          <button type="button" class="dv-filtro__boton" id="filtroBoton" aria-expanded="false" aria-controls="filtroEstados" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 6h15M7.5 12h9M10.5 18h3"/></svg>
+            <span id="filtroBotonTexto">Estados</span>
+          </button>
           <div class="dv-filtro" id="filtroEstados" role="group" aria-label="Filtrar por estado" hidden></div>
         </div>
       </div>
@@ -280,6 +284,14 @@
               <span class="dv-menu__hint">Con todos los diagramas; se puede volver a importar.</span>
             </button>
           </div>
+        </div>
+        <!-- En el teléfono lo que no cabe en la barra vive en este menú. -->
+        <div class="dv-mas">
+          <button type="button" class="ui-icon-btn" id="masAcciones" title="Más acciones" aria-label="Más acciones"
+                  aria-haspopup="menu" aria-expanded="false" aria-controls="menuMas">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg>
+          </button>
+          <div class="dv-menu dv-menu--mas" id="menuMas" role="menu" hidden></div>
         </div>
       </div>
     </header>

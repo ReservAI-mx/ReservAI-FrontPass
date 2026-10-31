@@ -804,7 +804,28 @@
   .ui-kpi__num { font-size: 1.6rem; }
   .ui-head h2,
   .ui-head__h1 { font-size: 1.3rem; }
-  .ui-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ui-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+  /* En dos columnas angostas el ícono va arriba y el texto usa todo el ancho. */
+  .ui-shortcut {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.55rem;
+    min-height: 0;
+    padding: 0.8rem 0.85rem;
+  }
+  .ui-shortcut__icono { width: 34px; height: 34px; border-radius: 10px; }
+  .ui-shortcut__icono svg { width: 18px; height: 18px; }
+  .ui-shortcut__texto { width: 100%; }
+  .ui-shortcut__titulo { font-size: 0.92rem; line-height: 1.2; overflow-wrap: anywhere; }
+  .ui-shortcut__hint {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+    font-size: 0.74rem;
+    line-height: 1.3;
+  }
+  .ui-shortcut__badge { right: 8px; font-size: 0.64rem; }
   .ui-head__sub { display: none; }
   .ui-toolbar { padding: 0.6rem; }
   .ui-seg { width: 100%; overflow-x: auto; }
