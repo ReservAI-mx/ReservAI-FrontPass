@@ -174,6 +174,86 @@
     return data;
   }
 
+  // ---------- Plantillas por tipo de nodo ----------
+
+  // Claves que no van a atributos sino a los campos base del nodo.
+  const CLAVES_BASE = new Set(['name', 'description', 'status']);
+
+  /**
+   * Revisa y limpia las filas que capturó la persona. Las filas sin clave se
+   * descartan; la etiqueta, si falta, es la clave.
+   * @returns {{ ok: true, defs: Array } | { ok: false, errores: string[] }}
+   */
+  function limpiarPlantilla(filas) {
+    const defs = [];
+    const errores = [];
+    const vistas = new Set();
+    for (const f of filas || []) {
+      const key = String(f.key || '').trim();
+      if (!key) continue;
+      if (vistas.has(key.toLowerCase())) {
+        errores.push(`La clave "${key}" está repetida.`);
+        continue;
+      }
+      vistas.add(key.toLowerCase());
+      const kind = TIPOS_ATRIBUTO.includes(f.kind) ? f.kind : 'text';
+      if (kind === 'json' && String(f.defaultValue || '').trim()) {
+        try {
+          JSON.parse(f.defaultValue);
+        } catch {
+          errores.push(`El valor de "${key}" no es JSON válido.`);
+          continue;
+        }
+      }
+      const def = { key, label: String(f.label || '').trim() || key, kind };
+      if (f.required) def.required = true;
+      if (f.defaultValue !== undefined && f.defaultValue !== '') def.defaultValue = String(f.defaultValue);
+      defs.push(def);
+    }
+    return errores.length ? { ok: false, errores } : { ok: true, defs };
+  }
+
+  /** Pone la plantilla de un tipo. Sin campos, el tipo se queda sin plantilla. */
+  function ponerPlantilla(doc, tipo, defs) {
+    const nuevo = clonar(doc);
+    nuevo.templatesByNodeType = { ...(nuevo.templatesByNodeType || {}) };
+    if (defs.length) nuevo.templatesByNodeType[tipo] = defs;
+    else delete nuevo.templatesByNodeType[tipo];
+    return nuevo;
+  }
+
+  /** Nodos de un tipo en todo el proyecto. */
+  function contarTipo(doc, tipo) {
+    let n = 0;
+    for (const d of Object.values(doc.diagrams)) for (const x of d.nodes) if (x.type === tipo) n++;
+    return n;
+  }
+
+  /**
+   * Agrega a los nodos que ya existen los campos de la plantilla que les
+   * falten. No cambia ningún valor que ya tengan.
+   * @returns {{ doc, nodos: number }} cuántos nodos recibieron algo
+   */
+  function aplicarPlantilla(doc, tipo) {
+    const defs = ((doc.templatesByNodeType || {})[tipo] || []).filter((d) => !CLAVES_BASE.has(d.key));
+    const nuevo = clonar(doc);
+    let nodos = 0;
+    for (const d of Object.values(nuevo.diagrams)) {
+      for (const n of d.nodes) {
+        if (n.type !== tipo) continue;
+        const attrs = n.data.attributes || [];
+        const tiene = new Set(attrs.map((a) => String(a.key || '').trim().toLowerCase()));
+        const faltan = defs.filter((def) => !tiene.has(def.key.toLowerCase()));
+        if (!faltan.length) continue;
+        n.data.attributes = [...attrs, ...faltan.map((def) => ({
+          key: def.key, kind: def.kind, value: valorInicialAtributo(def.kind, def.defaultValue),
+        }))];
+        nodos++;
+      }
+    }
+    return { doc: nuevo, nodos };
+  }
+
   /** @returns {{ doc, id }} */
   function agregarNodo(doc, diagramaId, tipo, posicion) {
     if (!TIPOS[tipo]) throw new Error(`Tipo de nodo desconocido: ${tipo}`);
@@ -628,6 +708,7 @@
     normalizarEstado, claseEstado, normalizarPuertos, puertosDesdeTexto,
     nuevoId, documentoVacio, slugDesdeNombre, slugValido, clonar,
     agregarNodo, moverNodos, quitar, conectar, cambiarDatos,
+    limpiarPlantilla, ponerPlantilla, contarTipo, aplicarPlantilla,
     abrirHijo, quitarHijo, nodoQueAbre, podarPila, subarbol,
     puertos, puerto, rutaArista, caja, encuadre,
     FONDO, COLOR_ARISTA, COLOR_ESTADO, AREA_TEXTO, pintura, siluetas, rutasDiagramas,

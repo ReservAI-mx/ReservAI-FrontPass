@@ -188,6 +188,9 @@
       <span class="dv-lectura" id="modoLectura" hidden>Sólo lectura</span>
       <span class="dv-guardado" id="estadoGuardado" role="status"></span>
       <div class="dv-barra__acciones">
+        <button type="button" class="ui-icon-btn js-editar" id="abrirPlantillas" title="Plantillas por tipo de nodo" aria-label="Plantillas por tipo de nodo" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="4" width="15" height="16" rx="2"/><path d="M8 8.5h8M8 12h8M8 15.5h5"/></svg>
+        </button>
         <button type="button" class="ui-icon-btn" id="abrirBuscar" title="Buscar nodo (Ctrl+K)" aria-label="Buscar nodo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/></svg>
         </button>
@@ -335,6 +338,23 @@
     </div>
     <ul class="dv-buscar__lista" id="resultadosBusqueda" role="listbox" aria-label="Resultados"></ul>
     <p class="dv-buscar__nota" id="notaBusqueda">Busca en todo el proyecto, también dentro de los diagramas de detalle. ↑↓ para moverte, Enter para ir.</p>
+  </dialog>
+
+  <dialog class="dv-dialogo dv-plantillas" id="dlgPlantillas" aria-labelledby="dlgPlantillasTitulo">
+    <h3 id="dlgPlantillasTitulo">Plantillas por tipo de nodo</h3>
+    <p class="dv-dialogo__nota">Los nodos nuevos de un tipo nacen con estos campos. Si la clave es
+      <code>name</code>, <code>description</code> o <code>status</code>, llena ese campo del nodo en vez de crear un atributo.</p>
+    <label class="dv-campo">Tipo de nodo<select class="dv-input" id="plTipo"></select></label>
+    <div class="dv-plantillas__filas" id="plFilas"></div>
+    <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico dv-plantillas__agregar" id="plAgregar">Agregar campo</button>
+    <p class="dv-dialogo__error" id="plError" role="alert"></p>
+    <div class="dv-plantillas__acciones">
+      <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico" id="plAplicar" hidden></button>
+      <div class="dv-dialogo__acciones">
+        <button type="button" class="ui-btn ui-btn--ghost" id="plCerrar">Cerrar</button>
+        <button type="button" class="ui-btn ui-btn--primary" id="plGuardar">Guardar</button>
+      </div>
+    </div>
   </dialog>
 
   <dialog class="dv-dialogo" id="dlgBorrar" aria-labelledby="dlgBorrarTitulo">

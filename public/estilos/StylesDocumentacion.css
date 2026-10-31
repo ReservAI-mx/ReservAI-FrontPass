@@ -445,7 +445,7 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
 
 /* ---------- Buscar nodo ---------- */
 
-.dv-buscar { width: min(620px, calc(100vw - 2rem)); padding: 0.6rem; gap: 0.4rem; margin-top: 12vh; }
+.dv-dialogo.dv-buscar { width: min(620px, calc(100vw - 2rem)); padding: 0.6rem; gap: 0.4rem; margin-top: 12vh; }
 
 .dv-buscar__campo { display: flex; align-items: center; gap: 0.5rem; padding: 0 0.6rem; border-bottom: 1px solid var(--dv-linea); }
 .dv-buscar__campo svg { width: 18px; height: 18px; color: var(--text-gray); flex-shrink: 0; }
@@ -478,6 +478,37 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
 .dv-buscar__donde { font-size: 0.76rem; color: var(--text-gray); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dv-buscar__http { font-family: var(--ui-mono); font-size: 0.74rem; color: #c4b5fd; justify-self: end; }
 .dv-buscar__nota { padding: 0.2rem 0.6rem 0.3rem; font-size: 0.74rem; color: var(--text-gray); }
+
+/* ---------- Plantillas ---------- */
+
+.dv-dialogo.dv-plantillas { width: min(760px, calc(100vw - 2rem)); max-height: calc(100dvh - 4rem); overflow-y: auto; }
+.dv-plantillas code { font-family: var(--ui-mono); font-size: 0.85em; }
+.dv-plantillas__filas { display: flex; flex-direction: column; gap: 0.6rem; }
+.dv-plantillas__vacio { font-size: 0.85rem; color: var(--text-gray); padding: 0.6rem 0; }
+
+.dv-plantillas__fila {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 130px auto auto;
+  gap: 0.45rem;
+  align-items: center;
+  padding: 0.6rem;
+  border: 1px solid var(--dv-linea);
+  border-radius: 10px;
+}
+
+.dv-plantillas__valor { grid-column: 1 / -1; }
+.dv-plantillas__check { display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--text-gray); white-space: nowrap; }
+.dv-plantillas__agregar { align-self: flex-start; }
+
+.dv-plantillas__acciones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dv-plantillas__acciones .dv-dialogo__acciones { margin-left: auto; margin-top: 0; }
 
 /* ---------- Menú de exportar ---------- */
 
@@ -675,7 +706,9 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
   .dv-guardado { order: 2; }
   .dv-lectura { order: 2; }
   .dv-barra__acciones { order: 3; margin-left: auto; }
-  .dv-buscar { margin-top: 1rem; }
+  .dv-dialogo.dv-buscar { margin-top: 1rem; }
+  .dv-plantillas__fila { grid-template-columns: 1fr 1fr; }
+  .dv-plantillas__fila select { grid-column: 1 / 2; }
   .dv-buscar__campo input { font-size: 16px; }
   #deshacer, #rehacer { display: none; }
 

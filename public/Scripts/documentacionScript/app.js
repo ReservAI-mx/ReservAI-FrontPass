@@ -348,6 +348,7 @@ function enlazarEditor() {
   $('acercar').addEventListener('click', () => lienzo.acercar(1.2));
   enlazarExportar();
   enlazarBuscador();
+  enlazarPlantillas();
   $('recargarConflicto').addEventListener('click', () => abrirProyecto(estado.slug, true));
   $('sobrescribirConflicto').addEventListener('click', sobrescribir);
 
@@ -712,6 +713,165 @@ function enlazarBuscador() {
   // Clic fuera de la caja (en el fondo del diálogo) lo cierra.
   $('dlgBuscar').addEventListener('click', (e) => {
     if (e.target === $('dlgBuscar')) $('dlgBuscar').close();
+  });
+}
+
+/* ==================================================================
+   Plantillas por tipo de nodo: campos con los que nace cada nodo nuevo
+   ================================================================== */
+
+const plantilla = { tipo: 'endpoint', filas: [], cambiada: false };
+
+function abrirPlantillas() {
+  if (!estado.puedeEditar || !estado.doc) return;
+  const sel = $('plTipo');
+  sel.replaceChildren();
+  for (const [tipo, cfg] of Object.entries(M.TIPOS)) {
+    const n = ((estado.doc.templatesByNodeType || {})[tipo] || []).length;
+    const o = el('option', '', n ? `${cfg.label} (${n} campo${n === 1 ? '' : 's'})` : cfg.label);
+    o.value = tipo;
+    sel.appendChild(o);
+  }
+  // Abre en el tipo del nodo seleccionado, si hay uno.
+  const n = estado.nodoInspector && nodoInspector();
+  sel.value = n ? n.type : plantilla.tipo;
+  cargarPlantilla(sel.value);
+  $('dlgPlantillas').showModal();
+}
+
+function cargarPlantilla(tipo) {
+  plantilla.tipo = tipo;
+  plantilla.filas = ((estado.doc.templatesByNodeType || {})[tipo] || []).map((d) => ({ ...d }));
+  plantilla.cambiada = false;
+  $('plError').textContent = '';
+  pintarPlantilla();
+}
+
+function pintarPlantilla() {
+  const cont = $('plFilas');
+  cont.replaceChildren();
+  if (!plantilla.filas.length) {
+    cont.appendChild(el('p', 'dv-plantillas__vacio', 'Sin campos. Los que agregues aparecerán en cada nodo nuevo de este tipo.'));
+  }
+  plantilla.filas.forEach((f, i) => {
+    const fila = el('div', 'dv-plantillas__fila');
+    const cambio = (campo, valor) => {
+      f[campo] = valor;
+      plantilla.cambiada = true;
+    };
+
+    const clave = el('input', 'dv-input dv-mono');
+    clave.value = f.key || '';
+    clave.placeholder = 'Clave (ej. Metodo)';
+    clave.setAttribute('aria-label', 'Clave del campo');
+    clave.addEventListener('input', () => cambio('key', clave.value));
+
+    const etiqueta = el('input', 'dv-input');
+    etiqueta.value = f.label || '';
+    etiqueta.placeholder = 'Etiqueta (opcional)';
+    etiqueta.setAttribute('aria-label', 'Etiqueta del campo');
+    etiqueta.addEventListener('input', () => cambio('label', etiqueta.value));
+
+    const tipo = el('select', 'dv-input');
+    tipo.setAttribute('aria-label', 'Tipo del campo');
+    for (const k of M.TIPOS_ATRIBUTO) {
+      const o = el('option', '', NOMBRE_ATRIBUTO[k]);
+      o.value = k;
+      tipo.appendChild(o);
+    }
+    tipo.value = f.kind || 'text';
+    tipo.addEventListener('change', () => {
+      cambio('kind', tipo.value);
+      pintarPlantilla(); // cambia el control del valor por omisión
+    });
+
+    const obligatorio = el('label', 'dv-plantillas__check');
+    const check = el('input');
+    check.type = 'checkbox';
+    check.checked = Boolean(f.required);
+    check.addEventListener('change', () => cambio('required', check.checked));
+    obligatorio.append(check, document.createTextNode('Obligatorio'));
+
+    const quitar = el('button', 'ui-icon-btn ui-icon-btn--xs');
+    quitar.type = 'button';
+    quitar.title = 'Quitar campo';
+    quitar.setAttribute('aria-label', `Quitar ${f.key || 'campo'}`);
+    quitar.appendChild(icono('M6.5 6.5l11 11M17.5 6.5l-11 11'));
+    quitar.addEventListener('click', () => {
+      plantilla.filas.splice(i, 1);
+      plantilla.cambiada = true;
+      pintarPlantilla();
+    });
+
+    const largo = ['textarea', 'json', 'table', 'kv'].includes(tipo.value);
+    const valor = el(largo ? 'textarea' : 'input', `dv-input dv-plantillas__valor${tipo.value === 'json' || tipo.value === 'table' ? ' dv-mono' : ''}`);
+    valor.value = f.defaultValue || '';
+    valor.placeholder = 'Valor con el que nace (opcional)';
+    valor.setAttribute('aria-label', 'Valor por omisión');
+    if (largo) valor.rows = 3;
+    valor.addEventListener('input', () => cambio('defaultValue', valor.value));
+
+    fila.append(clave, etiqueta, tipo, obligatorio, quitar, valor);
+    cont.appendChild(fila);
+  });
+  const n = M.contarTipo(estado.doc, plantilla.tipo);
+  $('plAplicar').hidden = n === 0;
+  $('plAplicar').textContent = n === 1 ? 'Agregar los campos que falten al nodo de este tipo' : `Agregar los campos que falten a los ${n} nodos de este tipo`;
+}
+
+/** @returns {boolean} si quedó guardada */
+function guardarPlantilla() {
+  const r = M.limpiarPlantilla(plantilla.filas);
+  if (!r.ok) {
+    $('plError').textContent = r.errores.join(' ');
+    return false;
+  }
+  $('plError').textContent = '';
+  if (plantilla.cambiada) {
+    cambiar(M.ponerPlantilla(estado.doc, plantilla.tipo, r.defs));
+    plantilla.filas = r.defs.map((d) => ({ ...d }));
+    plantilla.cambiada = false;
+    showToast(`Plantilla de ${M.TIPOS[plantilla.tipo].label} guardada.`, 'success');
+  }
+  return true;
+}
+
+function enlazarPlantillas() {
+  $('abrirPlantillas').addEventListener('click', abrirPlantillas);
+  $('plTipo').addEventListener('change', (e) => {
+    if (plantilla.cambiada && !window.confirm('Hay cambios sin guardar en esta plantilla. ¿Descartarlos?')) {
+      e.target.value = plantilla.tipo;
+      return;
+    }
+    cargarPlantilla(e.target.value);
+  });
+  $('plAgregar').addEventListener('click', () => {
+    plantilla.filas.push({ key: '', label: '', kind: 'text', defaultValue: '' });
+    plantilla.cambiada = true;
+    pintarPlantilla();
+    const claves = $('plFilas').querySelectorAll('.dv-plantillas__fila input.dv-mono');
+    if (claves.length) claves[claves.length - 1].focus();
+  });
+  $('plGuardar').addEventListener('click', () => {
+    if (guardarPlantilla()) $('dlgPlantillas').close();
+  });
+  $('plCerrar').addEventListener('click', () => {
+    if (plantilla.cambiada && !window.confirm('Hay cambios sin guardar en esta plantilla. ¿Cerrar sin guardar?')) return;
+    $('dlgPlantillas').close();
+  });
+  // Escape también cierra: que pregunte igual.
+  $('dlgPlantillas').addEventListener('cancel', (e) => {
+    if (plantilla.cambiada && !window.confirm('Hay cambios sin guardar en esta plantilla. ¿Cerrar sin guardar?')) e.preventDefault();
+  });
+  $('plAplicar').addEventListener('click', () => {
+    if (!guardarPlantilla()) return;
+    const r = M.aplicarPlantilla(estado.doc, plantilla.tipo);
+    if (!r.nodos) {
+      showToast('Todos los nodos de este tipo ya tienen esos campos.', 'info');
+      return;
+    }
+    cambiar(r.doc);
+    showToast(`Se agregaron campos a ${r.nodos} nodo${r.nodos === 1 ? '' : 's'}. Ctrl+Z lo deshace.`, 'success');
   });
 }
 
