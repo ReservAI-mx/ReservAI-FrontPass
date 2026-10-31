@@ -419,6 +419,126 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
 .dv-btn-peligro { color: var(--ui-error); }
 .dv-btn-peligro:hover { border-color: var(--ui-error); background: rgba(255, 132, 132, 0.1); }
 
+/* ---------- Chat ---------- */
+
+.dv-btn-chat { min-height: 36px; padding: 0 0.8rem; }
+.dv-btn-chat[aria-pressed="true"] { border-color: var(--primary); background: rgba(9, 131, 214, 0.18); }
+
+.dv-chat {
+  width: 400px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--dv-panel);
+  border-left: 1px solid var(--dv-linea);
+}
+
+.dv-chat[hidden] { display: none; }
+
+.dv-chat__head {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.6rem 0.7rem;
+  border-bottom: 1px solid var(--dv-linea);
+}
+
+.dv-chat__selector { flex: 1; min-width: 0; }
+
+.dv-chat__mensajes {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.9rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.dv-chat__vacio { margin: auto 0; text-align: center; color: var(--text-gray); font-size: 0.86rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.dv-chat__vacio-titulo { color: var(--text-light); font-weight: 700; font-size: 0.98rem; }
+.dv-chat__ejemplos { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.6rem; }
+
+.dv-chat__ejemplo {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--ui-line-2);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dv-chat__ejemplo:hover { border-color: var(--primary); background: rgba(9, 131, 214, 0.12); }
+
+.dv-chat__msg {
+  max-width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dv-chat__msg--user {
+  align-self: flex-end;
+  max-width: 88%;
+  background: var(--primary);
+  color: #fff;
+  white-space: pre-wrap;
+}
+
+.dv-chat__msg--assistant { background: var(--bg-card); border: 1px solid var(--dv-linea); }
+.dv-chat__msg.is-pensando { color: var(--text-gray); font-style: italic; }
+.dv-chat__msg.is-error { border-color: rgba(255, 132, 132, 0.5); color: var(--ui-error); }
+
+.dv-chat__msg > * + * { margin-top: 0.5rem; }
+.dv-chat__msg ul,
+.dv-chat__msg ol { padding-left: 1.2rem; }
+.dv-chat__msg li + li { margin-top: 0.2rem; }
+.dv-chat__msg code { font-family: var(--ui-mono); font-size: 0.82em; padding: 0.05rem 0.3rem; border-radius: 5px; background: rgba(255, 255, 255, 0.08); }
+.dv-chat__msg a { color: var(--ui-info); }
+.dv-chat__msg blockquote { padding-left: 0.7rem; border-left: 3px solid var(--ui-line-2); color: var(--text-gray); }
+.dv-chat__msg hr { border: 0; border-top: 1px solid var(--dv-linea); }
+.dv-md-titulo { font-size: 0.95rem; font-weight: 700; }
+
+.dv-md-codigo { border: 1px solid var(--dv-linea); border-radius: 9px; overflow: hidden; }
+.dv-md-codigo--mermaid { border-color: rgba(167, 139, 250, 0.45); }
+
+.dv-md-codigo__cabeza {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.72rem;
+  color: var(--text-gray);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dv-md-codigo__copiar { background: none; border: 0; color: var(--ui-info); font-size: 0.75rem; cursor: pointer; }
+.dv-md-codigo pre { margin: 0; padding: 0.6rem; overflow-x: auto; }
+.dv-md-codigo pre code { background: none; padding: 0; font-size: 0.78rem; white-space: pre; }
+
+.dv-md-tabla { overflow-x: auto; }
+.dv-md-tabla table { border-collapse: collapse; font-size: 0.8rem; }
+.dv-md-tabla th,
+.dv-md-tabla td { padding: 0.3rem 0.5rem; border: 1px solid var(--dv-linea); text-align: left; }
+
+.dv-chat__apagado { margin: 1rem; }
+
+.dv-chat__form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  padding: 0.7rem;
+  border-top: 1px solid var(--dv-linea);
+}
+
+.dv-chat__form textarea { flex: 1; resize: none; max-height: 160px; }
+.dv-chat__form[hidden] { display: none; }
+
 /* ---------- Diálogos ---------- */
 
 .dv-dialogo {
@@ -473,6 +593,15 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.5);
   }
+
+  .dv-chat {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    z-index: 5;
+    border-left: 0;
+  }
+  .dv-btn-chat { min-height: 36px; padding: 0 0.6rem; }
 
   .dv-input,
   .dv-titulo { font-size: 16px; }

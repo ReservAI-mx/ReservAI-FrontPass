@@ -2,6 +2,7 @@ import { apiJson, goLogout, requireUiSession } from '../api.js';
 import { setupAccountMenu } from '../accountMenu.js';
 import { showToast } from '../toast.js';
 import { Lienzo } from './lienzo.js';
+import { crearChat } from './chat.js';
 
 /**
  * /documentacion/: lista de proyectos y editor de diagramas de Doc visual.
@@ -41,6 +42,7 @@ const estado = {
 };
 
 let lienzo = null;
+let chat = null;
 
 function el(tag, clase, texto) {
   const n = document.createElement(tag);
@@ -360,11 +362,19 @@ function enlazarEditor() {
   });
 
   enlazarInspector();
+  chat = crearChat({
+    slug: () => estado.slug,
+    antesDeEnviar: () => guardarYa(),
+    // Chat e inspector comparten el lado derecho: con el chat abierto, el
+    // inspector espera.
+    alCambiar: () => pintarInspector(),
+  });
   document.addEventListener('keydown', teclado);
 }
 
 function cerrarEditor() {
   clearTimeout(estado.temporizador);
+  if (chat) chat.reiniciar();
   Object.assign(estado, {
     slug: null, doc: null, version: 0, pila: [], sucio: false, conflicto: false,
     deshacer: [], rehacer: [], nodoInspector: null,
@@ -735,7 +745,7 @@ function cambiarCampo(campo, valor) {
 function pintarInspector() {
   const panel = $('inspector');
   const n = estado.doc && estado.nodoInspector ? nodoInspector() : null;
-  if (!n) {
+  if (!n || (chat && chat.abierto())) {
     panel.hidden = true;
     return;
   }

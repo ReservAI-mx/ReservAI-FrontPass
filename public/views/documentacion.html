@@ -185,6 +185,10 @@
       <span class="dv-lectura" id="modoLectura" hidden>Sólo lectura</span>
       <span class="dv-guardado" id="estadoGuardado" role="status"></span>
       <div class="dv-barra__acciones">
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-chat" id="abrirChat" aria-pressed="false" aria-controls="chat" title="Preguntarle a la IA sobre este proyecto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5.5h14v10H9.5L5 19.5z"/><path d="M9 10.5h6"/></svg>
+          Chat
+        </button>
         <button type="button" class="ui-icon-btn js-editar" id="deshacer" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5h10a5 5 0 0 1 0 10H11"/></svg>
         </button>
@@ -256,6 +260,28 @@
           <button type="button" class="ui-btn ui-btn--ghost dv-btn-peligro" id="borrarNodo">Borrar nodo</button>
         </div>
       </aside>
+
+      <aside class="dv-chat" id="chat" hidden aria-label="Chat con IA del proyecto">
+        <div class="dv-chat__head">
+          <select class="dv-input dv-chat__selector" id="chatConversaciones" aria-label="Conversación"></select>
+          <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="chatNueva" title="Conversación nueva" aria-label="Conversación nueva">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"/></svg>
+          </button>
+          <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="cerrarChat" title="Cerrar chat" aria-label="Cerrar chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+          </button>
+        </div>
+        <div class="dv-chat__mensajes" id="chatMensajes" aria-live="polite"></div>
+        <div class="ui-empty dv-chat__apagado" id="chatApagado" hidden>
+          <p class="ui-empty__titulo">El chat no está configurado</p>
+          <p class="ui-empty__sub">Falta la llave de OpenAI en el servicio de documentación.</p>
+        </div>
+        <form class="dv-chat__form" id="chatForm" hidden>
+          <textarea class="dv-input" id="chatEntrada" rows="2" maxlength="4000"
+                    placeholder="Pregunta sobre el diagrama… (Enter envía, Shift+Enter salta línea)" aria-label="Mensaje"></textarea>
+          <button type="submit" class="ui-btn ui-btn--primary" id="chatEnviar">Enviar</button>
+        </form>
+      </aside>
     </div>
   </section>
 
@@ -284,6 +310,7 @@
   </dialog>
 
   <script src="/static/Scripts/documentacionScript/modelo.js"></script>
+  <script src="/static/Scripts/documentacionScript/markdown.js"></script>
   <script type="module" src="/static/Scripts/documentacionScript/app.js"></script>
 </body>
 </html>
