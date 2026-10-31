@@ -684,7 +684,8 @@
 
 .ui-shortcuts {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* 8 accesos: dos filas de 4. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
   margin-bottom: 1.1rem;
 }

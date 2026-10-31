@@ -1,0 +1,203 @@
+/* /admin/permisos. Usa StylesInicio.css (navbar, fondo) y StylesUI.css
+   (encabezado, botones, vacíos); aquí sólo lo propio. */
+
+.pm-main { gap: 1.25rem; max-width: 1100px; }
+
+.pm-card {
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid var(--ui-line-2);
+  border-radius: 16px;
+  padding: 1.25rem 1.35rem 1.4rem;
+}
+
+.pm-card__head { margin-bottom: 1rem; }
+.pm-card__head h3 { font-size: 1.1rem; font-weight: 700; }
+.pm-card__head p { margin-top: 0.2rem; font-size: 0.88rem; color: var(--text-gray); }
+
+/* ---------- Por área ---------- */
+
+.pm-tabla-wrap { overflow-x: auto; }
+
+.pm-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.pm-tabla th,
+.pm-tabla td {
+  padding: 0.7rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--ui-line);
+  white-space: nowrap;
+}
+
+.pm-tabla thead th {
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-gray);
+}
+
+.pm-tabla tbody th { font-weight: 600; }
+.pm-tabla tbody tr:last-child th,
+.pm-tabla tbody tr:last-child td { border-bottom: 0; }
+
+.pm-col-admin { color: var(--text-gray); font-size: 0.85rem; }
+
+.pm-select {
+  min-height: 36px;
+  padding: 0 2rem 0 0.7rem;
+  border-radius: 9px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--bg-input)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E")
+    no-repeat right 0.55rem center / 16px;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  appearance: none;
+  cursor: pointer;
+}
+
+.pm-select:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.pm-select:disabled { opacity: 0.6; cursor: progress; }
+
+/* ---------- Excepciones ---------- */
+
+.pm-nueva {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(150px, 1fr) minmax(120px, 0.8fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.pm-nueva label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text-gray);
+}
+
+.pm-nueva .pm-select { width: 100%; }
+
+.pm-buscar { position: relative; }
+
+.pm-buscar input {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 0.8rem;
+  border-radius: 9px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--bg-input);
+  color: var(--text-light);
+  font-size: 0.92rem;
+}
+
+.pm-buscar input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+.pm-sugerencias {
+  position: absolute;
+  z-index: 70; /* sobre la .navbar (60) */
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--bg-card);
+  border: 1px solid var(--ui-line-2);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+
+.pm-sugerencias__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+}
+
+.pm-sugerencias__item:hover,
+.pm-sugerencias__item:focus { background: var(--bg-input); outline: none; }
+
+.pm-sugerencias__vacio { padding: 0.6rem 0.8rem; color: var(--text-gray); font-size: 0.88rem; }
+
+.pm-lista { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+
+.pm-item {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+  background: var(--ui-card-2);
+}
+
+.pm-item__quien { display: flex; flex-direction: column; min-width: 0; }
+.pm-item__nombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-item__correo { font-size: 0.8rem; color: var(--text-gray); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-item__herr { font-size: 0.88rem; }
+.pm-item__area { font-size: 0.8rem; color: var(--text-gray); }
+
+.pm-chip {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--ui-line-2);
+  font-size: 0.75rem;
+  color: var(--text-gray);
+}
+
+.pm-vacio { padding: 1.75rem 1rem; }
+
+/* ---------- Teléfono ---------- */
+
+@media (max-width: 900px) {
+  .pm-main { width: 100%; padding: 1rem; }
+  .pm-card { padding: 1rem; }
+
+  /* La tabla se vuelve una tarjeta por herramienta: un renglón por área. */
+  .pm-tabla thead { display: none; }
+  .pm-tabla,
+  .pm-tabla tbody,
+  .pm-tabla tr,
+  .pm-tabla th,
+  .pm-tabla td { display: block; }
+  .pm-tabla tbody th { padding: 0.25rem 0 0.5rem; border-bottom: 0; font-size: 1rem; }
+  .pm-tabla td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+  .pm-tabla td::before { content: attr(data-area); color: var(--text-gray); font-size: 0.9rem; }
+  .pm-tabla tbody tr + tr { margin-top: 1rem; }
+  .pm-tabla .pm-select { min-width: 150px; }
+
+  .pm-nueva { grid-template-columns: 1fr 1fr; }
+  .pm-buscar { grid-column: 1 / -1; }
+  .pm-nueva .ui-btn { grid-column: 1 / -1; min-height: 44px; }
+
+  /* 16px: con menos, iPhone hace zoom al enfocar. */
+  .pm-buscar input,
+  .pm-select { font-size: 16px; min-height: 44px; }
+
+  .pm-item {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "quien quitar"
+      "herr chip"
+      "nivel area";
+  }
+  .pm-item__quien { grid-area: quien; }
+  .pm-item__quitar { grid-area: quitar; }
+  .pm-item__herr { grid-area: herr; }
+  .pm-chip { grid-area: chip; justify-self: end; }
+  .pm-item .pm-select { grid-area: nivel; }
+  .pm-item__area { grid-area: area; justify-self: end; }
+}

@@ -26,6 +26,7 @@ router.get('/admin/tenants', (req, res) => res.sendFile(path.resolve(__dirname +
 router.get('/admin/jobs', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/jobs.html")));
 router.get('/admin/traces', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/traces.html")));
 router.get('/admin/products', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/products.html")));
+router.get('/admin/permisos', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/permisos.html")));
 
 /**
  * Bitácora de visitas (ventas). Vive bajo /bitacora/ con barra final porque el
@@ -48,6 +49,17 @@ router.get('/bitacora/manifest.webmanifest', (req, res) =>
     res.sendFile(path.resolve(__dirname + "/bitacoraScript/manifest.webmanifest"), {
         headers: { 'Cache-Control': 'no-cache', 'Content-Type': 'application/manifest+json' },
     }));
+/**
+ * Doc visual (documentación de servicios). Vive bajo /documentacion/ con
+ * barra final, igual que la bitácora; ?p=<slug> abre un proyecto.
+ */
+router.get('/documentacion', (req, res) => {
+    if (req.originalUrl.split('?')[0] === '/documentacion') {
+        const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+        return res.redirect(302, `/documentacion/${qs}`);
+    }
+    return res.sendFile(path.resolve(__dirname + "/../views/documentacion.html"), { headers: { 'Cache-Control': 'no-cache' } });
+});
 router.get('/404', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/404.html")));
 router.get('/unauthorized', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/unauthorized.html")));
 /**
