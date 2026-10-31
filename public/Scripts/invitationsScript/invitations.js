@@ -4,6 +4,7 @@ import { setupAccountMenu } from '../accountMenu.js';
 import { setupChangePassword } from '../changePassword.js';
 import { setButtonLoading, shakeElement } from '../buttonLoading.js';
 import { bindSearchShortcut } from '../uiShell.js';
+import { mostrarHerramientasPermitidas } from '../herramientas.js';
 import {
   fetchInvitations,
   createInvitation,
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupAccountMenu(session);
   setupChangePassword();
+  mostrarHerramientasPermitidas();
   if (esVendedor) {
     document.querySelectorAll('.js-admin-only').forEach((el) => { el.hidden = true; });
     const logo = document.querySelector('.logo-text');
