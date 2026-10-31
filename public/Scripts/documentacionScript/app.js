@@ -21,6 +21,11 @@ const HISTORIAL_MAX = 60;
 const NOMBRE_ESTADO = {
   'TO DO': 'Por hacer', 'IN PROGRESS': 'En curso', 'ON HOLD': 'En pausa', TESTING: 'Pruebas', COMPLETE: 'Listo',
 };
+const INICIO = {
+  admin: { url: '/inicioAdmin', texto: 'Volver a cuentas', logo: 'ReservAI Admin' },
+  seller: { url: '/invitations', texto: 'Volver a invitaciones', logo: 'ReservAI Ventas' },
+  client: { url: '/inicio', texto: 'Volver al inicio', logo: 'ReservAI' },
+};
 const NOMBRE_ATRIBUTO = { text: 'Texto', textarea: 'Texto largo', tags: 'Etiquetas', kv: 'Clave-valor', json: 'JSON', table: 'Tabla' };
 
 const estado = {
@@ -28,6 +33,7 @@ const estado = {
   puedeEditar: false,
   proyectos: [],
   filtro: '',
+  orden: 'recientes',
   // Editor
   slug: null,
   version: 0,
@@ -77,6 +83,12 @@ function idActual() {
 async function arrancar() {
   setupAccountMenu(session);
   const admin = session.account_type === 'admin';
+  // El logo y "Volver" llevan al inicio de cada tipo de cuenta, como la Bitácora.
+  const inicio = INICIO[session.account_type] || INICIO.client;
+  $('logoPass').href = inicio.url;
+  $('volverPass').href = inicio.url;
+  $('volverTexto').textContent = inicio.texto;
+  $('logoTexto').textContent = inicio.logo;
   for (const n of document.querySelectorAll('.js-admin-only')) n.hidden = !admin;
   for (const n of document.querySelectorAll('.js-no-admin')) n.hidden = admin;
   $('logout').addEventListener('click', (e) => {
@@ -151,6 +163,13 @@ function enlazarLista() {
     estado.filtro = e.target.value.trim().toLowerCase();
     pintarLista();
   });
+  for (const b of document.querySelectorAll('.js-orden')) {
+    b.addEventListener('click', () => {
+      estado.orden = b.dataset.orden;
+      for (const o of document.querySelectorAll('.js-orden')) o.setAttribute('aria-pressed', String(o === b));
+      pintarLista();
+    });
+  }
   $('nuevoProyecto').addEventListener('click', () => abrirDialogoNuevo());
   $('importarProyecto').addEventListener('click', () => $('archivoImportar').click());
   $('archivoImportar').addEventListener('change', importar);
@@ -190,50 +209,193 @@ async function cargarLista() {
   $('listaError').textContent = '';
   estado.proyectos = r.data.proyectos || [];
   pintarLista();
+  cargarDetalles();
+}
+
+/* La lista sólo trae nombre y fechas; la vista previa y los números salen
+   del documento de cada proyecto, que se pide aparte, de pocos en pocos. */
+const detalles = new Map(); // slug → { version, img, nodos, endpoints, diagramas, conteo, problemas }
+const EN_PARALELO = 4;
+
+async function cargarDetalles() {
+  const pendientes = estado.proyectos.filter((p) => {
+    const d = detalles.get(p.slug);
+    return !d || d.version !== p.version;
+  });
+  const trabajar = async () => {
+    while (pendientes.length) {
+      const p = pendientes.shift();
+      const r = await apiJson(`/documentacion/proyectos/${encodeURIComponent(p.slug)}`).catch(() => ({ ok: false }));
+      if (!r.ok) continue;
+      try {
+        detalles.set(p.slug, resumirProyecto(r.data.documento, r.data.version));
+      } catch {
+        continue; // un documento raro no debe tumbar la lista
+      }
+      pintarTarjeta(p.slug);
+      pintarKpis();
+    }
+  };
+  await Promise.all(Array.from({ length: EN_PARALELO }, trabajar));
+}
+
+function resumirProyecto(doc, version) {
+  const todos = Object.values(doc.diagrams).flatMap((d) => d.nodes);
+  const raiz = doc.diagrams[doc.rootDiagramId];
+  return {
+    version,
+    img: raiz && raiz.nodes.length ? imagenDiagrama(raiz) : null,
+    nodos: todos.length,
+    endpoints: todos.filter((n) => n.type === 'endpoint').length,
+    diagramas: Object.keys(doc.diagrams).length,
+    conteo: M.conteoPorEstado(todos),
+    problemas: M.problemas(doc).length,
+  };
+}
+
+/** "hace 5 min", "hace 3 h", "ayer", o la fecha. */
+function haceCuanto(valor) {
+  const f = new Date(valor);
+  if (Number.isNaN(f.getTime())) return '';
+  const min = Math.round((Date.now() - f.getTime()) / 60000);
+  if (min < 1) return 'hace un momento';
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  if (h < 48) return 'ayer';
+  return f.toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City', day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function pintarKpis() {
+  const ds = estado.proyectos.map((p) => detalles.get(p.slug)).filter(Boolean);
+  const suma = (k) => ds.reduce((a, d) => a + d[k], 0);
+  const listos = ds.reduce((a, d) => a + d.conteo.COMPLETE, 0);
+  const nodos = suma('nodos');
+  $('kpiNodos').textContent = ds.length ? String(nodos) : '—';
+  $('kpiEndpoints').textContent = ds.length ? String(suma('endpoints')) : '—';
+  $('kpiListo').textContent = ds.length && nodos ? `${Math.round((listos / nodos) * 100)} %` : '—';
+  $('kpiProblemas').textContent = ds.length ? String(suma('problemas')) : '—';
+}
+
+function ordenados(lista) {
+  const copia = [...lista];
+  if (estado.orden === 'nombre') copia.sort((a, b) => (a.nombre || a.slug).localeCompare(b.nombre || b.slug, 'es'));
+  else copia.sort((a, b) => new Date(b.actualizado_en) - new Date(a.actualizado_en));
+  return copia;
 }
 
 function pintarLista() {
   const ul = $('listaProyectos');
   ul.replaceChildren();
   const f = estado.filtro;
-  const visibles = estado.proyectos.filter((p) => !f
-    || p.nombre.toLowerCase().includes(f) || p.slug.includes(f) || (p.descripcion || '').toLowerCase().includes(f));
+  const visibles = ordenados(estado.proyectos.filter((p) => !f
+    || p.nombre.toLowerCase().includes(f) || p.slug.includes(f) || (p.descripcion || '').toLowerCase().includes(f)));
   $('totalProyectos').textContent = String(estado.proyectos.length);
   $('totalProyectos').hidden = estado.proyectos.length === 0;
+  $('kpisDoc').hidden = estado.proyectos.length === 0;
+  pintarKpis();
 
-  $('listaVacia').hidden = visibles.length > 0;
+  $('listaVacia').hidden = visibles.length > 0 || (!estado.proyectos.length && estado.puedeEditar);
   $('listaVaciaTitulo').textContent = estado.proyectos.length ? 'Ningún proyecto coincide' : 'Todavía no hay proyectos';
   $('listaVaciaSub').textContent = estado.proyectos.length
     ? 'Prueba con otra búsqueda.'
-    : estado.puedeEditar ? 'Crea uno o importa el JSON de la versión local.' : 'Cuando alguien cree uno, aparecerá aquí.';
+    : 'Cuando alguien cree uno, aparecerá aquí.';
 
   for (const p of visibles) {
     const li = el('li', 'dv-tarjeta');
-    const a = el('a', 'dv-tarjeta__abrir');
-    a.href = `/documentacion/?p=${encodeURIComponent(p.slug)}`;
-    a.addEventListener('click', (e) => {
-      if (e.ctrlKey || e.metaKey || e.shiftKey) return;
-      e.preventDefault();
-      irA(p.slug);
-    });
-    a.appendChild(el('span', 'dv-tarjeta__nombre', p.nombre || p.slug));
-    a.appendChild(el('span', 'dv-tarjeta__desc', p.descripcion || 'Sin descripción'));
-    const pie = el('span', 'dv-tarjeta__pie');
-    pie.appendChild(el('span', 'dv-tarjeta__slug', p.slug));
-    pie.appendChild(el('span', '', `${p.actualizado_por ? `${p.actualizado_por} · ` : ''}${fecha(p.actualizado_en)}`));
-    a.appendChild(pie);
-    li.appendChild(a);
-
-    if (estado.puedeEditar) {
-      const borrar = el('button', 'ui-icon-btn ui-icon-btn--sm dv-tarjeta__borrar');
-      borrar.type = 'button';
-      borrar.title = 'Eliminar proyecto';
-      borrar.setAttribute('aria-label', `Eliminar ${p.nombre || p.slug}`);
-      borrar.appendChild(icono('M5.5 7h13M10 7V5h4v2M7.5 7l.75 12h7.5L16.5 7'));
-      borrar.addEventListener('click', () => confirmarBorrar(p));
-      li.appendChild(borrar);
-    }
+    li.dataset.slug = p.slug;
     ul.appendChild(li);
+    pintarTarjeta(p.slug);
+  }
+
+  // La última tarjeta es para crear (sólo con nivel editar y sin búsqueda).
+  if (estado.puedeEditar && !f) {
+    const li = el('li', 'dv-tarjeta dv-tarjeta--nueva');
+    const b = el('button', 'dv-tarjeta__crear');
+    b.type = 'button';
+    const mas = el('span', 'dv-tarjeta__mas', '+');
+    mas.setAttribute('aria-hidden', 'true');
+    b.append(mas, el('span', 'dv-tarjeta__nombre', 'Nuevo proyecto'), el('span', 'dv-tarjeta__desc', 'Empieza un diagrama vacío o importa el JSON de la versión local.'));
+    b.addEventListener('click', abrirDialogoNuevo);
+    li.appendChild(b);
+    ul.appendChild(li);
+  }
+}
+
+function pintarTarjeta(slug) {
+  const li = $('listaProyectos').querySelector(`[data-slug="${CSS.escape(slug)}"]`);
+  const p = estado.proyectos.find((x) => x.slug === slug);
+  if (!li || !p) return;
+  const d = detalles.get(slug);
+  li.replaceChildren();
+
+  const a = el('a', 'dv-tarjeta__abrir');
+  a.href = `/documentacion/?p=${encodeURIComponent(p.slug)}`;
+  a.addEventListener('click', (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault();
+    irA(p.slug);
+  });
+
+  // Vista previa del diagrama principal.
+  const vista = el('div', 'dv-tarjeta__vista');
+  if (d && d.img) {
+    const img = el('img', 'dv-tarjeta__img');
+    img.src = d.img;
+    img.alt = `Diagrama principal de ${p.nombre || p.slug}`;
+    vista.appendChild(img);
+  } else {
+    vista.appendChild(el('span', 'dv-tarjeta__sinvista', d ? 'Diagrama vacío' : 'Cargando vista previa…'));
+  }
+  a.appendChild(vista);
+
+  const cuerpo = el('div', 'dv-tarjeta__cuerpo');
+  cuerpo.append(el('span', 'dv-tarjeta__nombre', p.nombre || p.slug), el('span', 'dv-tarjeta__desc', p.descripcion || 'Sin descripción'));
+
+  if (d) {
+    const stats = el('div', 'dv-tarjeta__stats');
+    const chip = (texto, clase) => stats.appendChild(el('span', `dv-tarjeta__stat${clase ? ` ${clase}` : ''}`, texto));
+    chip(`${d.nodos} nodo${d.nodos === 1 ? '' : 's'}`);
+    if (d.endpoints) chip(`${d.endpoints} endpoint${d.endpoints === 1 ? '' : 's'}`);
+    if (d.diagramas > 1) chip(`${d.diagramas} diagramas`);
+    if (d.problemas) chip(`⚠ ${d.problemas}`, 'is-aviso');
+    cuerpo.appendChild(stats);
+
+    // Barra de avance: un tramo por estado, del listo al pendiente.
+    if (d.nodos) {
+      const barra = el('div', 'dv-tarjeta__barra');
+      barra.setAttribute('role', 'img');
+      const partes = ['COMPLETE', 'TESTING', 'IN PROGRESS', 'ON HOLD', 'TO DO'];
+      barra.setAttribute('aria-label', partes.map((s) => `${NOMBRE_ESTADO[s]}: ${d.conteo[s]}`).join(', '));
+      for (const s of partes) {
+        if (!d.conteo[s]) continue;
+        const t = el('span', `dv-tarjeta__tramo dv-estado-fondo--${M.claseEstado(s)}`);
+        t.style.width = `${(d.conteo[s] / d.nodos) * 100}%`;
+        t.title = `${NOMBRE_ESTADO[s]}: ${d.conteo[s]}`;
+        barra.appendChild(t);
+      }
+      const avance = el('div', 'dv-tarjeta__avance');
+      avance.append(barra, el('span', 'dv-tarjeta__pct', `${Math.round((d.conteo.COMPLETE / d.nodos) * 100)} % listo`));
+      cuerpo.appendChild(avance);
+    }
+  }
+
+  const pie = el('div', 'dv-tarjeta__pie');
+  const quien = el('span', 'dv-tarjeta__quien', p.actualizado_por ? `${p.actualizado_por} · ${haceCuanto(p.actualizado_en)}` : haceCuanto(p.actualizado_en));
+  quien.title = fecha(p.actualizado_en);
+  pie.append(quien, el('span', 'dv-tarjeta__slug', p.slug));
+  cuerpo.appendChild(pie);
+  a.appendChild(cuerpo);
+  li.appendChild(a);
+
+  if (estado.puedeEditar) {
+    const borrar = el('button', 'ui-icon-btn ui-icon-btn--sm dv-tarjeta__borrar');
+    borrar.type = 'button';
+    borrar.title = 'Eliminar proyecto';
+    borrar.setAttribute('aria-label', `Eliminar ${p.nombre || p.slug}`);
+    borrar.appendChild(icono('M5.5 7h13M10 7V5h4v2M7.5 7l.75 12h7.5L16.5 7'));
+    borrar.addEventListener('click', () => confirmarBorrar(p));
+    li.appendChild(borrar);
   }
 }
 
