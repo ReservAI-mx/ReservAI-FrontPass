@@ -2,7 +2,7 @@ import { apiJson } from './api.js';
 
 /**
  * Muestra los enlaces a herramientas internas ([data-herramienta="<clave>"])
- * a quien el admin les dio al menos "ver" en /admin/permisos. Sólo decide qué
+ * a quien el admin les dio al menos "ver" (en Documentación, su panel Equipo). Sólo decide qué
  * se pinta: cada servicio vuelve a revisar el permiso en cada petición.
  * Si la consulta falla, los enlaces se quedan ocultos.
  */
