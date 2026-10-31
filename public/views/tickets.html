@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0D0D0D" />
+  <title>ReservAI - Tickets</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesTickets.css" />
+</head>
+<body class="ui-page tk">
+  <div id="carga"></div>
+
+  <nav class="navbar">
+    <a class="logo tk-logo" id="logoPass" href="/">
+      <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
+      <span class="logo-text" id="logoTexto">ReservAI</span>
+    </a>
+    <div class="profile">
+      <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="Menú de cuenta">
+        <span class="profile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.5" r="3.75"/>
+            <path d="M4.5 20.25c0-3.6 3.36-6.25 7.5-6.25s7.5 2.65 7.5 6.25"/>
+          </svg>
+        </span>
+      </button>
+      <div class="dropdown" role="menu">
+        <p class="dropdown__account" id="accountName"></p>
+        <a href="/inicioAdmin" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Gestión de cuentas
+        </a>
+        <a href="/admin/tenants" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="2"/>
+            <path d="M8 9h8M8 12.5h8M8 16h5"/>
+          </svg>
+          Tenants
+        </a>
+        <a href="/admin/jobs" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+          </svg>
+          Jobs
+        </a>
+        <a href="/admin/traces" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+          </svg>
+          Traces
+        </a>
+        <a href="/invitations" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/>
+            <path d="m3.5 7 8.5 6 8.5-6"/>
+          </svg>
+          Invitaciones
+        </a>
+        <a href="/admin/products" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7.5 12 3.75 19.5 7.5 12 11.25 4.5 7.5z"/>
+            <path d="M4.5 12 12 15.75 19.5 12M4.5 16.5 12 20.25 19.5 16.5"/>
+          </svg>
+          Productos
+        </a>
+        <a href="/bitacora/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 3.75h9.5L19 7.25v13H6z"/><path d="M9 11h7M9 14.5h7M9 18h4"/>
+          </svg>
+          Bitácora de visitas
+        </a>
+        <a href="/documentacion/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3.5" y="4" width="7" height="5" rx="1.2"/><rect x="13.5" y="15" width="7" height="5" rx="1.2"/>
+            <path d="M7 9v4.5h10V15"/>
+          </svg>
+          Documentación
+        </a>
+        <a href="/tickets/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2a2.5 2.5 0 0 0 0 5v2a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-2a2.5 2.5 0 0 0 0-5z"/>
+            <path d="M14 5.5v13" stroke-dasharray="2 2"/>
+          </svg>
+          Tickets
+        </a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+            <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+          </svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div id="raiz" class="tk-raiz">
+    <div class="ui-loading"><span class="ui-loading__spinner" aria-hidden="true"></span>Abriendo Tickets…</div>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script type="module" src="/static/Scripts/ticketsScript/pagina.js"></script>
+</body>
+</html>

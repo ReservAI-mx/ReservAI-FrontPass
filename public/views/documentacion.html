@@ -92,6 +92,14 @@
           </svg>
           Documentación
         </a>
+        <a href="/tickets/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2a2.5 2.5 0 0 0 0 5v2a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-2a2.5 2.5 0 0 0 0-5z"/>
+            <path d="M14 5.5v13" stroke-dasharray="2 2"/>
+          </svg>
+          Tickets
+        </a>
         <a href="#" id="logout" role="menuitem" class="dropdown__danger">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -222,6 +230,10 @@
         </button>
         <button type="button" class="ui-icon-btn js-editar" id="abrirPlantillas" title="Plantillas por tipo de nodo" aria-label="Plantillas por tipo de nodo" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="4" width="15" height="16" rx="2"/><path d="M8 8.5h8M8 12h8M8 15.5h5"/></svg>
+        </button>
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-tickets js-editar" id="abrirTickets" aria-haspopup="dialog" title="Un ticket por bloque pendiente y los estados iguales en los dos lados" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2a2.5 2.5 0 0 0 0 5v2a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-2a2.5 2.5 0 0 0 0-5z"/></svg>
+          Tickets
         </button>
         <button type="button" class="ui-icon-btn" id="abrirBuscar" title="Buscar nodo (Ctrl+K)" aria-label="Buscar nodo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/></svg>
@@ -504,6 +516,21 @@
     </div>
   </dialog>
 
+  <dialog class="dv-dialogo dv-tickets" id="dlgTickets" aria-labelledby="dlgTicketsTitulo">
+    <h3 id="dlgTicketsTitulo">Sincronizar con Tickets</h3>
+    <p class="dv-dialogo__nota">Crea un ticket por cada bloque que no está listo y deja los estados iguales en los dos lados.
+      Si un bloque cambió aquí, manda el diagrama; si sólo se movió el ticket, manda Tickets.</p>
+    <label class="dv-campo">Área<select class="dv-input" id="ticketsArea"></select></label>
+    <label class="dv-check"><input type="checkbox" id="ticketsCrear" checked> Crear tickets para bloques nuevos</label>
+    <label class="dv-check"><input type="checkbox" id="ticketsIA"> Que la IA escriba la descripción y los pasos de los nuevos</label>
+    <div id="ticketsResultado" class="dv-tickets__resultado" role="status"></div>
+    <p class="dv-dialogo__error" id="ticketsError" role="alert"></p>
+    <div class="dv-dialogo__acciones">
+      <button type="button" class="ui-btn ui-btn--ghost" id="cerrarTickets">Cerrar</button>
+      <button type="button" class="ui-btn ui-btn--primary" id="sincronizarTickets">Sincronizar</button>
+    </div>
+  </dialog>
+
   <dialog class="dv-dialogo" id="dlgBorrar" aria-labelledby="dlgBorrarTitulo">
     <h3 id="dlgBorrarTitulo">¿Eliminar <span id="borrarNombre"></span>?</h3>
     <p class="dv-dialogo__nota">Deja de aparecer en la lista para todos. Si fue un error, un admin lo puede recuperar desde la base.</p>
@@ -516,6 +543,7 @@
   <script src="/static/Scripts/documentacionScript/modelo.js"></script>
   <script src="/static/Scripts/documentacionScript/markdown.js"></script>
   <script src="/static/Scripts/documentacionScript/exportar.js"></script>
+  <script src="/static/Scripts/documentacionScript/tickets.js"></script>
   <script type="module" src="/static/Scripts/documentacionScript/app.js"></script>
 </body>
 </html>
