@@ -188,6 +188,11 @@
       <span class="dv-lectura" id="modoLectura" hidden>Sólo lectura</span>
       <span class="dv-guardado" id="estadoGuardado" role="status"></span>
       <div class="dv-barra__acciones">
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-problemas" id="abrirProblemas" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5 20.5 19h-17z"/><path d="M12 10v4M12 16.6v.1"/></svg>
+          <span id="contadorProblemas">0</span>
+          <span class="dv-oculto">problemas</span>
+        </button>
         <button type="button" class="ui-icon-btn js-editar" id="abrirPlantillas" title="Plantillas por tipo de nodo" aria-label="Plantillas por tipo de nodo" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="4" width="15" height="16" rx="2"/><path d="M8 8.5h8M8 12h8M8 15.5h5"/></svg>
         </button>
@@ -338,6 +343,24 @@
     </div>
     <ul class="dv-buscar__lista" id="resultadosBusqueda" role="listbox" aria-label="Resultados"></ul>
     <p class="dv-buscar__nota" id="notaBusqueda">Busca en todo el proyecto, también dentro de los diagramas de detalle. ↑↓ para moverte, Enter para ir.</p>
+  </dialog>
+
+  <dialog class="dv-dialogo dv-problemas" id="dlgProblemas" aria-labelledby="dlgProblemasTitulo">
+    <div class="dv-problemas__cabeza">
+      <div>
+        <h3 id="dlgProblemasTitulo">Problemas del proyecto</h3>
+        <p class="dv-dialogo__nota" id="resumenProblemas"></p>
+      </div>
+      <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="cerrarProblemas" title="Cerrar" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+      </button>
+    </div>
+    <p class="dv-dialogo__nota">Lo que impide que la documentación esté completa. Haz clic en uno para ir al nodo.</p>
+    <ul class="dv-problemas__lista" id="listaProblemas"></ul>
+    <div class="ui-empty" id="sinProblemas" hidden>
+      <p class="ui-empty__titulo">Sin problemas</p>
+      <p class="ui-empty__sub">Todos los endpoints tienen método y ruta, no hay nodos sueltos ni diagramas perdidos.</p>
+    </div>
   </dialog>
 
   <dialog class="dv-dialogo dv-plantillas" id="dlgPlantillas" aria-labelledby="dlgPlantillasTitulo">

@@ -479,6 +479,52 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
 .dv-buscar__http { font-family: var(--ui-mono); font-size: 0.74rem; color: #c4b5fd; justify-self: end; }
 .dv-buscar__nota { padding: 0.2rem 0.6rem 0.3rem; font-size: 0.74rem; color: var(--text-gray); }
 
+/* ---------- Problemas ---------- */
+
+.dv-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.dv-btn-problemas { min-height: 36px; padding: 0 0.65rem; gap: 0.35rem; }
+.dv-btn-problemas[data-estado="error"] { color: var(--ui-error); border-color: rgba(255, 132, 132, 0.55); }
+.dv-btn-problemas[data-estado="aviso"] { color: var(--ui-warn); border-color: rgba(251, 191, 36, 0.5); }
+.dv-btn-problemas[data-estado="ok"] { color: var(--ui-ok); }
+
+.dv-dialogo.dv-problemas { width: min(640px, calc(100vw - 2rem)); max-height: calc(100dvh - 4rem); }
+.dv-problemas__cabeza { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.dv-problemas__lista { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; overflow-y: auto; }
+
+.dv-problema {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.15rem;
+  border: 1px solid var(--dv-linea);
+  border-left: 3px solid var(--ui-warn);
+  border-radius: 10px;
+}
+
+.dv-problema--error { border-left-color: var(--ui-error); }
+.dv-problema .dv-btn-peligro { align-self: flex-start; margin: 0 0 0.45rem 0.55rem; }
+
+.dv-problema__ir {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-light);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dv-problema__ir:hover:not(:disabled) { background: var(--bg-input); }
+.dv-problema__ir:disabled { cursor: default; }
+.dv-problema__titulo { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ui-warn); }
+.dv-problema--error .dv-problema__titulo { color: var(--ui-error); }
+.dv-problema__sujeto { font-weight: 600; font-size: 0.92rem; }
+.dv-problema__detalle { font-size: 0.82rem; color: var(--text-gray); }
+.dv-problema__donde { font-size: 0.74rem; color: var(--ui-info); }
+
 /* ---------- Plantillas ---------- */
 
 .dv-dialogo.dv-plantillas { width: min(760px, calc(100vw - 2rem)); max-height: calc(100dvh - 4rem); overflow-y: auto; }

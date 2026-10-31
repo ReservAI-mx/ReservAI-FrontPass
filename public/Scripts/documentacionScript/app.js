@@ -349,6 +349,7 @@ function enlazarEditor() {
   enlazarExportar();
   enlazarBuscador();
   enlazarPlantillas();
+  enlazarProblemas();
   $('recargarConflicto').addEventListener('click', () => abrirProyecto(estado.slug, true));
   $('sobrescribirConflicto').addEventListener('click', sobrescribir);
 
@@ -423,6 +424,7 @@ function pintarDiagrama(conservarVista) {
   });
   pintarMigas();
   pintarFiltro();
+  pintarContadorProblemas();
   pintarBotones();
   pintarInspector();
 }
@@ -438,7 +440,7 @@ function pintarMigas() {
     const ultimo = i === estado.pila.length - 1;
     const nombre = i === 0
       ? 'Principal'
-      : ((M.nodoQueAbre(estado.doc, estado.pila[i - 1], id) || {}).data || {}).name || 'Detalle';
+      : ((M.nodoQueAbre(estado.doc, estado.pila[i - 1], id) || { data: { name: 'Sin enlazar' } }).data.name || 'Detalle');
     if (i > 0) nav.appendChild(el('span', 'dv-migas__sep', '›'));
     if (ultimo) {
       const s = el('span', 'dv-migas__actual', nombre);
@@ -872,6 +874,83 @@ function enlazarPlantillas() {
     }
     cambiar(r.doc);
     showToast(`Se agregaron campos a ${r.nodos} nodo${r.nodos === 1 ? '' : 's'}. Ctrl+Z lo deshace.`, 'success');
+  });
+}
+
+/* ==================================================================
+   Problemas del proyecto: lo que impide que la documentación esté completa
+   ================================================================== */
+
+function pintarContadorProblemas() {
+  const ps = M.problemas(estado.doc);
+  const errores = ps.filter((p) => p.nivel === 'error').length;
+  const b = $('abrirProblemas');
+  $('contadorProblemas').textContent = String(ps.length);
+  b.dataset.estado = errores ? 'error' : ps.length ? 'aviso' : 'ok';
+  b.title = ps.length
+    ? `${errores} error(es) y ${ps.length - errores} aviso(s) en el proyecto`
+    : 'Sin problemas en el proyecto';
+  if ($('dlgProblemas').open) pintarProblemas(ps);
+}
+
+function pintarProblemas(ps) {
+  const lista = $('listaProblemas');
+  lista.replaceChildren();
+  const errores = ps.filter((p) => p.nivel === 'error').length;
+  $('resumenProblemas').textContent = ps.length
+    ? `${errores} error${errores === 1 ? '' : 'es'} · ${ps.length - errores} aviso${ps.length - errores === 1 ? '' : 's'}`
+    : '';
+  $('sinProblemas').hidden = ps.length > 0;
+
+  for (const p of ps) {
+    const li = el('li', `dv-problema dv-problema--${p.nivel}`);
+    const ir = el('button', 'dv-problema__ir');
+    ir.type = 'button';
+    ir.disabled = !p.ids;
+    ir.append(
+      el('span', 'dv-problema__titulo', p.titulo),
+      el('span', 'dv-problema__sujeto', p.sujeto),
+      el('span', 'dv-problema__detalle', p.detalle),
+      el('span', 'dv-problema__donde', p.ids ? `${p.donde} · clic para ir` : p.donde),
+    );
+    ir.addEventListener('click', () => irAProblema(p));
+    li.appendChild(ir);
+
+    if (p.descartable && estado.puedeEditar) {
+      const descartar = el('button', 'ui-btn ui-btn--ghost dv-btn-chico dv-btn-peligro', 'Descartar diagrama');
+      descartar.type = 'button';
+      descartar.addEventListener('click', () => {
+        if (!window.confirm(`¿Descartar «${p.sujeto}»? No lo abre ningún nodo, así que no afecta ningún flujo. Ctrl+Z lo deshace.`)) return;
+        cambiar(M.descartarDiagrama(estado.doc, p.descartable));
+        showToast('Diagrama descartado.', 'success');
+      });
+      li.appendChild(descartar);
+    }
+    lista.appendChild(li);
+  }
+}
+
+function irAProblema(p) {
+  if (!p.ids) return;
+  $('dlgProblemas').close();
+  estado.pila = p.ids.slice();
+  lienzo.seleccionar([], [], false);
+  estado.nodoInspector = null;
+  pintarDiagrama(false);
+  if (p.nodoId) {
+    lienzo.seleccionar([p.nodoId], []);
+    lienzo.centrarEn(p.nodoId);
+  }
+}
+
+function enlazarProblemas() {
+  $('abrirProblemas').addEventListener('click', () => {
+    pintarProblemas(M.problemas(estado.doc));
+    $('dlgProblemas').showModal();
+  });
+  $('cerrarProblemas').addEventListener('click', () => $('dlgProblemas').close());
+  $('dlgProblemas').addEventListener('click', (e) => {
+    if (e.target === $('dlgProblemas')) $('dlgProblemas').close();
   });
 }
 

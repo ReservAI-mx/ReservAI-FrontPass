@@ -394,16 +394,37 @@
     return d ? d.nodes.find((n) => n.data.childDiagramId === hijoId) || null : null;
   }
 
-  /** Recorta la pila de navegación a lo que todavía existe. */
+  /**
+   * Recorta la pila de navegación a lo que todavía existe. Un diagrama que
+   * nadie abre (huérfano) se permite colgado de la raíz: así el panel de
+   * problemas puede mostrarlo antes de descartarlo.
+   */
   function podarPila(doc, pila) {
     const out = [];
     for (let i = 0; i < pila.length; i++) {
       const id = pila[i];
-      if (!doc.diagrams[id]) break;
-      if (i > 0 && !nodoQueAbre(doc, out[i - 1], id)) break;
+      if (!doc.diagrams[id] || (i === 0 && id !== doc.rootDiagramId)) break;
+      const abierto = i === 0 || nodoQueAbre(doc, out[i - 1], id);
+      const huerfano = i === 1 && !abierto && !nodoQueAbreEnAlguno(doc, id);
+      if (!abierto && !huerfano) break;
       out.push(id);
     }
     return out.length ? out : [doc.rootDiagramId];
+  }
+
+  function nodoQueAbreEnAlguno(doc, id) {
+    return Object.values(doc.diagrams).some((d) => d.nodes.some((n) => n.data.childDiagramId === id));
+  }
+
+  /**
+   * Elimina un diagrama al que no apunta ningún nodo, con lo que cuelgue de
+   * él. No hace nada si es la raíz o si alguien lo abre.
+   */
+  function descartarDiagrama(doc, id) {
+    if (id === doc.rootDiagramId || !doc.diagrams[id] || nodoQueAbreEnAlguno(doc, id)) return doc;
+    const nuevo = clonar(doc);
+    for (const x of subarbol(nuevo.diagrams, id)) if (x !== nuevo.rootDiagramId) delete nuevo.diagrams[x];
+    return nuevo;
   }
 
   // ---------- Geometría (coordenadas del diagrama) ----------
@@ -689,6 +710,108 @@
     return out.sort((a, b) => b.puntaje - a.puntaje || a.nombre.localeCompare(b.nombre)).slice(0, limite || 40);
   }
 
+  // ---------- Problemas del proyecto (diagnostics.ts) ----------
+
+  /**
+   * Lo que impide que la documentación esté completa. Errores primero y,
+   * dentro de cada nivel, agrupados por ubicación.
+   * @returns {Array<{ id, nivel: 'error'|'aviso', titulo, sujeto, detalle, donde,
+   *   ids: string[]|null, nodoId: string|null, descartable?: string }>}
+   */
+  function problemas(doc) {
+    const out = [];
+    const caminos = caminosDiagramas(doc);
+    const plantillas = doc.templatesByNodeType || {};
+
+    // Diagramas a los que no se llega desde la raíz.
+    for (const [id, d] of Object.entries(doc.diagrams)) {
+      if (caminos.has(id)) continue;
+      const nombres = d.nodes.map((n) => String(n.data.name || '').trim() || TIPOS[n.type].label);
+      const resto = nombres.length - 3;
+      out.push({
+        id: `huerfano:${id}`,
+        nivel: 'aviso',
+        titulo: 'Diagrama inalcanzable',
+        sujeto: nombres.length ? `${nombres.slice(0, 3).join(', ')}${resto > 0 ? ` y ${resto} más` : ''}` : 'Diagrama vacío y sin enlazar',
+        detalle: nombres.length
+          ? `Ningún nodo lo abre, así que no aparece al navegar. Tiene ${d.nodes.length} nodo(s): ábrelo para revisarlo, o descártalo.`
+          : 'Ningún nodo lo abre y está vacío: es un resto en el proyecto y se puede descartar.',
+        donde: 'Fuera de la navegación',
+        ids: d.nodes.length ? [doc.rootDiagramId, id] : null,
+        nodoId: d.nodes.length ? d.nodes[0].id : null,
+        descartable: id,
+      });
+    }
+
+    for (const [id, d] of Object.entries(doc.diagrams)) {
+      const camino = caminos.get(id);
+      const donde = camino ? camino.nombres.join(' / ') : 'Fuera de la navegación';
+      if (camino && !d.nodes.length && id !== doc.rootDiagramId) {
+        out.push({
+          id: `vacio:${id}`, nivel: 'aviso', titulo: 'Diagrama vacío',
+          sujeto: camino.nombres[camino.nombres.length - 1],
+          detalle: 'El diagrama de detalle existe pero no tiene ningún nodo.',
+          donde, ids: camino.ids, nodoId: null,
+        });
+      }
+
+      const conectados = new Set();
+      for (const e of d.edges) {
+        conectados.add(e.source);
+        conectados.add(e.target);
+      }
+
+      for (const n of d.nodes) {
+        const cfg = TIPOS[n.type];
+        const nombre = String(n.data.name || '').trim();
+        const base = { donde, ids: camino ? camino.ids : null, nodoId: n.id, sujeto: nombre || `(${cfg.label} sin nombre)` };
+
+        if (!nombre) {
+          out.push({ id: `sinnombre:${n.id}`, nivel: 'aviso', titulo: 'Nodo sin nombre',
+            detalle: `Sale como «${cfg.label}» en el lienzo y en la documentación exportada.`, ...base });
+        }
+        if (d.nodes.length > 1 && !conectados.has(n.id)) {
+          out.push({ id: `suelto:${n.id}`, nivel: 'aviso', titulo: 'Nodo suelto',
+            detalle: 'No tiene ninguna conexión, así que no forma parte de ningún flujo.', ...base });
+        }
+        if (n.type === 'endpoint') {
+          const { metodo, ruta } = datosHttp(n.data);
+          if (!ruta) {
+            out.push({ id: `sinruta:${n.id}`, nivel: 'error', titulo: 'Endpoint sin ruta',
+              detalle: 'Le falta el atributo Endpoint (o el campo Endpoints): no muestra su ruta en el lienzo ni en el Markdown.', ...base });
+          }
+          if (!metodo) {
+            out.push({ id: `sinmetodo:${n.id}`, nivel: 'error', titulo: 'Endpoint sin método',
+              detalle: 'Le falta el atributo Metodo con un verbo HTTP válido (GET, POST, …).', ...base });
+          }
+        }
+        const hijo = n.data.childDiagramId;
+        if (hijo && !doc.diagrams[hijo]) {
+          out.push({ id: `rota:${n.id}`, nivel: 'error', titulo: 'Referencia rota a diagrama de detalle',
+            detalle: 'Apunta a un diagrama de detalle que ya no existe en el proyecto.', ...base });
+        }
+
+        // Campos que la plantilla de su tipo marca como obligatorios.
+        for (const def of plantillas[n.type] || []) {
+          if (!def.required) continue;
+          let valor;
+          if (CLAVES_BASE.has(def.key)) valor = n.data[def.key];
+          else {
+            const attr = (n.data.attributes || []).find((a) => String(a.key || '').trim().toLowerCase() === def.key.toLowerCase());
+            valor = attr && attr.value;
+          }
+          if (!String(valor || '').trim()) {
+            out.push({ id: `obligatorio:${n.id}:${def.key}`, nivel: 'aviso', titulo: 'Campo obligatorio vacío',
+              detalle: `La plantilla de ${cfg.label} pide «${def.label || def.key}» y este nodo no lo tiene lleno.`, ...base });
+          }
+        }
+      }
+    }
+
+    const peso = (x) => (x.nivel === 'error' ? 0 : 1);
+    return out.sort((a, b) => peso(a) - peso(b) || a.donde.localeCompare(b.donde));
+  }
+
   /** Cuántos nodos hay de cada estado en una lista. */
   function conteoPorEstado(nodos) {
     const c = Object.fromEntries(ESTADOS.map((e) => [e, 0]));
@@ -709,6 +832,7 @@
     nuevoId, documentoVacio, slugDesdeNombre, slugValido, clonar,
     agregarNodo, moverNodos, quitar, conectar, cambiarDatos,
     limpiarPlantilla, ponerPlantilla, contarTipo, aplicarPlantilla,
+    problemas, descartarDiagrama,
     abrirHijo, quitarHijo, nodoQueAbre, podarPila, subarbol,
     puertos, puerto, rutaArista, caja, encuadre,
     FONDO, COLOR_ARISTA, COLOR_ESTADO, AREA_TEXTO, pintura, siluetas, rutasDiagramas,
