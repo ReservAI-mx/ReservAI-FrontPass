@@ -16,7 +16,7 @@
    teléfonos que ya la abrieron siguen con la copia vieja.
    ------------------------------------------------------------------ */
 
-const VERSION = 'bitacora-pass-v1';
+const VERSION = 'bitacora-pass-v5';
 
 const PAGINA = '/bitacora/';
 
@@ -29,6 +29,7 @@ const CRITICOS = [
   '/static/Scripts/api.js',
   '/static/Scripts/AppStorage.js',
   '/static/Scripts/toast.js',
+  '/static/Scripts/accountMenu.js',
   '/static/Scripts/bitacoraScript/campos.js',
   '/static/Scripts/bitacoraScript/calculos.js',
   '/static/Scripts/bitacoraScript/excel.js',
@@ -41,10 +42,10 @@ const CRITICOS = [
 const OPCIONALES = [
   '/bitacora/manifest.webmanifest',
   '/static/Images/ReservAiLogo.png',
-  '/static/Images/bitacora/favicon-32x32.png',
-  '/static/Images/bitacora/favicon-192x192.png',
-  '/static/Images/bitacora/favicon-512x512.png',
-  '/static/Images/bitacora/apple-touch-icon.png',
+  '/static/Images/bitacora/app-192.png',
+  '/static/Images/bitacora/app-512.png',
+  '/static/Images/bitacora/app-maskable-512.png',
+  '/static/Images/bitacora/app-ios-180.png',
 ];
 
 const LIMITE_INSTALACION = 15000;

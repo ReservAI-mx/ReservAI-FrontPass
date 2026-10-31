@@ -1,6 +1,8 @@
 import { showToast } from '../toast.js';
+import { goLogout } from '../api.js';
+import { setupAccountMenu } from '../accountMenu.js';
 import { visitasDe, guardarLocal, leerMeta, guardarMeta, disponible } from './store.js';
-import { sincronizar, yo, pedirSesionDispositivo, SinSesion, SinRed } from './sync.js';
+import { sincronizar, yo, pedirSesionDispositivo, equipo, SinSesion, SinRed } from './sync.js';
 
 const C = globalThis.BitacoraCampos;
 const K = globalThis.BitacoraCalculos;
@@ -22,9 +24,16 @@ const estado = {
   sync: 'revisando',
   sincronizando: false,
   hoja: null,            // { v, modo: 'rapido'|'completo', paso, esNueva }
+  periodo: 0,            // días del tablero; 0 = todo
+  vendedorFiltro: '',    // admin: id de la cuenta, '' = todo el equipo
+  equipo: null,          // admin: filas de /api/bitacora/resumen
 };
 
 const esAdmin = () => estado.cuenta && estado.cuenta.tipo === 'admin';
+
+/* En pantalla grande la bitácora se ve como el resto del pass: barra con
+   menú, encabezado, pestañas arriba y tablas en lugar de tarjetas. */
+const escritorio = window.matchMedia('(min-width: 900px)');
 
 /* Las que capturó esta cuenta. Las recién creadas aún no traen vendedor. */
 const mias = () => estado.visitas.filter((v) => !v.vendedor || v.vendedor === estado.cuenta.id);
@@ -77,11 +86,15 @@ function pintarSync() {
   } else if ((e === 'sin-red' || e === 'sin-sesion') && pendientes) {
     texto = `${TEXTO_SYNC[e]} · ${pendientes} por subir`;
   }
-  $('syncPill').dataset.estado = e;
-  $('syncTexto').textContent = texto;
+  // Hay uno en la barra del teléfono y otro en la del escritorio.
+  for (const pill of document.querySelectorAll('.bt-sync')) {
+    pill.dataset.estado = e;
+    pill.querySelector('.bt-sync__texto').textContent = texto;
+  }
 }
 
 let relojSync = null;
+let ultimaSync = 0;
 function programarSync(ms = 3000) {
   clearTimeout(relojSync);
   relojSync = setTimeout(sincronizarAhora, ms);
@@ -116,6 +129,7 @@ async function sincronizarAhora() {
     }
   } finally {
     estado.sincronizando = false;
+    ultimaSync = Date.now();
   }
   await recargar();
 }
@@ -165,8 +179,19 @@ function item(v, { fecha = false, seguimiento = false, vendedor = false } = {}) 
     !v._rechazo && v._pendiente && h('span', { class: 'bt-item__aviso', text: 'Por subir' }));
 }
 
+/* Ícono fijo (no lleva datos), por eso se arma desde texto una sola vez. */
+const ICONO_VACIO = (() => {
+  const t = document.createElement('template');
+  t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+    + 'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.3 2.3 2.3 4.7-5"/></svg>';
+  return t.content.firstElementChild;
+})();
+
 function vacio(titulo, texto) {
-  return h('div', { class: 'bt-vacio' }, h('strong', { text: titulo }), texto);
+  return h('div', { class: 'bt-vacio' },
+    h('span', { class: 'bt-vacio__icono', 'aria-hidden': 'true' }, ICONO_VACIO.cloneNode(true)),
+    h('strong', { text: titulo }),
+    h('span', { text: texto }));
 }
 
 function pintarHoy() {
@@ -196,6 +221,67 @@ function pintarHoy() {
     ? lista.map((v) => item(v))
     : [vacio('Todavía no tocas ninguna.',
       'Registra cada puerta, también las que no te abrieron. Los “no” son los que hacen que los números sirvan.')]));
+
+  // Columna derecha (sólo escritorio): actividad y lo que hay que seguir.
+  const dias = K.porDia(propias, 14, hoy);
+  $('actividadTotal').textContent = resumenDias(dias);
+  $('actividadHoy').replaceChildren(barras(dias, meta));
+  const seguir = K.porSeguir(mias());
+  $('tituloSeguirLado').textContent = `Por seguir · ${seguir.length}`;
+  $('listaSeguirLado').replaceChildren(...(seguir.length
+    ? seguir.slice(0, 5).map((v) => item(v, { seguimiento: true }))
+    : [vacio('Nada pendiente.', 'Las visitas en propuesta, demo o reagendar aparecen aquí.')]));
+}
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const diaMes = (iso) => `${Number(iso.slice(8))} ${MESES[Number(iso.slice(5, 7)) - 1]}`;
+const esFinde = (iso) => [0, 6].includes(new Date(`${iso}T12:00:00`).getDay());
+
+/* "45 puertas · 1.5 al día" para el encabezado de una gráfica. */
+function resumenDias(dias) {
+  const total = dias.reduce((s, d) => s + d.n, 0);
+  return `${total} ${total === 1 ? 'puerta' : 'puertas'} · ${dec(total / dias.length)} al día`;
+}
+
+/* Barras verticales de puertas por día, con guías de escala a la izquierda.
+   La línea punteada es la meta; sábado y domingo van más tenues. */
+function barras(dias, meta) {
+  const total = dias.reduce((s, d) => s + d.n, 0);
+  if (!total) {
+    return h('div', { class: 'bt-barras bt-barras--vacia' },
+      h('strong', { text: 'Sin puertas en estos días' }),
+      h('span', { text: `Del ${diaMes(dias[0].fecha)} al ${diaMes(dias[dias.length - 1].fecha)}.` }));
+  }
+  const tope = Math.max(meta || 0, ...dias.map((d) => d.n), 1);
+  const guia = (valor, clase, texto) => {
+    const linea = h('span', { class: `bt-barras__guia ${clase}` }, h('span', { class: 'bt-barras__valor', text: texto }));
+    linea.style.bottom = `${(100 * valor) / tope}%`;
+    return linea;
+  };
+  const guias = [];
+  if (meta) guias.push(guia(meta, 'bt-barras__guia--meta', `meta ${meta}`));
+  if (tope !== meta) guias.push(guia(tope, '', String(tope)));
+  const mitad = Math.round(tope / 2);
+  if (mitad > 0 && mitad !== meta && mitad !== tope) guias.push(guia(mitad, '', String(mitad)));
+
+  // Fecha cada tantos días, contando desde hoy hacia atrás para que hoy siempre salga.
+  const paso = dias.length > 14 ? 5 : dias.length > 7 ? 2 : 1;
+  const hoy = C.hoy();
+  return h('div', { class: 'bt-barras' },
+    h('div', { class: 'bt-barras__area' },
+      guias,
+      dias.map((d) => {
+        const clases = ['bt-barras__col', d.fecha === hoy && 'is-hoy', esFinde(d.fecha) && 'is-finde', !d.n && 'is-cero']
+          .filter(Boolean).join(' ');
+        const col = h('span', {
+          class: clases,
+          title: `${diaMes(d.fecha)}: ${d.n} ${d.n === 1 ? 'puerta' : 'puertas'}${d.cerrados ? `, ${d.cerrados} cerrados` : ''}`,
+        }, d.n ? h('span', { class: 'bt-barras__num', text: d.n }) : null);
+        col.style.height = `${(100 * d.n) / tope}%`;
+        return col;
+      })),
+    h('div', { class: 'bt-barras__ejes' },
+      dias.map((d, i) => h('span', { text: (dias.length - 1 - i) % paso === 0 ? diaMes(d.fecha) : '' }))));
 }
 
 function pintarSeguir() {
@@ -236,9 +322,45 @@ function pintarTodas() {
     pendientes: ['Todo subido.', 'Lo que captures sin señal aparece aquí hasta que suba.'],
     archivadas: ['Nada archivado.', 'Las visitas cerradas o descartadas se archivan al exportar el Excel.'],
   };
-  $('listaTodas').replaceChildren(...(lista.length
-    ? lista.map((v) => item(v, { fecha: true, vendedor: esAdmin() }))
-    : [vacio(...textos[estado.filtroTodas])]));
+  if (!lista.length) {
+    $('listaTodas').replaceChildren(vacio(...textos[estado.filtroTodas]));
+  } else if (escritorio.matches) {
+    $('listaTodas').replaceChildren(tablaVisitas(lista));
+  } else {
+    $('listaTodas').replaceChildren(...lista.map((v) => item(v, { fecha: true, vendedor: esAdmin() })));
+  }
+}
+
+/* Escritorio: una fila por visita; clic o Enter abre la ficha. */
+function tablaVisitas(lista) {
+  const conVendedor = esAdmin();
+  const titulos = ['Fecha', 'Negocio', 'Giro', 'Zona', conVendedor && 'Vendedor', 'Interés', 'Resultado', 'Seguimiento']
+    .filter(Boolean);
+  const filas = lista.map((v) => {
+    const etiqueta = v.resultado || (v.decisor && v.decisor !== 'Sí' ? 'Sin decisor' : 'Sin cerrar');
+    const estadoSubida = v._rechazo
+      ? h('span', { class: 'bt-item__aviso bt-item__aviso--error', text: ' · no se subió' })
+      : v._pendiente && h('span', { class: 'bt-item__aviso', text: ' · por subir' });
+    const celdas = [
+      C.fechaCorta(v.fecha),
+      h('td', { class: 'bt-tabla__fuerte' }, v.negocio || 'Sin nombre', estadoSubida),
+      v.giro,
+      [v.colonia, v.municipio].filter(Boolean).join(', '),
+      conVendedor && v.visitador,
+      v.interes,
+      h('td', {}, h('span', { class: `bt-badge ${CLASE_RESULTADO[v.resultado] || ''}`, text: etiqueta })),
+      v.f_seguimiento ? C.fechaCorta(v.f_seguimiento) : '',
+    ].filter((c) => c !== false);
+    return h('tr', {
+      tabindex: '0',
+      onclick: () => abrirHoja(v),
+      onkeydown: (e) => { if (e.key === 'Enter') abrirHoja(v); },
+    }, celdas.map((c) => (c instanceof Node ? c : h('td', { text: c || '' }))));
+  });
+  return h('div', { class: 'bt-card bt-card--tabla' }, h('div', { class: 'bt-scroll' },
+    h('table', { class: 'bt-tabla bt-tabla--filas' },
+      h('thead', {}, h('tr', {}, titulos.map((t) => h('th', { text: t })))),
+      h('tbody', {}, filas))));
 }
 
 function tabla(titulos, filas, numericas = []) {
@@ -250,42 +372,122 @@ function tabla(titulos, filas, numericas = []) {
     }))))));
 }
 
-function pintarTablero() {
-  const visitas = vivas(estado.visitas);
-  const r = K.resumen(visitas);
-  $('tableroAlcance').textContent = `${esAdmin() ? 'Todo el equipo' : estado.cuenta.nombre} · ${r.puertas} visitas`;
+/* Las visitas recién capturadas aún no traen vendedor: son de esta cuenta. */
+const vendedorDe = (v) => v.vendedor || estado.cuenta.id;
 
-  const etapa = (nombre, n, conv, meta) => {
-    const dif = conv - meta;
-    return [nombre, n, pct(conv), pct(meta), { v: `${dif >= 0 ? '+' : '−'}${pct(Math.abs(dif))}`, clase: dif >= 0 ? 'arriba' : 'abajo' }];
-  };
-  const desglose = (titulo, clave, grupos, conMrr) => [
-    h('h3', { class: 'bt-subtitulo', text: titulo }),
+/* Admin: id → nombre de cada vendedor, de la lista del equipo y de las visitas. */
+function nombresVendedores() {
+  const nombres = new Map();
+  for (const f of estado.equipo || []) nombres.set(f.id, f.nombre);
+  for (const v of estado.visitas) {
+    const id = vendedorDe(v);
+    if (!nombres.has(id)) nombres.set(id, v.visitador || 'Sin nombre');
+  }
+  return nombres;
+}
+
+function pintarFiltroVendedor(nombres) {
+  const opciones = [...nombres].sort((a, b) => a[1].localeCompare(b[1], 'es'));
+  $('filtroVendedor').replaceChildren(
+    h('option', { value: '', text: 'Todo el equipo' }),
+    ...opciones.map(([id, nombre]) => h('option', { value: id, text: nombre })));
+  $('filtroVendedor').value = estado.vendedorFiltro;
+}
+
+const PERIODOS = { 0: 'desde el inicio', 1: 'hoy', 7: 'últimos 7 días', 30: 'últimos 30 días' };
+
+function tarjeta(titulo, ...contenido) {
+  return h('section', { class: 'bt-card' }, h('h3', { class: 'bt-card__titulo', text: titulo }), ...contenido);
+}
+
+/* Tarjeta cuyo contenido crece hasta la altura de su vecina en la rejilla. */
+function tarjetaGrafica(titulo, dato, contenido) {
+  return h('section', { class: 'bt-card bt-card--grafica' },
+    h('div', { class: 'bt-card__cabeza' },
+      h('h3', { class: 'bt-card__titulo', text: titulo }),
+      h('span', { class: 'bt-card__dato', text: dato })),
+    contenido);
+}
+
+function embudo(r) {
+  const etapas = [
+    ['Puertas tocadas', r.puertas],
+    ['Decisor presente', r.decisor, r.conv.decisor, C.METAS.decisor],
+    ['Demos', r.demos, r.conv.demo, C.METAS.demo],
+    ['Propuestas', r.propuestas, r.conv.propuesta, C.METAS.propuesta],
+    ['Cerrados', r.cerrados, r.conv.cierre, C.METAS.cierre],
+  ];
+  return h('div', { class: 'bt-embudo' }, etapas.map(([nombre, n, conv, meta]) => {
+    const barra = h('span', { class: 'bt-embudo__barra' });
+    barra.style.width = `${r.puertas ? (100 * n) / r.puertas : 0}%`;
+    const dif = conv === undefined ? null : conv - meta;
+    return h('div', { class: 'bt-embudo__fila' },
+      h('span', { class: 'bt-embudo__nombre', text: nombre }),
+      h('span', { class: 'bt-embudo__n', text: n }),
+      h('span', { class: 'bt-embudo__conv', text: dif === null ? '' : pct(conv) }),
+      h('span', { class: 'bt-embudo__pista' }, barra),
+      h('span', {
+        class: `bt-embudo__dif ${dif === null ? '' : dif >= 0 ? 'arriba' : 'abajo'}`,
+        text: dif === null ? '' : `${dif >= 0 ? '+' : '−'}${pct(Math.abs(dif))} vs. meta ${pct(meta)}`,
+      }));
+  }));
+}
+
+function pintarTablero() {
+  const hoy = C.hoy();
+  const nombres = esAdmin() ? nombresVendedores() : null;
+  if (esAdmin()) pintarFiltroVendedor(nombres);
+  for (const b of $('segPeriodo').querySelectorAll('[data-dias]')) {
+    b.setAttribute('aria-pressed', String(Number(b.dataset.dias) === estado.periodo));
+  }
+
+  let base = vivas(estado.visitas);
+  if (esAdmin() && estado.vendedorFiltro) base = base.filter((v) => vendedorDe(v) === estado.vendedorFiltro);
+  const visitas = K.enPeriodo(base, estado.periodo, hoy);
+  const r = K.resumen(visitas);
+
+  const quien = !esAdmin()
+    ? estado.cuenta.nombre
+    : estado.vendedorFiltro ? nombres.get(estado.vendedorFiltro) || 'Vendedor' : 'Todo el equipo';
+  $('tableroAlcance').textContent = `${quien} · ${PERIODOS[estado.periodo]} · ${r.puertas} visitas`;
+
+  const kpi = (label, num, clase, pista) => h('div', { class: `ui-kpi ${clase}` },
+    h('span', { class: 'ui-kpi__label', text: label }),
+    h('span', { class: 'ui-kpi__num', text: num }),
+    pista && h('span', { class: 'ui-kpi__hint', text: pista }));
+  $('tableroKpis').replaceChildren(
+    kpi('Puertas', r.puertas, '', `${dec(r.puertasPorDia)} por día con visitas`),
+    kpi('Demos', r.demos, 'ui-kpi--info', `${pct(r.conv.demo)} de los decisores`),
+    kpi('Propuestas', r.propuestas, 'ui-kpi--purple', `${pct(r.conv.propuesta)} de las demos`),
+    kpi('Cerrados', r.cerrados, 'ui-kpi--ok', `${pct(r.conv.total)} de las puertas`),
+    kpi('MRR cerrado', dinero(r.mrr), 'ui-kpi--ok', r.cerrados ? `${dinero(r.mrrPorCliente)} por cliente` : ''),
+    kpi('En seguimiento', r.enJuego, 'ui-kpi--warning', 'demo, propuesta o reagendar'));
+
+  // La gráfica siempre muestra días: con "Todo" u "Hoy", los últimos 30.
+  const diasGrafica = estado.periodo === 7 ? 7 : 30;
+  const metaGrafica = esAdmin() && !estado.vendedorFiltro ? 0 : Number(estado.config.meta) || 20;
+  const actividad = K.porDia(base, diasGrafica, hoy);
+
+  const desglose = (titulo, clave, grupos, conMrr) => tarjeta(titulo,
     grupos.length
       ? tabla(conMrr ? [clave, 'Puertas', 'Demos', 'Cerr.', 'Cierre', 'MRR'] : [clave, 'Puertas', 'Demos', 'Cerr.', 'Cierre'],
         grupos.map((g) => [g.clave, g.n, g.demos, g.cerrados, pct(g.tasa)].concat(conMrr ? [dinero(g.mrr)] : [])),
         conMrr ? [1, 2, 3, 4, 5] : [1, 2, 3, 4])
-      : h('p', { class: 'bt-nota', text: 'Sin datos todavía.' }),
-  ];
-  const reparto = (titulo, clave, columna, grupos) => [
-    h('h3', { class: 'bt-subtitulo', text: titulo }),
+      : h('p', { class: 'bt-nota', text: 'Sin datos todavía.' }));
+  const reparto = (titulo, clave, columna, grupos) => tarjeta(titulo,
     grupos.length
       ? tabla([clave, columna, '% del total'], grupos.map((g) => [g.clave, g.n, pct(g.parte)]), [1, 2])
-      : h('p', { class: 'bt-nota', text: 'Sin datos todavía.' }),
-  ];
+      : h('p', { class: 'bt-nota', text: 'Sin datos todavía.' }));
 
-  $('tablero').replaceChildren(
-    h('h3', { class: 'bt-subtitulo', text: 'El embudo' }),
-    tabla(['Etapa', 'N', 'Conv', 'Meta', 'Dif.'], [
-      ['Puertas tocadas', r.puertas, '', '', ''],
-      etapa('Decisor presente', r.decisor, r.conv.decisor, C.METAS.decisor),
-      etapa('Demos', r.demos, r.conv.demo, C.METAS.demo),
-      etapa('Propuestas', r.propuestas, r.conv.propuesta, C.METAS.propuesta),
-      etapa('Cerrados', r.cerrados, r.conv.cierre, C.METAS.cierre),
-    ], [1, 2, 3, 4]),
-    h('p', { class: 'bt-nota', text: 'Las metas son supuestos de venta en frío, no datos de ReservAI. Cámbialas cuando tengas unas 200 visitas propias.' }),
-    h('h3', { class: 'bt-subtitulo', text: 'Indicadores' }),
-    tabla(['Indicador', 'Valor'], [
+  const porVendedor = r.porVendedor.length > 1 ? desglose('Por vendedor', 'Vendedor', r.porVendedor, true) : null;
+  if (porVendedor) porVendedor.classList.add('bt-card--ancha');
+
+  $('tablero').replaceChildren(...[
+    tarjeta('El embudo', embudo(r),
+      h('p', { class: 'bt-nota', text: 'Las metas son supuestos de venta en frío, no datos de ReservAI. Cámbialas cuando tengas unas 200 visitas propias.' })),
+    tarjetaGrafica(`Puertas por día · últimos ${diasGrafica} días`, resumenDias(actividad), barras(actividad, metaGrafica)),
+    porVendedor,
+    tarjeta('Indicadores', tabla(['Indicador', 'Valor'], [
       ['Conversión total', pct(r.conv.total)],
       ['Puertas por cliente', dec(r.puertasPorCliente)],
       ['MRR cerrado', dinero(r.mrr)],
@@ -297,20 +499,96 @@ function pintarTablero() {
       ['Mensajes al día del mercado', dec(r.mensajes)],
       ['Ticket promedio del mercado', dinero(r.ticket)],
       ['En seguimiento activo', r.enJuego],
-    ], [1]),
-    ...(r.porVendedor.length > 1 ? desglose('Por vendedor', 'Vendedor', r.porVendedor, true) : []),
-    ...desglose('Por giro de negocio', 'Giro', r.porGiro),
-    ...desglose('Por municipio', 'Municipio', r.porMunicipio),
-    ...desglose('Por franja horaria', 'Franja', r.porFranja),
-    ...reparto('Objeciones que más aparecen', 'Objeción', 'Casos', r.porObjecion),
-    ...reparto('Qué sistema usan hoy', 'Sistema', 'Negocios', r.porSistema),
-    ...reparto('Estado de cada visita', 'Resultado', 'Visitas', r.porResultado),
-    ...reparto('Motivos de pérdida', 'Motivo', 'Visitas', r.porPerdida),
-  );
+    ], [1])),
+    reparto('Estado de cada visita', 'Resultado', 'Visitas', r.porResultado),
+    desglose('Por giro de negocio', 'Giro', r.porGiro),
+    desglose('Por municipio', 'Municipio', r.porMunicipio),
+    desglose('Por franja horaria', 'Franja', r.porFranja),
+    reparto('Objeciones que más aparecen', 'Objeción', 'Casos', r.porObjecion),
+    reparto('Qué sistema usan hoy', 'Sistema', 'Negocios', r.porSistema),
+    reparto('Motivos de pérdida', 'Motivo', 'Visitas', r.porPerdida),
+  ].filter(Boolean));
+}
+
+/* ------------------------------------------------------------------
+   Equipo (admin): una fila por vendedor, de /api/bitacora/resumen
+   ------------------------------------------------------------------ */
+
+let pidiendoEquipo = false;
+async function cargarEquipo() {
+  if (pidiendoEquipo) return;
+  pidiendoEquipo = true;
+  try {
+    const data = await equipo();
+    estado.equipo = (data.vendedores || []).map((f) => ({
+      ...f,
+      total: Number(f.total) || 0,
+      hoy: Number(f.hoy) || 0,
+      ultimos_7: Number(f.ultimos_7) || 0,
+      cerradas: Number(f.cerradas) || 0,
+      mrr: Number(f.mrr) || 0,
+    }));
+    estado.equipoError = '';
+  } catch (err) {
+    estado.equipoError = err instanceof SinRed
+      ? 'Sin conexión: la lista del equipo necesita internet.'
+      : err instanceof SinSesion ? 'Tu sesión terminó. Entra de nuevo para ver al equipo.'
+        : `No se pudo cargar el equipo: ${err.message}`;
+  } finally {
+    pidiendoEquipo = false;
+  }
+  if (estado.tab === 'equipo' || estado.tab === 'tablero') pintar();
+}
+
+function pintarEquipo() {
+  const filas = estado.equipo;
+  if (!filas) {
+    $('equipoAlcance').textContent = '';
+    $('equipo').replaceChildren(estado.equipoError
+      ? vacio('No se pudo cargar.', estado.equipoError)
+      : h('div', { class: 'ui-loading' }, h('span', { class: 'ui-loading__spinner', 'aria-hidden': 'true' }), ' Cargando al equipo…'));
+    return;
+  }
+  const vendedores = filas.filter((f) => f.tipo === 'seller');
+  const salieronHoy = filas.filter((f) => f.hoy > 0).length;
+  $('equipoAlcance').textContent = `${vendedores.length} vendedores · ${salieronHoy} con visitas hoy`
+    + (estado.equipoError ? ` · ${estado.equipoError}` : '');
+
+  const kpi = (label, num, clase) => h('div', { class: `ui-kpi ${clase}` },
+    h('span', { class: 'ui-kpi__label', text: label }), h('span', { class: 'ui-kpi__num', text: num }));
+  const suma = (k) => filas.reduce((s, f) => s + f[k], 0);
+  // Sin visitas en la última semana: la fecha sale en rojo.
+  const haceSemana = K.haceDias(C.hoy(), 6);
+
+  const tablaEquipo = h('div', { class: 'bt-scroll' }, h('table', { class: 'bt-tabla bt-tabla--filas' },
+    h('thead', {}, h('tr', {}, ['Vendedor', 'Hoy', '7 días', 'Total', 'Cerradas', 'MRR', 'Última visita']
+      .map((t, i) => h('th', { class: i ? 'n' : null, text: t })))),
+    h('tbody', {}, filas.map((f) => {
+      const quieto = !f.ultima_visita || f.ultima_visita < haceSemana;
+      const ver = () => { estado.vendedorFiltro = f.id; irA('tablero'); };
+      return h('tr', { tabindex: '0', onclick: ver, onkeydown: (e) => { if (e.key === 'Enter') ver(); } },
+        h('td', { class: 'bt-tabla__fuerte' }, f.nombre || 'Sin nombre',
+          f.tipo === 'admin' && h('span', { class: 'bt-item__meta', text: ' · admin' })),
+        h('td', { class: 'n', text: f.hoy }),
+        h('td', { class: 'n', text: f.ultimos_7 }),
+        h('td', { class: 'n', text: f.total }),
+        h('td', { class: 'n', text: f.cerradas }),
+        h('td', { class: 'n', text: dinero(f.mrr) }),
+        h('td', { class: `n${quieto ? ' abajo' : ''}`, text: f.ultima_visita ? C.fechaCorta(f.ultima_visita) : 'Nunca' }));
+    }))));
+
+  $('equipo').replaceChildren(
+    h('div', { class: 'ui-kpis bt-kpis bt-kpis--tablero bt-kpis--equipo' },
+      kpi('Puertas hoy', suma('hoy'), ''),
+      kpi('Puertas 7 días', suma('ultimos_7'), 'ui-kpi--info'),
+      kpi('Cerradas', suma('cerradas'), 'ui-kpi--ok'),
+      kpi('MRR cerrado', dinero(suma('mrr')), 'ui-kpi--ok')),
+    h('section', { class: 'bt-card bt-card--tabla' }, tablaEquipo));
 }
 
 function pintarAjustes() {
   $('inputMeta').value = estado.config.meta;
+  $('ajustesPendientes').textContent = estado.visitas.filter((v) => v._pendiente || v._rechazo).length;
   $('cuentaNombre').textContent = estado.cuenta.nombre || estado.cuenta.correo || '';
   $('cuentaPapel').textContent = esAdmin() ? 'Administrador' : 'Vendedor';
   $('cuentaSesion').textContent = estado.cuenta.sesion === 'dispositivo' || estado.cuenta.dispositivo
@@ -321,14 +599,20 @@ function pintarAjustes() {
 function pintar() {
   if (!estado.cuenta) return;
   pintarSync();
-  ({ hoy: pintarHoy, seguir: pintarSeguir, todas: pintarTodas, tablero: pintarTablero, ajustes: pintarAjustes })[estado.tab]();
+  ({
+    hoy: pintarHoy, seguir: pintarSeguir, todas: pintarTodas, tablero: pintarTablero, equipo: pintarEquipo, ajustes: pintarAjustes,
+  })[estado.tab]();
 }
 
 function irA(tab) {
+  if (tab === 'equipo' && !esAdmin()) tab = 'hoy';
   estado.tab = tab;
   for (const sec of document.querySelectorAll('.bt-panel')) sec.hidden = sec.id !== `tab-${tab}`;
   for (const b of $('tabs').querySelectorAll('.bt-tab')) b.classList.toggle('is-active', b.dataset.tab === tab);
   if (tab === 'ajustes') revisarOffline();
+  // La lista del equipo se pide al entrar: trae a los vendedores sin visitas
+  // y los nombres del filtro del tablero.
+  if (esAdmin() && (tab === 'equipo' || (tab === 'tablero' && !estado.equipo))) cargarEquipo();
   pintar();
   window.scrollTo(0, 0);
 }
@@ -350,6 +634,7 @@ function abrirHoja(visita) {
     estado.hoja = { v, modo: 'rapido', paso: 0, esNueva: true };
   }
   $('hoja').hidden = false;
+  $('velo').hidden = false;
   document.body.style.overflow = 'hidden';
   pintarHoja();
 }
@@ -357,6 +642,7 @@ function abrirHoja(visita) {
 function cerrarHoja() {
   estado.hoja = null;
   $('hoja').hidden = true;
+  $('velo').hidden = true;
   document.body.style.overflow = '';
 }
 
@@ -726,6 +1012,24 @@ async function obtenerCuenta() {
   }
 }
 
+/* Lo que cambia entre admin y vendedor: a dónde lleva el logo, qué trae el
+   menú del pass, la pestaña Equipo y el filtro por vendedor. */
+function prepararPass() {
+  const admin = esAdmin();
+  const inicio = admin ? '/inicioAdmin' : '/invitations';
+  $('volverPass').href = inicio;
+  $('logoPass').href = inicio;
+  $('logoTexto').textContent = admin ? 'ReservAI Admin' : 'ReservAI Ventas';
+  for (const el of document.querySelectorAll('.js-admin-only')) el.hidden = !admin;
+  setupAccountMenu({ account_name: estado.cuenta.nombre || estado.cuenta.correo, account_type: estado.cuenta.tipo });
+  $('cabezaSub').textContent = admin
+    ? 'Visitas en frío de todo el equipo de ventas'
+    : 'Tus visitas en frío: captura, seguimiento y números';
+  $('cabeza').hidden = false;
+  $('tabs').querySelector('[data-tab="equipo"]').hidden = !admin;
+  $('filtroVendedorCaja').hidden = !admin;
+}
+
 async function arrancar() {
   registrarSW();
 
@@ -755,7 +1059,7 @@ async function arrancar() {
   estado.config = { ...estado.config, ...(await leerMeta('config', {})) };
   estado.sync = r.sinSesion ? 'sin-sesion' : r.sinRed ? 'sin-red' : 'al-dia';
   $('avisoSesion').hidden = !r.sinSesion;
-  $('volverPass').href = esAdmin() ? '/inicioAdmin' : '/invitations';
+  prepararPass();
 
   $('pantallaInicio').hidden = true;
   $('tabs').hidden = false;
@@ -771,14 +1075,35 @@ $('tabs').addEventListener('click', (e) => {
   if (b) irA(b.dataset.tab);
 });
 $('btnRegistrar').addEventListener('click', () => abrirHoja(null));
+$('btnRegistrarCabeza').addEventListener('click', () => abrirHoja(null));
+$('btnExcelCabeza').addEventListener('click', () => exportar(false));
 $('hojaCerrar').addEventListener('click', cerrarHoja);
-$('syncPill').addEventListener('click', () => {
-  if (estado.sync === 'sin-sesion') {
-    window.location.href = '/login?return_to=%2Fbitacora%2F';
-    return;
-  }
-  sincronizarAhora();
+$('velo').addEventListener('click', cerrarHoja);
+for (const pill of document.querySelectorAll('.bt-sync')) {
+  pill.addEventListener('click', () => {
+    if (estado.sync === 'sin-sesion') {
+      window.location.href = '/login?return_to=%2Fbitacora%2F';
+      return;
+    }
+    sincronizarAhora();
+  });
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ir]');
+  if (b) irA(b.dataset.ir);
 });
+$('segPeriodo').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-dias]');
+  if (!b) return;
+  estado.periodo = Number(b.dataset.dias);
+  pintarTablero();
+});
+$('filtroVendedor').addEventListener('change', (e) => {
+  estado.vendedorFiltro = e.target.value;
+  pintarTablero();
+});
+// Al cruzar el ancho de escritorio cambian las listas por tablas y viceversa.
+escritorio.addEventListener('change', () => pintar());
 $('segTodas').addEventListener('click', (e) => {
   const b = e.target.closest('[data-filtro]');
   if (!b) return;
@@ -800,20 +1125,25 @@ $('inputMeta').addEventListener('change', (e) => {
   estado.config.meta = n;
   guardarMeta('config', estado.config).catch(() => {});
 });
-$('btnSalir').addEventListener('click', () => {
+function salir(e) {
+  if (e) e.preventDefault();
   const pendientes = estado.visitas.filter((v) => v._pendiente).length;
   // eslint-disable-next-line no-alert
-  if (pendientes && !window.confirm(`Tienes ${pendientes} visita(s) sin subir. Si cierras sesión se quedan en este teléfono hasta que vuelvas a entrar. ¿Cerrar de todos modos?`)) return;
-  window.location.href = '/api/logout';
-});
+  if (pendientes && !window.confirm(`Tienes ${pendientes} visita(s) sin subir. Si cierras sesión se quedan en este dispositivo hasta que vuelvas a entrar. ¿Cerrar de todos modos?`)) return;
+  goLogout();
+}
+$('btnSalir').addEventListener('click', salir);
+$('logout').addEventListener('click', salir);
 $('btnActualizar').addEventListener('click', () => window.location.reload());
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && estado.hoja) cerrarHoja();
 });
 window.addEventListener('online', () => sincronizarAhora());
 window.addEventListener('offline', () => { estado.sync = 'sin-red'; pintarSync(); });
+// Al volver a la pestaña o a la app. Algunos navegadores disparan el evento
+// muchas veces seguidas: con una vuelta cada 30 s basta.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') sincronizarAhora();
+  if (document.visibilityState === 'visible' && Date.now() - ultimaSync > 30000) sincronizarAhora();
 });
 setInterval(() => sincronizarAhora(), 5 * 60 * 1000);
 

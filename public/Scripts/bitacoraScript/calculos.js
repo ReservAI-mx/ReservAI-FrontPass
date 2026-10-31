@@ -95,7 +95,49 @@ function porSeguir(todas) {
     .sort((a, b) => String(a.f_seguimiento || '9999').localeCompare(String(b.f_seguimiento || '9999')));
 }
 
-const api = { resumen, agrupar, porSeguir };
+/* Fechas como texto YYYY-MM-DD (así vienen en las visitas), en hora local. */
+function aFecha(iso) {
+  const [y, m, d] = String(iso).split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function aTexto(fecha) {
+  const m = String(fecha.getMonth() + 1).padStart(2, '0');
+  const d = String(fecha.getDate()).padStart(2, '0');
+  return `${fecha.getFullYear()}-${m}-${d}`;
+}
+
+/** El día que fue hace n días (n = 0 es hoy). */
+function haceDias(hoy, n) {
+  const f = aFecha(hoy);
+  f.setDate(f.getDate() - n);
+  return aTexto(f);
+}
+
+/** Las de los últimos `dias` días contando hoy. Sin `dias`, todas. */
+function enPeriodo(todas, dias, hoy) {
+  if (!dias) return todas;
+  const desde = haceDias(hoy, dias - 1);
+  return todas.filter((v) => v.fecha && v.fecha >= desde && v.fecha <= hoy);
+}
+
+/** Una fila por día de los últimos `dias` (el más viejo primero), con ceros. */
+function porDia(todas, dias, hoy) {
+  const filas = new Map();
+  for (let n = dias - 1; n >= 0; n--) {
+    const fecha = haceDias(hoy, n);
+    filas.set(fecha, { fecha, n: 0, cerrados: 0 });
+  }
+  for (const v of todas) {
+    const f = !v.eliminada && filas.get(v.fecha);
+    if (!f) continue;
+    f.n += 1;
+    if (v.resultado === CERRADO) f.cerrados += 1;
+  }
+  return [...filas.values()];
+}
+
+const api = { resumen, agrupar, porSeguir, enPeriodo, porDia, haceDias };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

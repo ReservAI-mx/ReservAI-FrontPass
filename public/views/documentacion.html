@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>ReservAI - Documentación</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesDocumentacion.css" />
+</head>
+<body class="ui-page dv">
+  <div id="messageContainer" class="message-container" aria-live="polite"></div>
+
+  <nav class="navbar">
+    <a class="logo dv-logo" href="/">
+      <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
+      <span class="logo-text">ReservAI</span>
+    </a>
+    <div class="profile">
+      <button class="profile-btn" id="profileBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="Menú de cuenta">
+        <span class="profile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.5" r="3.75"/>
+            <path d="M4.5 20.25c0-3.6 3.36-6.25 7.5-6.25s7.5 2.65 7.5 6.25"/>
+          </svg>
+        </span>
+      </button>
+      <div class="dropdown" role="menu">
+        <p class="dropdown__account" id="accountName"></p>
+        <a href="/inicioAdmin" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.25" y="10.25" width="15.5" height="9.5" rx="2.25"/>
+            <path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/>
+          </svg>
+          Gestión de cuentas
+        </a>
+        <a href="/admin/tenants" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="2"/>
+            <path d="M8 9h8M8 12.5h8M8 16h5"/>
+          </svg>
+          Tenants
+        </a>
+        <a href="/admin/jobs" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+          </svg>
+          Jobs
+        </a>
+        <a href="/admin/traces" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7h15M4.5 12h15M4.5 17h10"/>
+          </svg>
+          Traces
+        </a>
+        <a href="/invitations" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.25"/>
+            <path d="m3.5 7 8.5 6 8.5-6"/>
+          </svg>
+          Invitaciones
+        </a>
+        <a href="/admin/products" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 7.5 12 3.75 19.5 7.5 12 11.25 4.5 7.5z"/>
+            <path d="M4.5 12 12 15.75 19.5 12M4.5 16.5 12 20.25 19.5 16.5"/>
+          </svg>
+          Productos
+        </a>
+        <a href="/bitacora/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 3.75h9.5L19 7.25v13H6z"/><path d="M9 11h7M9 14.5h7M9 18h4"/>
+          </svg>
+          Bitácora de visitas
+        </a>
+        <a href="/documentacion/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3.5" y="4" width="7" height="5" rx="1.2"/><rect x="13.5" y="15" width="7" height="5" rx="1.2"/>
+            <path d="M7 9v4.5h10V15"/>
+          </svg>
+          Documentación
+        </a>
+        <a href="/admin/permisos" class="js-admin-only" role="menuitem" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3.75 5 6.5v5.25c0 4.2 2.9 7.4 7 8.5 4.1-1.1 7-4.3 7-8.5V6.5z"/>
+            <path d="m9.25 12 1.9 1.9 3.6-3.8"/>
+          </svg>
+          Permisos
+        </a>
+        <a href="#" id="logout" role="menuitem" class="dropdown__danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4.75H6.75A2 2 0 0 0 4.75 6.75v10.5a2 2 0 0 0 2 2h7.75"/>
+            <path d="M17.5 15.25 20.75 12 17.5 8.75"/><path d="M20.25 12H10"/>
+          </svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="ui-loading" id="cargando"><span class="ui-loading__spinner" aria-hidden="true"></span>Abriendo Documentación…</div>
+
+  <main class="container dv-vacio" id="vacio" hidden>
+    <div class="ui-empty">
+      <span class="ui-empty__icono ui-empty__icono--neutral" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3.75 5 6.5v5.25c0 4.2 2.9 7.4 7 8.5 4.1-1.1 7-4.3 7-8.5V6.5z"/>
+        </svg>
+      </span>
+      <p class="ui-empty__titulo" id="vacioTitulo"></p>
+      <p class="ui-empty__sub" id="vacioSub"></p>
+      <button type="button" class="ui-btn ui-btn--ghost" id="vacioReintentar" hidden>Reintentar</button>
+    </div>
+  </main>
+
+  <!-- ============ Lista de proyectos ============ -->
+  <main class="container dv-lista" id="vistaLista" hidden>
+    <header class="ui-head">
+      <div class="ui-head__titulo">
+        <span class="ui-head__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="4" width="7" height="5" rx="1.2"/><rect x="13.5" y="15" width="7" height="5" rx="1.2"/>
+            <path d="M7 9v4.5h10V15"/>
+          </svg>
+        </span>
+        <div>
+          <h2>Documentación <span class="count-badge" id="totalProyectos" hidden></span></h2>
+          <p class="ui-head__sub">Diagramas de los servicios de ReservAI</p>
+        </div>
+      </div>
+      <div class="ui-head__acciones js-editar" hidden>
+        <button type="button" class="ui-btn ui-btn--ghost" id="importarProyecto">Importar JSON</button>
+        <button type="button" class="ui-btn ui-btn--primary" id="nuevoProyecto">Nuevo proyecto</button>
+        <input type="file" id="archivoImportar" accept=".json,application/json" hidden>
+      </div>
+    </header>
+
+    <section class="ui-toolbar" aria-label="Buscar">
+      <div class="search-field ui-search">
+        <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/>
+        </svg>
+        <input id="buscarProyecto" type="search" placeholder="Buscar proyecto…" aria-label="Buscar proyecto"
+               autocapitalize="none" spellcheck="false">
+      </div>
+    </section>
+
+    <div class="ui-loading" id="listaCargando" hidden><span class="ui-loading__spinner" aria-hidden="true"></span>Cargando proyectos…</div>
+    <p class="lista-error" id="listaError" role="alert"></p>
+    <ul class="dv-tarjetas" id="listaProyectos" aria-live="polite"></ul>
+    <div class="ui-empty dv-tarjetas__vacio" id="listaVacia" hidden>
+      <p class="ui-empty__titulo" id="listaVaciaTitulo"></p>
+      <p class="ui-empty__sub" id="listaVaciaSub"></p>
+    </div>
+  </main>
+
+  <!-- ============ Editor ============ -->
+  <section class="dv-editor" id="vistaEditor" hidden aria-label="Editor del diagrama">
+    <header class="dv-barra">
+      <button type="button" class="ui-icon-btn" id="volverLista" title="Volver a la lista" aria-label="Volver a la lista">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.5 6.5 9 12l5.5 5.5"/>
+        </svg>
+      </button>
+      <div class="dv-barra__titulo">
+        <input id="tituloProyecto" class="dv-titulo" aria-label="Nombre del proyecto" maxlength="200">
+        <div class="dv-barra__sub">
+          <nav class="dv-migas" id="migas" aria-label="Diagramas abiertos"></nav>
+          <div class="dv-filtro" id="filtroEstados" role="group" aria-label="Filtrar por estado" hidden></div>
+        </div>
+      </div>
+      <span class="dv-lectura" id="modoLectura" hidden>Sólo lectura</span>
+      <span class="dv-guardado" id="estadoGuardado" role="status"></span>
+      <div class="dv-barra__acciones">
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-problemas" id="abrirProblemas" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5 20.5 19h-17z"/><path d="M12 10v4M12 16.6v.1"/></svg>
+          <span id="contadorProblemas">0</span>
+          <span class="dv-oculto">problemas</span>
+        </button>
+        <button type="button" class="ui-icon-btn js-editar" id="abrirPlantillas" title="Plantillas por tipo de nodo" aria-label="Plantillas por tipo de nodo" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="4" width="15" height="16" rx="2"/><path d="M8 8.5h8M8 12h8M8 15.5h5"/></svg>
+        </button>
+        <button type="button" class="ui-icon-btn" id="abrirBuscar" title="Buscar nodo (Ctrl+K)" aria-label="Buscar nodo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/></svg>
+        </button>
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-chat" id="abrirChat" aria-pressed="false" aria-controls="chat" title="Preguntarle a la IA sobre este proyecto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5.5h14v10H9.5L5 19.5z"/><path d="M9 10.5h6"/></svg>
+          Chat
+        </button>
+        <button type="button" class="ui-icon-btn js-editar" id="deshacer" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5h10a5 5 0 0 1 0 10H11"/></svg>
+        </button>
+        <button type="button" class="ui-icon-btn js-editar" id="rehacer" title="Rehacer (Ctrl+Shift+Z)" aria-label="Rehacer" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l4.5-4.5L15 5"/><path d="M19.5 9.5h-10a5 5 0 0 0 0 10H13"/></svg>
+        </button>
+        <button type="button" class="ui-icon-btn" id="alejar" title="Alejar" aria-label="Alejar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4M8.5 11h5"/></svg>
+        </button>
+        <button type="button" class="ui-icon-btn" id="acercar" title="Acercar" aria-label="Acercar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4M8.5 11h5M11 8.5v5"/></svg>
+        </button>
+        <button type="button" class="ui-icon-btn" id="encuadrar" title="Ver todo el diagrama" aria-label="Ver todo el diagrama">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15"/></svg>
+        </button>
+        <div class="dv-exportar">
+          <button type="button" class="ui-icon-btn" id="exportar" title="Exportar" aria-label="Exportar"
+                  aria-haspopup="menu" aria-expanded="false" aria-controls="menuExportar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5v10.5M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>
+          </button>
+          <div class="dv-menu" id="menuExportar" role="menu" hidden>
+            <button type="button" role="menuitem" class="dv-menu__item" data-formato="png">
+              <span class="dv-menu__nombre">Imagen PNG</span>
+              <span class="dv-menu__hint">El diagrama que tienes abierto, completo.</span>
+            </button>
+            <button type="button" role="menuitem" class="dv-menu__item" data-formato="svg">
+              <span class="dv-menu__nombre">Imagen SVG</span>
+              <span class="dv-menu__hint">Lo mismo, en vectores: se ve nítido a cualquier tamaño.</span>
+            </button>
+            <button type="button" role="menuitem" class="dv-menu__item" data-formato="md">
+              <span class="dv-menu__nombre">Documentación Markdown</span>
+              <span class="dv-menu__hint">Todo el proyecto: índice de endpoints y una ficha por nodo.</span>
+            </button>
+            <button type="button" role="menuitem" class="dv-menu__item" data-formato="json">
+              <span class="dv-menu__nombre">JSON del proyecto</span>
+              <span class="dv-menu__hint">Con todos los diagramas; se puede volver a importar.</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="dv-conflicto" id="bannerConflicto" role="alert" hidden>
+      <p><strong>Alguien más guardó este proyecto mientras lo editabas.</strong> Tus últimos cambios no se han guardado.</p>
+      <div class="dv-conflicto__acciones">
+        <button type="button" class="ui-btn ui-btn--ghost" id="recargarConflicto">Ver su versión (pierdo lo mío)</button>
+        <button type="button" class="ui-btn ui-btn--primary" id="sobrescribirConflicto">Guardar la mía encima</button>
+      </div>
+    </div>
+
+    <div class="dv-cuerpo">
+      <aside class="dv-paleta js-editar" id="paleta" aria-label="Agregar nodo" hidden></aside>
+      <div class="dv-lienzo" id="lienzo">
+        <div class="ui-loading dv-lienzo__cargando" id="editorCargando" hidden><span class="ui-loading__spinner" aria-hidden="true"></span>Abriendo proyecto…</div>
+      </div>
+
+      <aside class="dv-inspector" id="inspector" hidden aria-label="Propiedades del nodo">
+        <div class="dv-inspector__head">
+          <span class="dv-inspector__tipo" id="inspTipo"></span>
+          <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="cerrarInspector" title="Cerrar" aria-label="Cerrar propiedades">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+          </button>
+        </div>
+
+        <label class="dv-campo">Nombre<input class="dv-input" id="in_name" maxlength="300"></label>
+        <label class="dv-campo">Estado<select class="dv-input" id="in_status"></select></label>
+        <label class="dv-campo">Descripción<textarea class="dv-input" id="in_description" rows="3"></textarea></label>
+        <label class="dv-campo">Endpoints<input class="dv-input dv-mono" id="in_endpoints" placeholder="GET /api/…"></label>
+        <div class="dv-campo-doble">
+          <label class="dv-campo">Entrada<textarea class="dv-input" id="in_input" rows="2"></textarea></label>
+          <label class="dv-campo">Salida<textarea class="dv-input" id="in_output" rows="2"></textarea></label>
+        </div>
+        <label class="dv-campo">Códigos de respuesta<input class="dv-input dv-mono" id="in_returnCodes" placeholder="200, 401, 418"></label>
+        <label class="dv-campo">Funcionalidad<input class="dv-input" id="in_feature"></label>
+        <div class="dv-campo-doble">
+          <label class="dv-campo">Puertos de entrada<input class="dv-input dv-mono" id="in_inputs"></label>
+          <label class="dv-campo">Puertos de salida<input class="dv-input dv-mono" id="in_outputs"></label>
+        </div>
+        <p class="dv-inspector__nota">Separados por coma. Ej. una decisión: TRUE, FALSE.</p>
+
+        <div class="dv-inspector__seccion">
+          <span>Atributos</span>
+          <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico" id="agregarAtributo">Agregar</button>
+        </div>
+        <div id="atributos" class="dv-atributos"></div>
+
+        <div class="dv-inspector__acciones">
+          <button type="button" class="ui-btn ui-btn--ghost" id="verFlujo" title="Sólo los caminos que llegan a este nodo">Ver flujo del request</button>
+          <button type="button" class="ui-btn ui-btn--ghost" id="abrirHijo"></button>
+          <button type="button" class="ui-btn ui-btn--ghost dv-btn-peligro" id="quitarHijo" hidden>Quitar detalle</button>
+          <button type="button" class="ui-btn ui-btn--ghost dv-btn-peligro" id="borrarNodo">Borrar nodo</button>
+        </div>
+      </aside>
+
+      <aside class="dv-chat" id="chat" hidden aria-label="Chat con IA del proyecto">
+        <div class="dv-chat__head">
+          <select class="dv-input dv-chat__selector" id="chatConversaciones" aria-label="Conversación"></select>
+          <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="chatNueva" title="Conversación nueva" aria-label="Conversación nueva">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"/></svg>
+          </button>
+          <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="cerrarChat" title="Cerrar chat" aria-label="Cerrar chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+          </button>
+        </div>
+        <div class="dv-chat__mensajes" id="chatMensajes" aria-live="polite"></div>
+        <div class="ui-empty dv-chat__apagado" id="chatApagado" hidden>
+          <p class="ui-empty__titulo">El chat no está configurado</p>
+          <p class="ui-empty__sub">Falta la llave de OpenAI en el servicio de documentación.</p>
+        </div>
+        <form class="dv-chat__form" id="chatForm" hidden>
+          <textarea class="dv-input" id="chatEntrada" rows="2" maxlength="4000"
+                    placeholder="Pregunta sobre el diagrama… (Enter envía, Shift+Enter salta línea)" aria-label="Mensaje"></textarea>
+          <button type="submit" class="ui-btn ui-btn--primary" id="chatEnviar">Enviar</button>
+        </form>
+      </aside>
+    </div>
+  </section>
+
+  <dialog class="dv-dialogo" id="dlgNuevo" aria-labelledby="dlgNuevoTitulo">
+    <form id="formNuevo" method="dialog">
+      <h3 id="dlgNuevoTitulo">Nuevo proyecto</h3>
+      <label class="dv-campo">Nombre<input class="dv-input" id="nuevoNombre" maxlength="200" required placeholder="Pass Manager"></label>
+      <label class="dv-campo">Identificador<input class="dv-input dv-mono" id="nuevoSlug" maxlength="180" required
+             pattern="[a-z0-9_\-]+" placeholder="pass-manager" autocapitalize="none" spellcheck="false"></label>
+      <p class="dv-dialogo__nota">Va en la dirección del proyecto. Minúsculas, números, guion y guion bajo.</p>
+      <p class="dv-dialogo__error" id="nuevoError" role="alert"></p>
+      <div class="dv-dialogo__acciones">
+        <button type="button" class="ui-btn ui-btn--ghost" id="cancelarNuevo">Cancelar</button>
+        <button type="submit" class="ui-btn ui-btn--primary" id="crearNuevo">Crear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="dv-dialogo dv-buscar" id="dlgBuscar" aria-label="Buscar nodo">
+    <div class="dv-buscar__campo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/></svg>
+      <input id="buscarNodo" type="search" placeholder="Nombre, ruta, método o descripción…" autocomplete="off"
+             spellcheck="false" role="combobox" aria-expanded="true" aria-controls="resultadosBusqueda" aria-autocomplete="list">
+    </div>
+    <ul class="dv-buscar__lista" id="resultadosBusqueda" role="listbox" aria-label="Resultados"></ul>
+    <p class="dv-buscar__nota" id="notaBusqueda">Busca en todo el proyecto, también dentro de los diagramas de detalle. ↑↓ para moverte, Enter para ir.</p>
+  </dialog>
+
+  <dialog class="dv-dialogo dv-flujo" id="dlgFlujo" aria-labelledby="flujoTitulo">
+    <div class="dv-flujo__cabeza">
+      <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="flujoAtras" title="Regresar" aria-label="Regresar al flujo anterior" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5"/></svg>
+      </button>
+      <div class="dv-flujo__titulos">
+        <h3 id="flujoTitulo"></h3>
+        <p class="dv-dialogo__nota" id="flujoSub"></p>
+      </div>
+      <div class="dv-flujo__acciones">
+        <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="flujoEncuadrar" title="Ver todo" aria-label="Ver todo el flujo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15"/></svg>
+        </button>
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico" id="flujoDescargar">Imagen PNG</button>
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico" id="flujoJson">JSON</button>
+        <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="flujoCerrar" title="Cerrar" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+        </button>
+      </div>
+    </div>
+    <ul class="dv-flujo__avisos" id="flujoAvisos" hidden></ul>
+    <div class="dv-flujo__cuerpo">
+      <div class="dv-lienzo dv-flujo__lienzo" id="flujoLienzo">
+        <div class="ui-empty dv-flujo__vacio" id="flujoVacio" hidden>
+          <p class="ui-empty__titulo">No hay caminos que mostrar</p>
+          <p class="ui-empty__sub">Conecta el nodo con el resto del flujo para ver por dónde llega el request.</p>
+        </div>
+      </div>
+      <aside class="dv-flujo__detalle" id="flujoDetalle" aria-live="polite"></aside>
+    </div>
+    <p class="dv-dialogo__nota">Sólo lectura. Toca un nodo para ver su detalle; doble clic en uno con detalle para ver el flujo de adentro.</p>
+  </dialog>
+
+  <dialog class="dv-dialogo dv-problemas" id="dlgProblemas" aria-labelledby="dlgProblemasTitulo">
+    <div class="dv-problemas__cabeza">
+      <div>
+        <h3 id="dlgProblemasTitulo">Problemas del proyecto</h3>
+        <p class="dv-dialogo__nota" id="resumenProblemas"></p>
+      </div>
+      <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="cerrarProblemas" title="Cerrar" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+      </button>
+    </div>
+    <p class="dv-dialogo__nota">Lo que impide que la documentación esté completa. Haz clic en uno para ir al nodo.</p>
+    <ul class="dv-problemas__lista" id="listaProblemas"></ul>
+    <div class="ui-empty" id="sinProblemas" hidden>
+      <p class="ui-empty__titulo">Sin problemas</p>
+      <p class="ui-empty__sub">Todos los endpoints tienen método y ruta, no hay nodos sueltos ni diagramas perdidos.</p>
+    </div>
+  </dialog>
+
+  <dialog class="dv-dialogo dv-plantillas" id="dlgPlantillas" aria-labelledby="dlgPlantillasTitulo">
+    <h3 id="dlgPlantillasTitulo">Plantillas por tipo de nodo</h3>
+    <p class="dv-dialogo__nota">Los nodos nuevos de un tipo nacen con estos campos. Si la clave es
+      <code>name</code>, <code>description</code> o <code>status</code>, llena ese campo del nodo en vez de crear un atributo.</p>
+    <label class="dv-campo">Tipo de nodo<select class="dv-input" id="plTipo"></select></label>
+    <div class="dv-plantillas__filas" id="plFilas"></div>
+    <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico dv-plantillas__agregar" id="plAgregar">Agregar campo</button>
+    <p class="dv-dialogo__error" id="plError" role="alert"></p>
+    <div class="dv-plantillas__acciones">
+      <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico" id="plAplicar" hidden></button>
+      <div class="dv-dialogo__acciones">
+        <button type="button" class="ui-btn ui-btn--ghost" id="plCerrar">Cerrar</button>
+        <button type="button" class="ui-btn ui-btn--primary" id="plGuardar">Guardar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dv-dialogo" id="dlgBorrar" aria-labelledby="dlgBorrarTitulo">
+    <h3 id="dlgBorrarTitulo">¿Eliminar <span id="borrarNombre"></span>?</h3>
+    <p class="dv-dialogo__nota">Deja de aparecer en la lista para todos. Si fue un error, un admin lo puede recuperar desde la base.</p>
+    <div class="dv-dialogo__acciones">
+      <button type="button" class="ui-btn ui-btn--ghost" id="cancelarBorrar">Cancelar</button>
+      <button type="button" class="ui-btn ui-btn--primary dv-btn-borrar" id="confirmarBorrar">Eliminar</button>
+    </div>
+  </dialog>
+
+  <script src="/static/Scripts/documentacionScript/modelo.js"></script>
+  <script src="/static/Scripts/documentacionScript/markdown.js"></script>
+  <script src="/static/Scripts/documentacionScript/exportar.js"></script>
+  <script type="module" src="/static/Scripts/documentacionScript/app.js"></script>
+</body>
+</html>
