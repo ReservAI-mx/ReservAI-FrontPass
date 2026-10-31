@@ -14,9 +14,9 @@
   <div id="messageContainer" class="message-container" aria-live="polite"></div>
 
   <nav class="navbar">
-    <a class="logo dv-logo" href="/">
+    <a class="logo dv-logo" id="logoPass" href="/">
       <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
-      <span class="logo-text">ReservAI</span>
+      <span class="logo-text" id="logoTexto">ReservAI</span>
     </a>
     <div class="profile">
       <button class="profile-btn" id="profileBtn" aria-haspopup="true"
@@ -121,6 +121,14 @@
 
   <!-- ============ Lista de proyectos ============ -->
   <main class="container dv-lista" id="vistaLista" hidden>
+    <a class="volver" id="volverPass" href="/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14.5 6.5 9 12l5.5 5.5"/>
+      </svg>
+      <span id="volverTexto">Volver</span>
+    </a>
+
     <header class="ui-head">
       <div class="ui-head__titulo">
         <span class="ui-head__icono" aria-hidden="true">
@@ -143,6 +151,25 @@
       </div>
     </header>
 
+    <section class="ui-kpis dv-kpis" id="kpisDoc" aria-label="Resumen de la documentación" hidden>
+      <div class="ui-kpi ui-kpi--info">
+        <span class="ui-kpi__label">Nodos</span>
+        <span class="ui-kpi__num" id="kpiNodos">—</span>
+      </div>
+      <div class="ui-kpi ui-kpi--open">
+        <span class="ui-kpi__label">Endpoints</span>
+        <span class="ui-kpi__num" id="kpiEndpoints">—</span>
+      </div>
+      <div class="ui-kpi dv-kpi--listo">
+        <span class="ui-kpi__label">Listo</span>
+        <span class="ui-kpi__num" id="kpiListo">—</span>
+      </div>
+      <div class="ui-kpi ui-kpi--warning">
+        <span class="ui-kpi__label">Problemas</span>
+        <span class="ui-kpi__num" id="kpiProblemas">—</span>
+      </div>
+    </section>
+
     <section class="ui-toolbar" aria-label="Buscar">
       <div class="search-field ui-search">
         <svg class="search-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -151,6 +178,10 @@
         </svg>
         <input id="buscarProyecto" type="search" placeholder="Buscar proyecto…" aria-label="Buscar proyecto"
                autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="ui-seg dv-orden" role="group" aria-label="Ordenar proyectos">
+        <button type="button" class="ui-seg__btn js-orden" data-orden="recientes" aria-pressed="true">Recientes</button>
+        <button type="button" class="ui-seg__btn js-orden" data-orden="nombre" aria-pressed="false">Nombre</button>
       </div>
     </section>
 
