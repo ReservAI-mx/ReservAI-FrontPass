@@ -350,6 +350,7 @@ function enlazarEditor() {
   enlazarBuscador();
   enlazarPlantillas();
   enlazarProblemas();
+  enlazarFlujo();
   $('recargarConflicto').addEventListener('click', () => abrirProyecto(estado.slug, true));
   $('sobrescribirConflicto').addEventListener('click', sobrescribir);
 
@@ -955,6 +956,137 @@ function enlazarProblemas() {
 }
 
 /* ==================================================================
+   Flujo del request: sólo los caminos que llegan a un nodo, en otra capa
+   de sólo lectura. Doble clic en un nodo con detalle entra a su flujo.
+   ================================================================== */
+
+const flujo = { capas: [], resultado: null, lienzo: null };
+
+function nombreNodo(n) {
+  return String(n.data.name || '').trim() || M.TIPOS[n.type].label;
+}
+
+function abrirFlujo(nodoId) {
+  const n = nodoInspector();
+  if (!n) return;
+  flujo.capas = [{ diagramaId: idActual(), destinoId: nodoId, nombre: nombreNodo(n) }];
+  $('dlgFlujo').showModal();
+  pintarFlujo();
+}
+
+function pintarFlujo() {
+  const capa = flujo.capas[flujo.capas.length - 1];
+  const diagrama = estado.doc.diagrams[capa.diagramaId];
+  const r = capa.destinoId ? M.flujoRequest(diagrama, capa.destinoId) : { diagrama: { nodes: [], edges: [] }, inicios: [], rutas: [], avisos: ['El diagrama de detalle está vacío.'] };
+  flujo.resultado = r;
+
+  $('flujoAtras').hidden = flujo.capas.length < 2;
+  $('flujoTitulo').textContent = `Flujo hasta «${capa.nombre}»`;
+  const porId = new Map(diagrama.nodes.map((n) => [n.id, n]));
+  const inicios = r.inicios.map((id) => nombreNodo(porId.get(id)));
+  $('flujoSub').textContent = r.rutas.length
+    ? `${r.rutas.length} camino${r.rutas.length === 1 ? '' : 's'} · empieza en ${inicios.join(', ')}`
+    : 'Sin caminos';
+  const avisos = $('flujoAvisos');
+  avisos.replaceChildren(...r.avisos.map((a) => el('li', '', a)));
+  avisos.hidden = !r.avisos.length;
+  $('flujoVacio').hidden = r.diagrama.nodes.length > 0;
+  $('flujoDescargar').disabled = !r.diagrama.nodes.length;
+  $('flujoJson').disabled = !r.diagrama.nodes.length;
+
+  flujo.lienzo.seleccionar([], [], false);
+  flujo.lienzo.dibujar(r.diagrama, { soloLectura: true, ignorarVista: true });
+  detalleFlujo(capa.destinoId);
+}
+
+/** Ficha del nodo tocado en el flujo (por omisión, el destino). */
+function detalleFlujo(nodoId) {
+  const cont = $('flujoDetalle');
+  cont.replaceChildren();
+  const n = flujo.resultado && flujo.resultado.diagrama.nodes.find((x) => x.id === nodoId);
+  if (!n) {
+    cont.appendChild(el('p', 'dv-inspector__nota', 'Toca un nodo para ver su detalle.'));
+    return;
+  }
+  const cfg = M.TIPOS[n.type];
+  const tipo = el('span', 'dv-inspector__tipo', cfg.label);
+  tipo.style.color = cfg.accent;
+  cont.append(tipo, el('h4', 'dv-flujo__nombre', nombreNodo(n)));
+  const { metodo, ruta } = M.datosHttp(n.data);
+  if (metodo || ruta) cont.appendChild(el('p', 'dv-flujo__http', [metodo, ruta].filter(Boolean).join(' ')));
+  const estadoN = M.normalizarEstado(n.data.status);
+  cont.appendChild(el('span', `dv-estado dv-estado--${M.claseEstado(estadoN)} dv-flujo__estado`, M.ESTADO_CORTO[estadoN]));
+  if (String(n.data.description || '').trim()) cont.appendChild(el('p', 'dv-flujo__texto', n.data.description));
+  const campos = [['Entrada', n.data.input], ['Salida', n.data.output], ['Códigos', n.data.returnCodes], ['Funcionalidad', n.data.feature]];
+  for (const a of n.data.attributes || []) campos.push([a.key || '(sin clave)', a.value]);
+  for (const [k, v] of campos) {
+    if (!String(v || '').trim()) continue;
+    const p = el('p', 'dv-flujo__campo');
+    p.append(el('span', 'dv-flujo__clave', k), el('code', '', v));
+    cont.appendChild(p);
+  }
+  const hijo = n.data.childDiagramId && estado.doc.diagrams[n.data.childDiagramId];
+  if (hijo) {
+    const b = el('button', 'ui-btn ui-btn--ghost dv-btn-chico', 'Ver el flujo dentro de este nodo');
+    b.type = 'button';
+    b.addEventListener('click', () => entrarFlujo(n));
+    cont.appendChild(b);
+  }
+}
+
+function entrarFlujo(n) {
+  const hijoId = n.data.childDiagramId;
+  if (!hijoId || !estado.doc.diagrams[hijoId]) return;
+  const destino = M.destinoPorOmision(estado.doc.diagrams[hijoId]);
+  const d = destino && estado.doc.diagrams[hijoId].nodes.find((x) => x.id === destino);
+  flujo.capas.push({ diagramaId: hijoId, destinoId: destino, nombre: d ? nombreNodo(d) : nombreNodo(n) });
+  pintarFlujo();
+}
+
+function enlazarFlujo() {
+  flujo.lienzo = new Lienzo($('flujoLienzo'), {
+    onSeleccion: (sel) => detalleFlujo(sel.nodos[0] || flujo.capas[flujo.capas.length - 1].destinoId),
+    onAbrir: (id) => {
+      const n = flujo.resultado.diagrama.nodes.find((x) => x.id === id);
+      if (n) entrarFlujo(n);
+    },
+    onMover: () => {},
+    onConectar: () => {},
+    onViewport: () => {},
+    onSoltarTipo: () => {},
+  });
+  $('verFlujo').addEventListener('click', () => abrirFlujo(estado.nodoInspector));
+  $('flujoAtras').addEventListener('click', () => {
+    flujo.capas.pop();
+    pintarFlujo();
+  });
+  $('flujoCerrar').addEventListener('click', () => $('dlgFlujo').close());
+  $('flujoEncuadrar').addEventListener('click', () => flujo.lienzo.encuadrar(false));
+  $('flujoDescargar').addEventListener('click', async () => {
+    const capa = flujo.capas[flujo.capas.length - 1];
+    try {
+      await descargarPng(flujo.resultado.diagrama, `Flujo hasta «${capa.nombre}»`, `${estado.slug}-flujo-${M.slugDesdeNombre(capa.nombre) || 'request'}`);
+    } catch {
+      showToast('No se pudo exportar.', 'error');
+    }
+  });
+  $('flujoJson').addEventListener('click', () => {
+    const capa = flujo.capas[flujo.capas.length - 1];
+    const r = flujo.resultado;
+    descargar(JSON.stringify({
+      proyecto: estado.slug,
+      diagrama: capa.diagramaId,
+      destino: capa.destinoId,
+      inicios: r.inicios,
+      caminos: r.rutas,
+      avisos: r.avisos,
+      nodos: r.diagrama.nodes,
+      conexiones: r.diagrama.edges,
+    }, null, 2), `${estado.slug}-flujo-${M.slugDesdeNombre(capa.nombre) || 'request'}.json`, 'application/json');
+  });
+}
+
+/* ==================================================================
    Exportar
    ================================================================== */
 
@@ -988,7 +1120,11 @@ function tituloImagen() {
 const LADO_MAX = 8192;
 
 async function exportarPng() {
-  const r = X.svgDiagrama(diagramaActual(), { titulo: tituloImagen() });
+  await descargarPng(diagramaActual(), tituloImagen(), nombreArchivo());
+}
+
+async function descargarPng(diagrama, titulo, nombre) {
+  const r = X.svgDiagrama(diagrama, { titulo });
   if (!r) {
     showToast('El diagrama no tiene nodos que exportar.', 'warning');
     return;
@@ -1006,7 +1142,7 @@ async function exportarPng() {
   ctx.drawImage(img, 0, 0, r.ancho, r.alto);
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
   if (!blob) throw new Error('canvas vacío');
-  descargar(blob, `${nombreArchivo()}.png`);
+  descargar(blob, `${nombre}.png`);
 }
 
 async function exportar(formato) {

@@ -290,6 +290,7 @@
         <div id="atributos" class="dv-atributos"></div>
 
         <div class="dv-inspector__acciones">
+          <button type="button" class="ui-btn ui-btn--ghost" id="verFlujo" title="Sólo los caminos que llegan a este nodo">Ver flujo del request</button>
           <button type="button" class="ui-btn ui-btn--ghost" id="abrirHijo"></button>
           <button type="button" class="ui-btn ui-btn--ghost dv-btn-peligro" id="quitarHijo" hidden>Quitar detalle</button>
           <button type="button" class="ui-btn ui-btn--ghost dv-btn-peligro" id="borrarNodo">Borrar nodo</button>
@@ -343,6 +344,39 @@
     </div>
     <ul class="dv-buscar__lista" id="resultadosBusqueda" role="listbox" aria-label="Resultados"></ul>
     <p class="dv-buscar__nota" id="notaBusqueda">Busca en todo el proyecto, también dentro de los diagramas de detalle. ↑↓ para moverte, Enter para ir.</p>
+  </dialog>
+
+  <dialog class="dv-dialogo dv-flujo" id="dlgFlujo" aria-labelledby="flujoTitulo">
+    <div class="dv-flujo__cabeza">
+      <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="flujoAtras" title="Regresar" aria-label="Regresar al flujo anterior" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5"/></svg>
+      </button>
+      <div class="dv-flujo__titulos">
+        <h3 id="flujoTitulo"></h3>
+        <p class="dv-dialogo__nota" id="flujoSub"></p>
+      </div>
+      <div class="dv-flujo__acciones">
+        <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="flujoEncuadrar" title="Ver todo" aria-label="Ver todo el flujo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15"/></svg>
+        </button>
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico" id="flujoDescargar">Imagen PNG</button>
+        <button type="button" class="ui-btn ui-btn--ghost dv-btn-chico" id="flujoJson">JSON</button>
+        <button type="button" class="ui-icon-btn ui-icon-btn--sm" id="flujoCerrar" title="Cerrar" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+        </button>
+      </div>
+    </div>
+    <ul class="dv-flujo__avisos" id="flujoAvisos" hidden></ul>
+    <div class="dv-flujo__cuerpo">
+      <div class="dv-lienzo dv-flujo__lienzo" id="flujoLienzo">
+        <div class="ui-empty dv-flujo__vacio" id="flujoVacio" hidden>
+          <p class="ui-empty__titulo">No hay caminos que mostrar</p>
+          <p class="ui-empty__sub">Conecta el nodo con el resto del flujo para ver por dónde llega el request.</p>
+        </div>
+      </div>
+      <aside class="dv-flujo__detalle" id="flujoDetalle" aria-live="polite"></aside>
+    </div>
+    <p class="dv-dialogo__nota">Sólo lectura. Toca un nodo para ver su detalle; doble clic en uno con detalle para ver el flujo de adentro.</p>
   </dialog>
 
   <dialog class="dv-dialogo dv-problemas" id="dlgProblemas" aria-labelledby="dlgProblemasTitulo">

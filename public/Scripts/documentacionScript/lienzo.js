@@ -63,6 +63,12 @@ export class Lienzo {
     // El doble clic se detecta en pointerdown: con setPointerCapture el
     // evento dblclick llega al <svg> y ya no se sabe sobre qué nodo fue.
     this.ultimoToque = { id: null, t: 0 };
+    this.encuadrarAlCrecer = false;
+    if (typeof ResizeObserver === 'function') {
+      new ResizeObserver(() => {
+        if (this.encuadrarAlCrecer) this.encuadrar(false);
+      }).observe(this.cont);
+    }
     this.cont.addEventListener('dragover', (e) => {
       if (!this.soloLectura && e.dataTransfer.types.includes('text/x-dv-tipo')) e.preventDefault();
     });
@@ -109,6 +115,13 @@ export class Lienzo {
   encuadrar(avisar = true) {
     if (!this.diagrama) return;
     const { ancho, alto } = this.tamano();
+    // Recién mostrado (un diálogo que se acaba de abrir) puede medir 0 todavía:
+    // se encuadra en cuanto tenga tamaño.
+    if (!ancho || !alto) {
+      this.encuadrarAlCrecer = true;
+      return;
+    }
+    this.encuadrarAlCrecer = false;
     this.fijarViewport(M.encuadre(this.diagrama, ancho, alto), avisar);
   }
 

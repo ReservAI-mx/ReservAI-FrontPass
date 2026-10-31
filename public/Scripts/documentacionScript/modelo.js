@@ -710,6 +710,119 @@
     return out.sort((a, b) => b.puntaje - a.puntaje || a.nombre.localeCompare(b.nombre)).slice(0, limite || 40);
   }
 
+  // ---------- Flujo de un request (request-flow-paths.ts) ----------
+
+  const SEP_VERTICAL = 210;
+  const SEP_HORIZONTAL = 360;
+
+  /**
+   * Acomoda sólo los nodos de los caminos: de arriba (inicio) a abajo
+   * (destino). Con varios caminos, cada nodo va a la profundidad máxima en la
+   * que aparece y, en su fila, según el promedio de los caminos que lo usan.
+   */
+  function acomodarFlujo(diagrama, rutas) {
+    const pos = new Map();
+    if (rutas.length === 1) {
+      rutas[0].nodos.forEach((id, i) => pos.set(id, { x: 0, y: i * SEP_VERTICAL }));
+    } else {
+      const datos = new Map();
+      rutas.forEach((r, ri) => r.nodos.forEach((id, prof) => {
+        const d = datos.get(id) || { prof: 0, rutas: [] };
+        d.prof = Math.max(d.prof, prof);
+        d.rutas.push(ri);
+        datos.set(id, d);
+      }));
+      const filas = new Map();
+      for (const [id, d] of datos) filas.set(d.prof, [...(filas.get(d.prof) || []), id]);
+      const prom = (id) => {
+        const r = datos.get(id).rutas;
+        return r.reduce((a, b) => a + b, 0) / r.length;
+      };
+      for (const [prof, ids] of filas) {
+        const orden = [...ids].sort((a, b) => prom(a) - prom(b) || a.localeCompare(b));
+        orden.forEach((id, i) => pos.set(id, { x: (i - (orden.length - 1) / 2) * SEP_HORIZONTAL, y: prof * SEP_VERTICAL }));
+      }
+    }
+    return {
+      nodes: diagrama.nodes.map((n) => ({ ...n, position: pos.get(n.id) || n.position })),
+      edges: diagrama.edges,
+    };
+  }
+
+  /**
+   * Todos los caminos que llegan a `destinoId` dentro de un diagrama,
+   * siguiendo las conexiones hacia atrás hasta un nodo sin entradas.
+   * @returns {{ diagrama, inicios: string[], rutas: Array<{ nodos, aristas }>, avisos: string[] }}
+   *   diagrama: sólo los nodos y conexiones de los caminos, ya acomodados.
+   */
+  function flujoRequest(diagrama, destinoId) {
+    const vacio = (aviso) => ({ diagrama: { nodes: [], edges: [] }, inicios: [], rutas: [], avisos: [aviso] });
+    if (!diagrama.nodes.length) return vacio('El diagrama no tiene nodos.');
+    const porId = new Map(diagrama.nodes.map((n) => [n.id, n]));
+    if (!porId.has(destinoId)) return vacio('Ese nodo no está en este diagrama.');
+
+    const entradas = new Map();
+    const conectados = new Set();
+    for (const e of diagrama.edges) {
+      if (!porId.has(e.source) || !porId.has(e.target)) continue;
+      conectados.add(e.source);
+      conectados.add(e.target);
+      entradas.set(e.target, [...(entradas.get(e.target) || []), e]);
+    }
+    if (!conectados.has(destinoId)) return vacio('Este nodo no tiene conexiones.');
+
+    const inicios = new Set();
+    const nodos = new Set();
+    const aristas = new Set();
+    const ciclos = new Set();
+    const rutas = [];
+    // Tope para diagramas muy ramificados: el número de caminos crece rápido.
+    const MAX_RUTAS = 200;
+
+    const visitar = (id, camino, caminoAristas) => {
+      if (rutas.length >= MAX_RUTAS) return;
+      if (camino.includes(id)) {
+        ciclos.add(id);
+        return;
+      }
+      const siguiente = [...camino, id];
+      const llegan = entradas.get(id) || [];
+      if (!llegan.length) {
+        inicios.add(id);
+        const ruta = { nodos: [...siguiente].reverse(), aristas: [...caminoAristas].reverse() };
+        rutas.push(ruta);
+        ruta.nodos.forEach((x) => nodos.add(x));
+        ruta.aristas.forEach((x) => aristas.add(x));
+        return;
+      }
+      for (const e of llegan) visitar(e.source, siguiente, [...caminoAristas, e.id]);
+    };
+    visitar(destinoId, [], []);
+
+    const avisos = [];
+    if (!rutas.length) avisos.push('Ningún camino llega a este nodo desde un inicio: todo lo que entra viene de un ciclo.');
+    if (ciclos.size) {
+      const nombres = [...ciclos].map((id) => String(porId.get(id).data.name || '').trim() || TIPOS[porId.get(id).type].label);
+      avisos.push(`Hay ciclos; no se repiten las vueltas en: ${nombres.join(', ')}.`);
+    }
+    if (rutas.length >= MAX_RUTAS) avisos.push(`Se muestran sólo los primeros ${MAX_RUTAS} caminos.`);
+
+    const sub = {
+      nodes: diagrama.nodes.filter((n) => nodos.has(n.id)),
+      edges: diagrama.edges.filter((e) => aristas.has(e.id)),
+    };
+    return { diagrama: acomodarFlujo(sub, rutas), inicios: [...inicios], rutas, avisos };
+  }
+
+  /** Destino por omisión al abrir el flujo de un diagrama hijo: su primer endpoint, o un nodo final conectado. */
+  function destinoPorOmision(diagrama) {
+    const ep = diagrama.nodes.find((n) => n.type === 'endpoint');
+    if (ep) return ep.id;
+    const salen = new Set(diagrama.edges.map((e) => e.source));
+    const final = diagrama.nodes.find((n) => !salen.has(n.id) && diagrama.edges.some((e) => e.target === n.id));
+    return (final || diagrama.nodes[0] || {}).id || null;
+  }
+
   // ---------- Problemas del proyecto (diagnostics.ts) ----------
 
   /**
@@ -833,6 +946,7 @@
     agregarNodo, moverNodos, quitar, conectar, cambiarDatos,
     limpiarPlantilla, ponerPlantilla, contarTipo, aplicarPlantilla,
     problemas, descartarDiagrama,
+    flujoRequest, destinoPorOmision,
     abrirHijo, quitarHijo, nodoQueAbre, podarPila, subarbol,
     puertos, puerto, rutaArista, caja, encuadre,
     FONDO, COLOR_ARISTA, COLOR_ESTADO, AREA_TEXTO, pintura, siluetas, rutasDiagramas,
