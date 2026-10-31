@@ -170,3 +170,45 @@ describe('lectura', () => {
     expect((c.y + c.h) * vp.zoom + vp.y).toBeLessThanOrEqual(600);
   });
 });
+
+describe('buscar y filtrar', () => {
+  function conDetalle() {
+    let doc = M.documentoVacio('Pass');
+    let r = M.agregarNodo(doc, 'root', 'service', { x: 0, y: 0 });
+    doc = r.doc;
+    const servicio = r.id;
+    doc.diagrams.root.nodes[0].data.name = 'Backend';
+    const h = M.abrirHijo(doc, 'root', servicio);
+    doc = h.doc;
+    r = M.agregarNodo(doc, h.hijoId, 'endpoint', { x: 0, y: 0 });
+    doc = r.doc;
+    const ep = doc.diagrams[h.hijoId].nodes[0];
+    ep.data.name = 'Verificación de sesión';
+    ep.data.status = 'IN PROGRESS';
+    ep.data.attributes = [{ key: 'Metodo', kind: 'text', value: 'GET' }, { key: 'Endpoint', kind: 'text', value: '/api/yo' }];
+    r = M.agregarNodo(doc, 'root', 'db', { x: 0, y: 300 });
+    doc = r.doc;
+    doc.diagrams.root.nodes[1].data.description = 'guarda la verificacion';
+    return { doc, hijoId: h.hijoId, epId: ep.id };
+  }
+
+  test('encuentra dentro de diagramas de detalle, sin importar acentos', () => {
+    const { doc, hijoId, epId } = conDetalle();
+    const hits = M.buscarNodos(doc, 'verificacion');
+    expect(hits[0]).toMatchObject({ nodoId: epId, diagramaId: hijoId, ids: ['root', hijoId], migas: ['Pass', 'Backend'], metodo: 'GET', ruta: '/api/yo' });
+    // El nombre pesa más que la descripción.
+    expect(hits.map((h) => h.tipo)).toEqual(['endpoint', 'db']);
+  });
+
+  test('por ruta o método; vacío no busca', () => {
+    const { doc } = conDetalle();
+    expect(M.buscarNodos(doc, '/api/yo')).toHaveLength(1);
+    expect(M.buscarNodos(doc, '  ')).toEqual([]);
+  });
+
+  test('conteo por estado', () => {
+    const { doc, hijoId } = conDetalle();
+    expect(M.conteoPorEstado(doc.diagrams[hijoId].nodes)['IN PROGRESS']).toBe(1);
+    expect(M.conteoPorEstado(doc.diagrams.root.nodes)['TO DO']).toBe(2);
+  });
+});

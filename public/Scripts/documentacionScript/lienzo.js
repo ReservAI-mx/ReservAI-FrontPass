@@ -112,6 +112,20 @@ export class Lienzo {
     this.fijarViewport(M.encuadre(this.diagrama, ancho, alto), avisar);
   }
 
+  /** Lleva un nodo al centro de la vista (al buscarlo). */
+  centrarEn(nodoId) {
+    const n = this.diagrama && this.diagrama.nodes.find((x) => x.id === nodoId);
+    if (!n) return;
+    const cfg = M.TIPOS[n.type];
+    const { ancho, alto } = this.tamano();
+    const zoom = Math.max(this.vp.zoom, 0.9);
+    this.fijarViewport({
+      x: ancho / 2 - (n.position.x + cfg.width / 2) * zoom,
+      y: alto / 2 - (n.position.y + cfg.height / 2) * zoom,
+      zoom,
+    }, true);
+  }
+
   acercar(factor) {
     const { ancho, alto } = this.tamano();
     this.zoomEn(ancho / 2, alto / 2, factor);

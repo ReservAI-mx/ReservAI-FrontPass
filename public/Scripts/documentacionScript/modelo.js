@@ -501,26 +501,38 @@
   };
 
   /**
-   * Dónde está cada diagrama: los nombres de la raíz al diagrama, siguiendo
-   * los nodos que lo abren (node-search.ts buildDiagramPaths). Los diagramas
-   * a los que no llega nadie no aparecen.
-   * @returns {Map<string, string[]>}
+   * Dónde está cada diagrama: los ids y los nombres de la raíz al diagrama,
+   * siguiendo los nodos que lo abren (node-search.ts buildDiagramPaths). Los
+   * diagramas a los que no llega nadie no aparecen.
+   * @returns {Map<string, { ids: string[], nombres: string[] }>}
    */
-  function rutasDiagramas(doc) {
+  function caminosDiagramas(doc) {
     const out = new Map();
-    const cola = [{ id: doc.rootDiagramId, nombres: [String(doc.meta.name || '').trim() || 'Principal'] }];
+    const raizNombre = String(doc.meta.name || '').trim() || 'Principal';
+    const cola = [{ id: doc.rootDiagramId, ids: [doc.rootDiagramId], nombres: [raizNombre] }];
     while (cola.length) {
       const actual = cola.shift();
       if (out.has(actual.id)) continue;
-      out.set(actual.id, actual.nombres);
+      out.set(actual.id, { ids: actual.ids, nombres: actual.nombres });
       const d = doc.diagrams[actual.id];
       if (!d) continue;
       for (const n of d.nodes) {
         const hijo = n.data.childDiagramId;
         if (!hijo || out.has(hijo) || !doc.diagrams[hijo]) continue;
-        cola.push({ id: hijo, nombres: [...actual.nombres, String(n.data.name || '').trim() || TIPOS[n.type].label] });
+        cola.push({
+          id: hijo,
+          ids: [...actual.ids, hijo],
+          nombres: [...actual.nombres, String(n.data.name || '').trim() || TIPOS[n.type].label],
+        });
       }
     }
+    return out;
+  }
+
+  /** Sólo los nombres de cada camino. @returns {Map<string, string[]>} */
+  function rutasDiagramas(doc) {
+    const out = new Map();
+    for (const [id, c] of caminosDiagramas(doc)) out.set(id, c.nombres);
     return out;
   }
 
@@ -550,6 +562,60 @@
     return { metodo, ruta };
   }
 
+  // ---------- Buscar y filtrar ----------
+
+  /** Sin acentos ni mayúsculas: "verificacion" encuentra "Verificación". */
+  function sinAcentos(v) {
+    return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  // Un nombre que empieza con lo buscado pesa más que una mención en la
+  // descripción, para que lo obvio salga primero (node-search.ts).
+  function puntaje(texto, buscado, peso) {
+    if (!texto) return 0;
+    const i = texto.indexOf(buscado);
+    if (i < 0) return 0;
+    if (texto === buscado) return peso * 3;
+    if (i === 0) return peso * 2;
+    return peso;
+  }
+
+  /**
+   * Nodos de todo el proyecto (también dentro de diagramas de detalle).
+   * @returns {Array<{ nodoId, diagramaId, ids, migas, tipo, nombre, descripcion, metodo, ruta, estado, puntaje }>}
+   */
+  function buscarNodos(doc, texto, limite) {
+    const q = sinAcentos(String(texto || '').trim());
+    if (!q) return [];
+    const out = [];
+    for (const [diagramaId, camino] of caminosDiagramas(doc)) {
+      for (const n of doc.diagrams[diagramaId].nodes) {
+        const cfg = TIPOS[n.type];
+        const nombre = String(n.data.name || '').trim() || cfg.label;
+        const descripcion = String(n.data.description || '').trim();
+        const { metodo, ruta } = datosHttp(n.data);
+        const p = puntaje(sinAcentos(nombre), q, 100)
+          + puntaje(sinAcentos(ruta), q, 80)
+          + puntaje(sinAcentos(metodo), q, 60)
+          + puntaje(sinAcentos(cfg.label), q, 20)
+          + puntaje(sinAcentos(descripcion), q, 10);
+        if (!p) continue;
+        out.push({
+          nodoId: n.id, diagramaId, ids: camino.ids, migas: camino.nombres, tipo: n.type,
+          nombre, descripcion, metodo, ruta, estado: normalizarEstado(n.data.status), puntaje: p,
+        });
+      }
+    }
+    return out.sort((a, b) => b.puntaje - a.puntaje || a.nombre.localeCompare(b.nombre)).slice(0, limite || 40);
+  }
+
+  /** Cuántos nodos hay de cada estado en una lista. */
+  function conteoPorEstado(nodos) {
+    const c = Object.fromEntries(ESTADOS.map((e) => [e, 0]));
+    for (const n of nodos) c[normalizarEstado(n.data.status)]++;
+    return c;
+  }
+
   /** Conteo por estado de todos los nodos del proyecto. */
   function conteoEstados(doc) {
     const c = Object.fromEntries(ESTADOS.map((e) => [e, 0]));
@@ -565,6 +631,7 @@
     abrirHijo, quitarHijo, nodoQueAbre, podarPila, subarbol,
     puertos, puerto, rutaArista, caja, encuadre,
     FONDO, COLOR_ARISTA, COLOR_ESTADO, AREA_TEXTO, pintura, siluetas, rutasDiagramas,
+    caminosDiagramas, buscarNodos, conteoPorEstado, sinAcentos,
     datosHttp, conteoEstados,
   };
 });

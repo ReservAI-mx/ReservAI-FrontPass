@@ -180,11 +180,17 @@
       </button>
       <div class="dv-barra__titulo">
         <input id="tituloProyecto" class="dv-titulo" aria-label="Nombre del proyecto" maxlength="200">
-        <nav class="dv-migas" id="migas" aria-label="Diagramas abiertos"></nav>
+        <div class="dv-barra__sub">
+          <nav class="dv-migas" id="migas" aria-label="Diagramas abiertos"></nav>
+          <div class="dv-filtro" id="filtroEstados" role="group" aria-label="Filtrar por estado" hidden></div>
+        </div>
       </div>
       <span class="dv-lectura" id="modoLectura" hidden>Sólo lectura</span>
       <span class="dv-guardado" id="estadoGuardado" role="status"></span>
       <div class="dv-barra__acciones">
+        <button type="button" class="ui-icon-btn" id="abrirBuscar" title="Buscar nodo (Ctrl+K)" aria-label="Buscar nodo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/></svg>
+        </button>
         <button type="button" class="ui-btn ui-btn--ghost dv-btn-chat" id="abrirChat" aria-pressed="false" aria-controls="chat" title="Preguntarle a la IA sobre este proyecto">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5.5h14v10H9.5L5 19.5z"/><path d="M9 10.5h6"/></svg>
           Chat
@@ -319,6 +325,16 @@
         <button type="submit" class="ui-btn ui-btn--primary" id="crearNuevo">Crear</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog class="dv-dialogo dv-buscar" id="dlgBuscar" aria-label="Buscar nodo">
+    <div class="dv-buscar__campo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.25"/><path d="m15.5 15.5 4 4"/></svg>
+      <input id="buscarNodo" type="search" placeholder="Nombre, ruta, método o descripción…" autocomplete="off"
+             spellcheck="false" role="combobox" aria-expanded="true" aria-controls="resultadosBusqueda" aria-autocomplete="list">
+    </div>
+    <ul class="dv-buscar__lista" id="resultadosBusqueda" role="listbox" aria-label="Resultados"></ul>
+    <p class="dv-buscar__nota" id="notaBusqueda">Busca en todo el proyecto, también dentro de los diagramas de detalle. ↑↓ para moverte, Enter para ir.</p>
   </dialog>
 
   <dialog class="dv-dialogo" id="dlgBorrar" aria-labelledby="dlgBorrarTitulo">

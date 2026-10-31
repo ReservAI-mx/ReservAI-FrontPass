@@ -39,6 +39,7 @@ const estado = {
   deshacer: [],
   rehacer: [],
   nodoInspector: null,
+  ocultos: new Set(),  // estados atenuados con el filtro (se quedan al cambiar de diagrama)
 };
 
 let lienzo = null;
@@ -346,6 +347,7 @@ function enlazarEditor() {
   $('alejar').addEventListener('click', () => lienzo.acercar(1 / 1.2));
   $('acercar').addEventListener('click', () => lienzo.acercar(1.2));
   enlazarExportar();
+  enlazarBuscador();
   $('recargarConflicto').addEventListener('click', () => abrirProyecto(estado.slug, true));
   $('sobrescribirConflicto').addEventListener('click', sobrescribir);
 
@@ -416,8 +418,10 @@ function pintarDiagrama(conservarVista) {
     soloLectura: !estado.puedeEditar,
     conservarVista,
     ignorarVista: window.matchMedia('(max-width: 900px)').matches,
+    estadosOcultos: estado.ocultos,
   });
   pintarMigas();
+  pintarFiltro();
   pintarBotones();
   pintarInspector();
 }
@@ -558,6 +562,11 @@ function teclado(e) {
   const t = e.target;
   const escribiendo = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
   const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    abrirBuscador();
+    return;
+  }
   if (mod && e.key.toLowerCase() === 's') {
     e.preventDefault();
     guardarYa();
@@ -580,6 +589,130 @@ function teclado(e) {
     e.preventDefault();
     entrarAHijo(estado.nodoInspector);
   }
+}
+
+/* ==================================================================
+   Filtro por estado (atenúa, no oculta: la forma del flujo se sigue viendo)
+   ================================================================== */
+
+function pintarFiltro() {
+  const cont = $('filtroEstados');
+  cont.replaceChildren();
+  const nodos = diagramaActual().nodes;
+  const conteo = M.conteoPorEstado(nodos);
+  // Un estado sin nodos aquí sólo haría ruido; con uno solo no hay qué filtrar.
+  const presentes = M.ESTADOS.filter((s) => conteo[s] > 0);
+  cont.hidden = presentes.length < 2;
+  if (cont.hidden) return;
+
+  for (const s of presentes) {
+    const apagado = estado.ocultos.has(s);
+    const b = el('button', `dv-chip-estado dv-estado--${M.claseEstado(s)}`);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(!apagado));
+    b.title = apagado ? `Mostrar ${M.ESTADO_CORTO[s]}` : `Atenuar ${M.ESTADO_CORTO[s]}`;
+    b.append(el('span', '', M.ESTADO_CORTO[s]), el('span', 'dv-chip-estado__n', String(conteo[s])));
+    b.addEventListener('click', () => {
+      if (apagado) estado.ocultos.delete(s);
+      else estado.ocultos.add(s);
+      repintar();
+    });
+    cont.appendChild(b);
+  }
+  if (estado.ocultos.size) {
+    const todos = el('button', 'dv-filtro__todos', 'Ver todos');
+    todos.type = 'button';
+    todos.addEventListener('click', () => {
+      estado.ocultos.clear();
+      repintar();
+    });
+    cont.appendChild(todos);
+  }
+}
+
+/* ==================================================================
+   Buscar nodo (Ctrl+K): en todo el proyecto, también en los detalles
+   ================================================================== */
+
+const busqueda = { resultados: [], activo: 0 };
+
+function abrirBuscador() {
+  if (!estado.doc) return;
+  $('buscarNodo').value = '';
+  pintarResultados([]);
+  $('dlgBuscar').showModal();
+  $('buscarNodo').focus();
+}
+
+function pintarResultados(resultados) {
+  busqueda.resultados = resultados;
+  busqueda.activo = 0;
+  const ul = $('resultadosBusqueda');
+  ul.replaceChildren();
+  const q = $('buscarNodo').value.trim();
+  $('notaBusqueda').textContent = !q
+    ? 'Busca en todo el proyecto, también dentro de los diagramas de detalle. ↑↓ para moverte, Enter para ir.'
+    : resultados.length ? `${resultados.length} resultado${resultados.length === 1 ? '' : 's'}` : 'Nada coincide.';
+
+  resultados.forEach((r, i) => {
+    const cfg = M.TIPOS[r.tipo];
+    const li = el('li', 'dv-buscar__item');
+    li.id = `resultado-${i}`;
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', String(i === 0));
+    const tipo = el('span', 'dv-buscar__tipo', cfg.label);
+    tipo.style.color = cfg.accent;
+    li.append(el('span', 'dv-buscar__nombre', r.nombre), tipo, el('span', 'dv-buscar__donde', r.migas.join(' › ')));
+    const http = [r.metodo, r.ruta].filter(Boolean).join(' ');
+    li.appendChild(el('span', 'dv-buscar__http', http || M.ESTADO_CORTO[r.estado]));
+    li.addEventListener('mousemove', () => marcarResultado(i));
+    li.addEventListener('click', () => irAResultado(r));
+    ul.appendChild(li);
+  });
+  $('buscarNodo').setAttribute('aria-activedescendant', resultados.length ? 'resultado-0' : '');
+}
+
+function marcarResultado(i) {
+  const items = $('resultadosBusqueda').children;
+  if (!items.length) return;
+  busqueda.activo = (i + items.length) % items.length;
+  [...items].forEach((li, j) => li.setAttribute('aria-selected', String(j === busqueda.activo)));
+  items[busqueda.activo].scrollIntoView({ block: 'nearest' });
+  $('buscarNodo').setAttribute('aria-activedescendant', items[busqueda.activo].id);
+}
+
+function irAResultado(r) {
+  $('dlgBuscar').close();
+  // Si su estado está atenuado, se quita del filtro: se buscó para verlo.
+  if (estado.ocultos.delete(r.estado)) showToast(`Se volvieron a mostrar los nodos "${M.ESTADO_CORTO[r.estado]}".`, 'info');
+  estado.pila = r.ids.slice();
+  lienzo.seleccionar([], [], false);
+  pintarDiagrama(true);
+  lienzo.seleccionar([r.nodoId], []);
+  lienzo.centrarEn(r.nodoId);
+}
+
+function enlazarBuscador() {
+  const input = $('buscarNodo');
+  $('abrirBuscar').addEventListener('click', abrirBuscador);
+  input.addEventListener('input', () => pintarResultados(M.buscarNodos(estado.doc, input.value, 40)));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      marcarResultado(busqueda.activo + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      marcarResultado(busqueda.activo - 1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const r = busqueda.resultados[busqueda.activo];
+      if (r) irAResultado(r);
+    }
+  });
+  // Clic fuera de la caja (en el fondo del diálogo) lo cierra.
+  $('dlgBuscar').addEventListener('click', (e) => {
+    if (e.target === $('dlgBuscar')) $('dlgBuscar').close();
+  });
 }
 
 /* ==================================================================
