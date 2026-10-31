@@ -24,8 +24,9 @@ export class Lienzo {
    * @param {HTMLElement} contenedor
    * @param {Object} cb onSeleccion(sel), onMover(ids, dx, dy), onConectar(o, po, d, pd),
    *   onAbrir(nodoId), onViewport(vp), onSoltarTipo(tipo, punto)
+   * @param {Object} [op] { minimapa: boolean } (por omisión, con minimapa)
    */
-  constructor(contenedor, cb) {
+  constructor(contenedor, cb, op = {}) {
     this.cont = contenedor;
     this.cb = cb;
     this.diagrama = null;
@@ -69,6 +70,9 @@ export class Lienzo {
         if (this.encuadrarAlCrecer) this.encuadrar(false);
       }).observe(this.cont);
     }
+    // Clic derecho es para seleccionar en cuadro, no para el menú del navegador.
+    this.svg.addEventListener('contextmenu', (e) => e.preventDefault());
+    if (op.minimapa !== false) this.crearMinimapa();
     this.cont.addEventListener('dragover', (e) => {
       if (!this.soloLectura && e.dataTransfer.types.includes('text/x-dv-tipo')) e.preventDefault();
     });
@@ -99,6 +103,7 @@ export class Lienzo {
 
   aplicarViewport() {
     const { x, y, zoom } = this.vp;
+    this.pintarMinimapa();
     this.mundo.setAttribute('transform', `translate(${x} ${y}) scale(${zoom})`);
     // La cuadrícula del fondo se mueve con el lienzo (CSSOM: no lo frena la CSP).
     const paso = 22 * zoom;
@@ -139,15 +144,24 @@ export class Lienzo {
     }, true);
   }
 
+  /** Zoom de los botones: animado en ~150 ms para que se sienta gradual. */
   acercar(factor) {
     const { ancho, alto } = this.tamano();
-    this.zoomEn(ancho / 2, alto / 2, factor);
+    cancelAnimationFrame(this.animZoom);
+    const pasos = 9;
+    const porPaso = Math.pow(factor, 1 / pasos);
+    let i = 0;
+    const paso = () => {
+      this.zoomEn(ancho / 2, alto / 2, porPaso, i === pasos - 1);
+      if (++i < pasos) this.animZoom = requestAnimationFrame(paso);
+    };
+    paso();
   }
 
-  zoomEn(px, py, factor) {
+  zoomEn(px, py, factor, avisar = true) {
     const zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, this.vp.zoom * factor));
     const k = zoom / this.vp.zoom;
-    this.fijarViewport({ x: px - (px - this.vp.x) * k, y: py - (py - this.vp.y) * k, zoom }, true);
+    this.fijarViewport({ x: px - (px - this.vp.x) * k, y: py - (py - this.vp.y) * k, zoom }, avisar);
   }
 
   // ---------- Dibujo ----------
@@ -203,6 +217,87 @@ export class Lienzo {
 
     this.capaNodos.replaceChildren();
     for (const n of d.nodes) this.capaNodos.appendChild(this.nodoSvg(n, visible(n)));
+    this.pintarMinimapa();
+  }
+
+  // ---------- Minimapa (abajo a la derecha) ----------
+
+  crearMinimapa() {
+    this.mini = document.createElement('div');
+    this.mini.className = 'dv-minimapa';
+    this.mini.title = 'Minimapa: clic o arrastra para moverte';
+    this.miniSvg = svg('svg', { class: 'dv-minimapa__svg', 'aria-hidden': 'true' });
+    this.mini.appendChild(this.miniSvg);
+    this.cont.appendChild(this.mini);
+    this.miniMarco = null;
+    const mover = (e) => {
+      if (!this.miniMarco) return;
+      const r = this.miniSvg.getBoundingClientRect();
+      const { bx, by, esc, ox, oy } = this.miniMarco;
+      const dx = (e.clientX - r.left - ox) / esc + bx;
+      const dy = (e.clientY - r.top - oy) / esc + by;
+      const { ancho, alto } = this.tamano();
+      const z = this.vp.zoom;
+      this.fijarViewport({ x: ancho / 2 - dx * z, y: alto / 2 - dy * z, zoom: z }, false);
+    };
+    this.mini.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      try { this.mini.setPointerCapture(e.pointerId); } catch { /* sin captura: igual funciona */ }
+      this.miniArrastrando = true;
+      mover(e);
+    });
+    this.mini.addEventListener('pointermove', (e) => {
+      if (this.miniArrastrando) mover(e);
+    });
+    const soltar = () => {
+      if (!this.miniArrastrando) return;
+      this.miniArrastrando = false;
+      this.cb.onViewport({ ...this.vp });
+      this.pintarMinimapa();
+    };
+    this.mini.addEventListener('pointerup', soltar);
+    this.mini.addEventListener('pointercancel', soltar);
+  }
+
+  pintarMinimapa() {
+    if (!this.mini) return;
+    const d = this.diagrama;
+    const c = d && M.caja(d);
+    this.mini.hidden = !c;
+    if (!c) return;
+    const W = 200;
+    const H = 130;
+    const { ancho, alto } = this.tamano();
+    const z = this.vp.zoom;
+    const vista = { x: -this.vp.x / z, y: -this.vp.y / z, w: ancho / z, h: alto / z };
+    // Mientras se arrastra en el minimapa el marco no cambia: si siguiera a
+    // la vista, el mapa se movería bajo el dedo.
+    if (!this.miniArrastrando || !this.miniMarco) {
+      const m = 40;
+      const bx = Math.min(c.x, vista.x) - m;
+      const by = Math.min(c.y, vista.y) - m;
+      const bw = Math.max(c.x + c.w, vista.x + vista.w) + m - bx;
+      const bh = Math.max(c.y + c.h, vista.y + vista.h) + m - by;
+      const esc = Math.min(W / bw, H / bh);
+      this.miniMarco = { bx, by, esc, ox: (W - bw * esc) / 2, oy: (H - bh * esc) / 2 };
+    }
+    const { bx, by, esc, ox, oy } = this.miniMarco;
+    const X = (v) => ox + (v - bx) * esc;
+    const Y = (v) => oy + (v - by) * esc;
+    this.miniSvg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    this.miniSvg.replaceChildren();
+    for (const n of d.nodes) {
+      const cfg = M.TIPOS[n.type];
+      this.miniSvg.appendChild(svg('rect', {
+        x: X(n.position.x), y: Y(n.position.y),
+        width: Math.max(2, cfg.width * esc), height: Math.max(2, cfg.height * esc),
+        rx: 2, fill: cfg.accent, 'fill-opacity': this.sel.nodos.has(n.id) ? 1 : 0.55,
+      }));
+    }
+    this.miniSvg.appendChild(svg('rect', {
+      x: X(vista.x), y: Y(vista.y), width: vista.w * esc, height: vista.h * esc,
+      class: 'dv-minimapa__vista',
+    }));
   }
 
   nodoSvg(n, visible) {
@@ -302,12 +397,17 @@ export class Lienzo {
   // ---------- Gestos ----------
 
   alPresionar(e) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 2) return;
+    if (e.button === 2) {
+      this.capturar(e);
+      this.gesto = { tipo: 'caja', inicio: { x: e.clientX, y: e.clientY }, sumar: e.shiftKey || e.ctrlKey || e.metaKey, movido: false };
+      return;
+    }
     const puertoEl = e.target.closest('[data-puerto]');
     const nodoEl = e.target.closest('[data-nodo]');
     const aristaEl = e.target.closest('[data-arista]');
     const inicio = { x: e.clientX, y: e.clientY };
-    this.svg.setPointerCapture(e.pointerId);
+    this.capturar(e);
 
     if (puertoEl && nodoEl && puertoEl.dataset.lado === 'out' && !this.soloLectura) {
       const nodo = this.diagrama.nodes.find((n) => n.id === nodoEl.dataset.nodo);
@@ -342,7 +442,29 @@ export class Lienzo {
       this.gesto = null;
       return;
     }
+    if (e.shiftKey) {
+      this.gesto = { tipo: 'caja', inicio, sumar: true, movido: false };
+      return;
+    }
     this.gesto = { tipo: 'desplazar', inicio, vp: { ...this.vp }, movido: false };
+  }
+
+  /** Captura el puntero para seguir el gesto aunque salga del lienzo. */
+  capturar(e) {
+    try {
+      this.svg.setPointerCapture(e.pointerId);
+    } catch { /* p. ej. un puntero que ya se soltó: el gesto sigue sin captura */ }
+  }
+
+  /** Nodos que toca el rectángulo entre dos puntos de pantalla. */
+  nodosEnCaja(a, b) {
+    const p1 = this.aDiagrama(Math.min(a.x, b.x), Math.min(a.y, b.y));
+    const p2 = this.aDiagrama(Math.max(a.x, b.x), Math.max(a.y, b.y));
+    return this.diagrama.nodes.filter((n) => {
+      const cfg = M.TIPOS[n.type];
+      return n.position.x < p2.x && n.position.x + cfg.width > p1.x
+        && n.position.y < p2.y && n.position.y + cfg.height > p1.y;
+    }).map((n) => n.id);
   }
 
   alMover(e) {
@@ -356,6 +478,14 @@ export class Lienzo {
     if (g.tipo === 'desplazar') {
       this.fijarViewport({ x: g.vp.x + dx, y: g.vp.y + dy, zoom: g.vp.zoom }, false);
       this.svg.classList.add('is-desplazando');
+    } else if (g.tipo === 'caja') {
+      const p1 = this.aDiagrama(Math.min(g.inicio.x, e.clientX), Math.min(g.inicio.y, e.clientY));
+      const p2 = this.aDiagrama(Math.max(g.inicio.x, e.clientX), Math.max(g.inicio.y, e.clientY));
+      this.capaTemporal.replaceChildren(svg('rect', {
+        x: p1.x, y: p1.y, width: p2.x - p1.x, height: p2.y - p1.y, class: 'dv-caja',
+      }));
+      const dentro = new Set(this.nodosEnCaja(g.inicio, { x: e.clientX, y: e.clientY }));
+      for (const el of this.capaNodos.querySelectorAll('[data-nodo]')) el.classList.toggle('is-en-caja', dentro.has(el.dataset.nodo));
     } else if (g.tipo === 'mover') {
       if (this.soloLectura) return;
       const k = this.vp.zoom;
@@ -389,6 +519,10 @@ export class Lienzo {
     if (g.tipo === 'desplazar') {
       if (g.movido) this.cb.onViewport({ ...this.vp });
       else this.seleccionar([], []);
+    } else if (g.tipo === 'caja') {
+      if (!g.movido) return;
+      const ids = this.nodosEnCaja(g.inicio, { x: e.clientX, y: e.clientY });
+      this.seleccionar(g.sumar ? new Set([...this.sel.nodos, ...ids]) : ids, []);
     } else if (g.tipo === 'mover') {
       if (g.movido && !this.soloLectura) {
         const k = this.vp.zoom;
@@ -419,7 +553,9 @@ export class Lienzo {
       this.fijarViewport({ x: this.vp.x - e.deltaY, y: this.vp.y - e.deltaX, zoom: this.vp.zoom }, true);
       return;
     }
-    const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));
+    // Pasos chicos: un "clic" de rueda (deltaY ≈ 100) es ~8 %; el pellizco del
+    // trackpad manda muchos deltas pequeños, por eso su factor es mayor.
+    const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.006 : 0.0008));
     this.zoomEn(e.clientX - r.left, e.clientY - r.top, factor);
   }
 }
