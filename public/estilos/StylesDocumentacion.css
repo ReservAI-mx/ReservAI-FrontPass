@@ -639,6 +639,8 @@ body.dv--redimensionando { cursor: ew-resize; user-select: none; }
 .dv-eq__sugerencia:hover,
 .dv-eq__sugerencia:focus { background: var(--bg-input); outline: none; }
 .dv-eq__sin { padding: 0.55rem 0.75rem; font-size: 0.85rem; color: var(--text-gray); }
+.dv-eq__sugerencia.is-admin { cursor: default; opacity: 0.6; }
+.dv-eq__sugerencia.is-admin:hover { background: transparent; }
 
 .dv-eq__evento { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid var(--dv-linea); border-radius: 10px; }
 .dv-eq__etiqueta { padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid currentColor; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
