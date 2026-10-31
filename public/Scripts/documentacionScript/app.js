@@ -3,11 +3,12 @@ import { setupAccountMenu } from '../accountMenu.js';
 import { showToast } from '../toast.js';
 import { Lienzo } from './lienzo.js';
 import { crearChat } from './chat.js';
+import { crearEquipo } from './equipo.js';
 
 /**
  * /documentacion/: lista de proyectos y editor de diagramas de Doc visual.
  * API: /api/documentacion (reservai-documentacion-service). Lo que cada quien
- * puede hacer lo decide el admin en /admin/permisos; aquí sólo se esconde lo
+ * puede hacer lo decide el admin en el panel Equipo; aquí sólo se esconde lo
  * que el servicio igual rechazaría.
  */
 
@@ -44,6 +45,7 @@ const estado = {
 
 let lienzo = null;
 let chat = null;
+let equipo = null;
 
 function el(tag, clase, texto) {
   const n = document.createElement(tag);
@@ -95,6 +97,17 @@ async function arrancar() {
     return;
   }
   for (const n of document.querySelectorAll('.js-editar')) n.hidden = !estado.puedeEditar;
+  // Equipo: lo administra el admin; quien edita ve los borrados y la actividad.
+  equipo = crearEquipo({
+    esAdmin: r.data.tipo === 'admin',
+    puedeEditar: estado.puedeEditar,
+    alRestaurar: () => {
+      if (!$('vistaLista').hidden) cargarLista();
+    },
+  });
+  for (const n of document.querySelectorAll('.js-equipo')) n.hidden = !estado.puedeEditar;
+  $('abrirEquipoLista').addEventListener('click', () => equipo.abrir());
+  $('abrirEquipoEditor').addEventListener('click', () => equipo.abrir());
 
   enlazarLista();
   enlazarEditor();
@@ -103,6 +116,11 @@ async function arrancar() {
     if (estado.sucio || estado.guardando) e.preventDefault();
   });
   rutear();
+  // /documentacion/?equipo=1 (los enlaces viejos a /admin/permisos llegan así).
+  if (new URLSearchParams(window.location.search).get('equipo') && estado.puedeEditar) {
+    history.replaceState(null, '', '/documentacion/');
+    equipo.abrir();
+  }
 }
 
 function mostrarVacio(titulo, sub, reintentar) {
@@ -344,8 +362,8 @@ function enlazarEditor() {
   $('deshacer').addEventListener('click', deshacer);
   $('rehacer').addEventListener('click', rehacer);
   $('encuadrar').addEventListener('click', () => lienzo.encuadrar());
-  $('alejar').addEventListener('click', () => lienzo.acercar(1 / 1.2));
-  $('acercar').addEventListener('click', () => lienzo.acercar(1.2));
+  $('alejar').addEventListener('click', () => lienzo.acercar(1 / 1.1));
+  $('acercar').addEventListener('click', () => lienzo.acercar(1.1));
   enlazarExportar();
   enlazarBuscador();
   enlazarPlantillas();
@@ -476,10 +494,10 @@ function pintarPaleta() {
       const b = el('button', 'dv-paleta__item');
       b.type = 'button';
       b.draggable = true;
-      b.title = cfg.hint;
-      const punto = el('span', 'dv-paleta__color');
-      punto.style.background = cfg.accent;
-      b.append(punto, el('span', '', cfg.label));
+      b.title = `${cfg.hint} Clic para agregar al centro, o arrástralo al lienzo.`;
+      const textos = el('span', 'dv-paleta__textos');
+      textos.append(el('span', 'dv-paleta__nombre', cfg.label), el('span', 'dv-paleta__hint', cfg.hint));
+      b.append(glifo(cfg), textos);
       b.addEventListener('click', () => {
         // Un poco movido del centro, para que dos clics seguidos no se encimen.
         const c = lienzo.centro();
@@ -492,6 +510,26 @@ function pintarPaleta() {
       cont.appendChild(b);
     }
   }
+}
+
+/** Miniatura de la figura que se va a colocar, con su color. */
+function glifo(cfg) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = document.createElementNS(ns, 'svg');
+  s.setAttribute('viewBox', '0 0 40 28');
+  s.setAttribute('class', 'dv-paleta__glifo');
+  s.setAttribute('aria-hidden', 'true');
+  const color = M.pintura(cfg.accent, true);
+  M.GLIFOS[cfg.shape].forEach((d, i) => {
+    const p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', d);
+    p.setAttribute('fill', i === 0 ? color.relleno : 'none');
+    p.setAttribute('stroke', cfg.accent);
+    p.setAttribute('stroke-width', '1.6');
+    p.setAttribute('stroke-linejoin', 'round');
+    s.appendChild(p);
+  });
+  return s;
 }
 
 /** Agrega un nodo centrado en `punto` (coordenadas del diagrama). */
@@ -604,17 +642,20 @@ function pintarFiltro() {
   cont.replaceChildren();
   const nodos = diagramaActual().nodes;
   const conteo = M.conteoPorEstado(nodos);
-  // Un estado sin nodos aquí sólo haría ruido; con uno solo no hay qué filtrar.
-  const presentes = M.ESTADOS.filter((s) => conteo[s] > 0);
-  cont.hidden = presentes.length < 2;
+  // Siempre a la vista (con los cinco estados) para que se sepa que existe;
+  // los que no tienen nodos quedan apagados.
+  cont.hidden = nodos.length === 0;
   if (cont.hidden) return;
+  cont.appendChild(el('span', 'dv-filtro__etiqueta', 'Filtrar:'));
 
-  for (const s of presentes) {
+  for (const s of M.ESTADOS) {
     const apagado = estado.ocultos.has(s);
     const b = el('button', `dv-chip-estado dv-estado--${M.claseEstado(s)}`);
     b.type = 'button';
+    b.disabled = conteo[s] === 0 && !apagado;
     b.setAttribute('aria-pressed', String(!apagado));
-    b.title = apagado ? `Mostrar ${M.ESTADO_CORTO[s]}` : `Atenuar ${M.ESTADO_CORTO[s]}`;
+    b.title = conteo[s] === 0 ? `Ningún nodo en ${NOMBRE_ESTADO[s]}`
+      : apagado ? `Mostrar ${NOMBRE_ESTADO[s]}` : `Atenuar ${NOMBRE_ESTADO[s]} (${conteo[s]})`;
     b.append(el('span', '', M.ESTADO_CORTO[s]), el('span', 'dv-chip-estado__n', String(conteo[s])));
     b.addEventListener('click', () => {
       if (apagado) estado.ocultos.delete(s);
@@ -1333,6 +1374,9 @@ function enlazarInspector() {
     cambiar(M.quitarHijo(estado.doc, idActual(), estado.nodoInspector));
   });
   $('borrarNodo').addEventListener('click', quitarSeleccion);
+  $('vistaDetalle').addEventListener('click', () => entrarAHijo(estado.nodoInspector));
+  $('vistaFlujo').addEventListener('click', () => abrirFlujo(estado.nodoInspector));
+  enlazarAnchoPaneles();
 
   const sel = $('in_status');
   for (const s of M.ESTADOS) {
@@ -1387,7 +1431,75 @@ function pintarInspector() {
   $('borrarNodo').hidden = lectura;
   $('agregarAtributo').hidden = lectura;
 
+  pintarVistas(n, lectura);
   pintarAtributos(n, lectura);
+}
+
+/** Imagen del diagrama (el mismo SVG de exportar) para las vistas previas. */
+function imagenDiagrama(diagrama) {
+  const r = X.svgDiagrama(diagrama);
+  return r ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(r.svg)}` : null;
+}
+
+/** Vistas previas del detalle y del flujo del request del nodo abierto. */
+function pintarVistas(n, lectura) {
+  const hijo = n.data.childDiagramId && estado.doc.diagrams[n.data.childDiagramId];
+  const imgD = hijo ? imagenDiagrama(hijo) : null;
+  $('vistaDetalleImg').hidden = !imgD;
+  if (imgD) $('vistaDetalleImg').src = imgD;
+  $('vistaDetalleNota').textContent = hijo
+    ? (imgD ? `${hijo.nodes.length} nodo${hijo.nodes.length === 1 ? '' : 's'} · clic para abrir` : 'Vacío · clic para abrir')
+    : (lectura ? 'No tiene diagrama de detalle' : 'No tiene · clic para crearlo');
+  $('vistaDetalle').disabled = !hijo && lectura;
+
+  const f = M.flujoRequest(diagramaActual(), n.id);
+  const imgF = f.rutas.length ? imagenDiagrama(f.diagrama) : null;
+  $('vistaFlujoImg').hidden = !imgF;
+  if (imgF) $('vistaFlujoImg').src = imgF;
+  $('vistaFlujoNota').textContent = f.rutas.length
+    ? `${f.rutas.length} camino${f.rutas.length === 1 ? '' : 's'} · clic para verlo grande`
+    : 'Ningún camino llega a este nodo';
+  $('vistaFlujo').disabled = !f.rutas.length;
+}
+
+/* Ancho del inspector y del chat: se arrastra su orilla izquierda y se
+   recuerda en este navegador. */
+const ANCHO_PANEL = { clave: 'documentacion.anchoPanel', min: 340, porOmision: 460 };
+
+function aplicarAnchoPanel(px) {
+  const max = Math.max(ANCHO_PANEL.min, window.innerWidth * 0.6);
+  const ancho = Math.round(Math.min(max, Math.max(ANCHO_PANEL.min, px)));
+  document.documentElement.style.setProperty('--dv-ancho-panel', `${ancho}px`);
+  return ancho;
+}
+
+function enlazarAnchoPaneles() {
+  let guardado = ANCHO_PANEL.porOmision;
+  try {
+    guardado = Number(localStorage.getItem(ANCHO_PANEL.clave)) || ANCHO_PANEL.porOmision;
+  } catch { /* sin almacenamiento: el ancho por omisión */ }
+  aplicarAnchoPanel(guardado);
+
+  for (const asa of document.querySelectorAll('.dv-redimensionar')) {
+    asa.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      asa.setPointerCapture(e.pointerId);
+      const derecha = asa.parentElement.getBoundingClientRect().right;
+      document.body.classList.add('dv--redimensionando');
+      const mover = (ev) => aplicarAnchoPanel(derecha - ev.clientX);
+      const soltar = (ev) => {
+        asa.removeEventListener('pointermove', mover);
+        asa.removeEventListener('pointerup', soltar);
+        document.body.classList.remove('dv--redimensionando');
+        const ancho = aplicarAnchoPanel(derecha - ev.clientX);
+        try {
+          localStorage.setItem(ANCHO_PANEL.clave, String(ancho));
+        } catch { /* no se recuerda; no pasa nada */ }
+      };
+      asa.addEventListener('pointermove', mover);
+      asa.addEventListener('pointerup', soltar);
+    });
+  }
 }
 
 function pintarAtributos(n, lectura) {

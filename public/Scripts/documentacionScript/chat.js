@@ -112,6 +112,18 @@ export function pintarMarkdown(cont, texto) {
   }
 }
 
+// Causa que manda el servicio en `error` cuando OpenAI falla (502).
+const CAUSAS = {
+  agente_llave_invalida: 'OpenAI rechazó la llave del servicio. Un admin tiene que revisar OPENAI_API_KEY en Fly.',
+  agente_sin_saldo: 'La cuenta de OpenAI se quedó sin saldo o sin cuota. Un admin tiene que revisar la facturación de OpenAI.',
+  agente_limite: 'OpenAI está limitando las peticiones en este momento. Intenta en un minuto.',
+  agente_modelo: 'El modelo configurado no existe o la llave no tiene acceso a él. Un admin tiene que revisar MODEL_NAME.',
+  agente_muy_largo: 'La conversación ya es muy larga para el modelo. Empieza una conversación nueva.',
+  agente_sin_conexion: 'El servicio no pudo conectarse con OpenAI. Intenta de nuevo.',
+  agente_fallo: 'OpenAI respondió con un error. Intenta de nuevo en un momento.',
+  agente_no_configurado: 'El chat no está configurado (falta la llave de OpenAI en el servicio).',
+};
+
 const ERRORES = {
   0: 'Sin conexión. Intenta de nuevo.',
   403: 'No tienes permiso para usar el chat en este proyecto.',
@@ -163,8 +175,35 @@ export function crearChat(op) {
     const vacioEl = lista.querySelector('.dv-chat__vacio');
     if (vacioEl) vacioEl.remove();
     const m = el('div', `dv-chat__msg dv-chat__msg--${rol}${clase ? ` ${clase}` : ''}`);
-    if (rol === 'assistant') pintarMarkdown(m, contenido);
-    else m.textContent = contenido;
+    if (rol === 'assistant' && !clase) {
+      pintarMarkdown(m, contenido);
+      const copiar = el('button', 'dv-chat__copiar', 'Copiar');
+      copiar.type = 'button';
+      copiar.title = 'Copiar la respuesta (Markdown)';
+      copiar.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(contenido);
+          copiar.textContent = 'Copiado';
+          setTimeout(() => { copiar.textContent = 'Copiar'; }, 1500);
+        } catch {
+          showToast('No se pudo copiar.', 'error');
+        }
+      });
+      m.appendChild(copiar);
+    } else {
+      m.textContent = contenido;
+    }
+    lista.appendChild(m);
+    lista.scrollTop = lista.scrollHeight;
+    return m;
+  }
+
+  function pensando() {
+    const vacioEl = lista.querySelector('.dv-chat__vacio');
+    if (vacioEl) vacioEl.remove();
+    const m = el('div', 'dv-chat__msg dv-chat__msg--assistant is-pensando');
+    m.setAttribute('aria-label', 'Pensando');
+    for (let i = 0; i < 3; i++) m.appendChild(el('span', 'dv-chat__punto'));
     lista.appendChild(m);
     lista.scrollTop = lista.scrollHeight;
     return m;
@@ -218,6 +257,7 @@ export function crearChat(op) {
     if (estado.configurado !== null) return estado.configurado;
     const r = await apiJson('/documentacion/agente').catch(() => ({ ok: false }));
     estado.configurado = Boolean(r.ok && r.data.configurado);
+    $('chatModelo').textContent = estado.configurado && r.data.modelo ? r.data.modelo : '';
     return estado.configurado;
   }
 
@@ -249,14 +289,17 @@ export function crearChat(op) {
     op.alCambiar(false);
   }
 
-  async function enviar() {
-    const mensaje = entrada.value.trim();
+  /** @param {string} [reintento] el mensaje que falló, para mandarlo otra vez sin repetir la burbuja */
+  async function enviar(reintento) {
+    const mensaje = reintento || entrada.value.trim();
     if (!mensaje || estado.enviando) return;
     estado.enviando = true;
     $('chatEnviar').disabled = true;
-    entrada.value = '';
-    agregarMensaje('user', mensaje);
-    const pensando = agregarMensaje('assistant', 'Pensando…', 'is-pensando');
+    if (!reintento) {
+      entrada.value = '';
+      agregarMensaje('user', mensaje);
+    }
+    const espera = pensando();
 
     // La IA lee lo guardado: que vea lo último que se dibujó.
     await op.antesDeEnviar();
@@ -266,15 +309,25 @@ export function crearChat(op) {
     const r = await apiJson(`/documentacion/proyectos/${encodeURIComponent(slug)}/chat`, { method: 'POST', body })
       .catch(() => ({ ok: false, status: 0, data: {} }));
 
-    pensando.remove();
+    espera.remove();
     estado.enviando = false;
     $('chatEnviar').disabled = false;
     if (op.slug() !== slug) return; // se cambió de proyecto mientras tanto
 
     if (!r.ok) {
-      const m = agregarMensaje('assistant', ERRORES[r.status] || 'No se pudo enviar.', 'is-error');
+      const texto = CAUSAS[r.data && r.data.error] || ERRORES[r.status] || 'No se pudo enviar.';
+      const m = agregarMensaje('assistant', texto, 'is-error');
       m.setAttribute('role', 'alert');
-      if (!entrada.value) entrada.value = mensaje;
+      // Reintentar sólo tiene sentido si no es algo que tenga que arreglar un admin.
+      if (!['agente_llave_invalida', 'agente_sin_saldo', 'agente_modelo', 'agente_no_configurado'].includes(r.data && r.data.error)) {
+        const otra = el('button', 'dv-chat__reintentar', 'Reintentar');
+        otra.type = 'button';
+        otra.addEventListener('click', () => {
+          m.remove();
+          enviar(mensaje);
+        });
+        m.appendChild(otra);
+      }
       return;
     }
     agregarMensaje('assistant', r.data.markdown);
@@ -300,6 +353,11 @@ export function crearChat(op) {
       e.preventDefault();
       enviar();
     }
+  });
+  // El cuadro crece con el texto, hasta un tope.
+  entrada.addEventListener('input', () => {
+    entrada.style.height = 'auto';
+    entrada.style.height = `${Math.min(entrada.scrollHeight, 180)}px`;
   });
 
   return {

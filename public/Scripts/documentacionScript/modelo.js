@@ -590,6 +590,18 @@
     }
   }
 
+  // Miniatura de cada silueta para la paleta, en un viewBox de 40 × 28
+  // (ShapeGlyph de NodeShape.tsx): lo que se ve es lo que se va a colocar.
+  const GLIFOS = {
+    diamond: ['M20 3 L37 14 L20 25 L3 14 Z'],
+    hexagon: ['M11 3 H29 L37 14 L29 25 H11 L3 14 Z'],
+    semicircle: ['M4 4 H36 V12 A16 12 0 0 1 4 12 Z'],
+    cylinder: ['M6 9 A14 5 0 0 1 34 9 V19 A14 5 0 0 1 6 19 Z', 'M6 9 A14 5 0 0 0 34 9'],
+    stadium: ['M11 7 H29 A7 7 0 0 1 29 21 H11 A7 7 0 0 1 11 7 Z'],
+    rect: ['M8 6 H32 A4 4 0 0 1 36 10 V18 A4 4 0 0 1 32 22 H8 A4 4 0 0 1 4 18 V10 A4 4 0 0 1 8 6 Z'],
+    rack: ['M7 6 H33 A3 3 0 0 1 36 9 V19 A3 3 0 0 1 33 22 H7 A3 3 0 0 1 4 19 V9 A3 3 0 0 1 7 6 Z', 'M27 11h5M27 14h5M27 17h5'],
+  };
+
   // Zona del texto dentro de cada silueta: [x, y, ancho, alto] en fracciones.
   const AREA_TEXTO = {
     diamond: [0.24, 0.2, 0.52, 0.6],
@@ -949,7 +961,7 @@
     flujoRequest, destinoPorOmision,
     abrirHijo, quitarHijo, nodoQueAbre, podarPila, subarbol,
     puertos, puerto, rutaArista, caja, encuadre,
-    FONDO, COLOR_ARISTA, COLOR_ESTADO, AREA_TEXTO, pintura, siluetas, rutasDiagramas,
+    FONDO, COLOR_ARISTA, COLOR_ESTADO, AREA_TEXTO, GLIFOS, pintura, siluetas, rutasDiagramas,
     caminosDiagramas, buscarNodos, conteoPorEstado, sinAcentos,
     datosHttp, conteoEstados,
   };
