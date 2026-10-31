@@ -13,6 +13,7 @@ import { crearEquipo } from './equipo.js';
  */
 
 const M = globalThis.DocModelo;
+const T = globalThis.DocTickets;
 const session = requireUiSession();
 const $ = (id) => document.getElementById(id);
 
@@ -531,6 +532,7 @@ function enlazarEditor() {
   enlazarPlantillas();
   enlazarProblemas();
   enlazarFlujo();
+  enlazarTickets();
   $('recargarConflicto').addEventListener('click', () => abrirProyecto(estado.slug, true));
   $('sobrescribirConflicto').addEventListener('click', sobrescribir);
 
@@ -1287,6 +1289,95 @@ function enlazarFlujo() {
       conexiones: r.diagrama.edges,
     }, null, 2), `${estado.slug}-flujo-${M.slugDesdeNombre(capa.nombre) || 'request'}.json`, 'application/json');
   });
+}
+
+/* ==================================================================
+   Tickets: un ticket por bloque pendiente y estados iguales en los dos
+   lados (POST /api/tickets/documentacion/sincronizar). Tickets decide quién
+   gana; aquí sólo se aplica lo que regresó y se guarda como cualquier cambio.
+   ================================================================== */
+
+async function abrirTickets() {
+  const sel = $('ticketsArea');
+  $('ticketsResultado').replaceChildren();
+  $('ticketsError').textContent = '';
+  $('sincronizarTickets').disabled = true;
+  sel.replaceChildren(el('option', '', 'Cargando áreas…'));
+  $('dlgTickets').showModal();
+  const r = await apiJson('/tickets/catalogos').catch(() => ({ ok: false, status: 0, data: {} }));
+  sel.replaceChildren();
+  if (!r.ok) {
+    $('ticketsError').textContent = r.status === 403
+      ? 'No tienes acceso a Tickets. Pídeselo a un admin.'
+      : 'No se pudo abrir Tickets. Intenta de nuevo.';
+    return;
+  }
+  const areas = (r.data.areas || []).filter((a) => !a.archivada && ['admin', 'miembro'].includes(a.mi_rol));
+  if (!areas.length) {
+    $('ticketsError').textContent = 'No puedes crear tickets en ninguna área.';
+    return;
+  }
+  for (const a of areas) {
+    const o = el('option', '', a.nombre);
+    o.value = a.id;
+    o.dataset.clave = a.clave;
+    sel.appendChild(o);
+  }
+  // La última área que se usó con este proyecto.
+  try {
+    const previa = localStorage.getItem(`dv-tickets-area:${estado.slug}`);
+    if (previa && areas.some((a) => a.id === previa)) sel.value = previa;
+  } catch (_) { /* sin almacenamiento */ }
+  $('sincronizarTickets').disabled = false;
+}
+
+async function sincronizarTickets() {
+  const boton = $('sincronizarTickets');
+  const sel = $('ticketsArea');
+  boton.disabled = true;
+  $('ticketsError').textContent = '';
+  $('ticketsResultado').replaceChildren(el('p', 'dv-dialogo__nota', 'Sincronizando…'));
+  try {
+    // Lo que Tickets regresa se aplica sobre lo último guardado.
+    if (estado.sucio || estado.guardando) await guardarYa();
+    const r = await apiJson('/tickets/documentacion/sincronizar', {
+      method: 'POST',
+      body: {
+        proyecto: { slug: estado.slug, nombre: estado.doc.meta.name },
+        area_id: sel.value,
+        crear: $('ticketsCrear').checked,
+        ia: $('ticketsIA').checked,
+        nodos: T.bloquesParaTickets(estado.doc),
+      },
+    });
+    if (!r.ok) {
+      $('ticketsResultado').replaceChildren();
+      $('ticketsError').textContent = r.status === 403 ? 'No puedes crear tickets en esa área.' : 'No se pudo sincronizar. Intenta de nuevo.';
+      return;
+    }
+    try { localStorage.setItem(`dv-tickets-area:${estado.slug}`, sel.value); } catch (_) { /* sin almacenamiento */ }
+    const { doc, cambios } = T.aplicarTickets(estado.doc, r.data.para_documentacion);
+    if (cambios && estado.puedeEditar) cambiar(doc);
+    const resumen = [
+      `${r.data.creados.length} ticket${r.data.creados.length === 1 ? '' : 's'} nuevo${r.data.creados.length === 1 ? '' : 's'} en ${r.data.area}`,
+      r.data.actualizados.length ? `${r.data.actualizados.length} cambio${r.data.actualizados.length === 1 ? '' : 's'} en Tickets` : '',
+      cambios ? `${cambios} bloque${cambios === 1 ? '' : 's'} al día con su ticket` : 'el diagrama ya estaba al día',
+    ].filter(Boolean).join(' · ');
+    const enlace = el('a', 'ui-btn ui-btn--ghost', 'Ver en Tickets');
+    enlace.href = `/tickets/#/area/${sel.selectedOptions[0].dataset.clave}`;
+    $('ticketsResultado').replaceChildren(el('p', 'dv-tickets__resumen', `Listo: ${resumen}.`), enlace);
+  } catch (_) {
+    $('ticketsResultado').replaceChildren();
+    $('ticketsError').textContent = 'No se pudo sincronizar. Revisa tu conexión.';
+  } finally {
+    boton.disabled = false;
+  }
+}
+
+function enlazarTickets() {
+  $('abrirTickets').addEventListener('click', abrirTickets);
+  $('sincronizarTickets').addEventListener('click', sincronizarTickets);
+  $('cerrarTickets').addEventListener('click', () => $('dlgTickets').close());
 }
 
 /* ==================================================================

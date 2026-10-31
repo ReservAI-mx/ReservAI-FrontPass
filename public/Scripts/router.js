@@ -61,6 +61,17 @@ router.get('/documentacion', (req, res) => {
     }
     return res.sendFile(path.resolve(__dirname + "/../views/documentacion.html"), { headers: { 'Cache-Control': 'no-cache' } });
 });
+/**
+ * Tickets internos (Ventas por ahora). Vive bajo /tickets/ con barra final,
+ * como Documentación; la navegación interna va en el hash (#/area/ventas).
+ */
+router.get('/tickets', (req, res) => {
+    if (req.originalUrl.split('?')[0] === '/tickets') {
+        const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+        return res.redirect(302, `/tickets/${qs}`);
+    }
+    return res.sendFile(path.resolve(__dirname + "/../views/tickets.html"), { headers: { 'Cache-Control': 'no-cache' } });
+});
 router.get('/404', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/404.html")));
 router.get('/unauthorized', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/unauthorized.html")));
 /**
