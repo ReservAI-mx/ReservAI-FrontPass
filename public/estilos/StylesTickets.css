@@ -491,9 +491,19 @@ textarea.titulo-editable:focus:not([readonly]) { border-color: var(--blue) !impo
 .barra-progreso { height: 6px; background: var(--surface-3); border-radius: 6px; overflow: hidden; }
 .barra-progreso > div { height: 100%; background: linear-gradient(90deg, var(--blue), var(--blue-light)); border-radius: 6px; transition: width .4s ease; }
 
-.comentario { display: grid; grid-template-columns: 30px 1fr; gap: 10px; animation: entrar .25s ease-out both; }
-.comentario .burbuja { background: var(--surface); border: 1px solid var(--line); border-radius: 4px 14px 14px 14px; padding: .65rem .9rem; }
+/* Comentarios separados entre sí; los seguidos de la misma persona van más
+   juntos, sin repetir foto ni nombre (como en un chat). */
+.lista-comentarios { display: grid; gap: 14px; }
+.comentario { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; animation: entrar .25s ease-out both; }
+.comentario .burbuja { background: var(--surface); border: 1px solid var(--line); border-radius: 4px 14px 14px 14px; padding: .6rem .9rem .65rem; min-width: 0; }
 .comentario .meta { font-size: .8rem; color: var(--muted); margin-bottom: 3px; }
+.comentario.seguido { margin-top: -9px; }
+.comentario.seguido > .avatar { visibility: hidden; }
+.comentario.seguido .burbuja { border-radius: 14px; }
+.comentario.seguido .meta b, .comentario.seguido .meta .cuando { display: none; }
+.comentario.seguido .meta:not(:has(a)) { display: none; }
+.comentario.seguido .meta { float: right; margin: 0 0 0 10px; }
+.comentario.seguido .meta a { margin-left: 0 !important; }
 .comentario .texto { white-space: pre-wrap; word-break: break-word; }
 .mencion { color: var(--blue-text); font-weight: 600; }
 .actividad { font-size: .85rem; color: var(--muted); display: grid; gap: .5rem; border-left: 2px solid var(--line); padding-left: 14px; }
