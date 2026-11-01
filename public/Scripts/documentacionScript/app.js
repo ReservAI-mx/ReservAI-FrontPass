@@ -528,6 +528,7 @@ function enlazarEditor() {
   $('alejar').addEventListener('click', () => lienzo.acercar(1 / 1.1));
   $('acercar').addEventListener('click', () => lienzo.acercar(1.1));
   enlazarExportar();
+  enlazarMovil();
   enlazarBuscador();
   enlazarPlantillas();
   enlazarProblemas();
@@ -809,6 +810,10 @@ function pintarFiltro() {
   // Siempre a la vista (con los cinco estados) para que se sepa que existe;
   // los que no tienen nodos quedan apagados.
   cont.hidden = nodos.length === 0;
+  $('filtroBoton').hidden = cont.hidden;
+  $('filtroBotonTexto').textContent = estado.ocultos.size
+    ? `Estados · ${estado.ocultos.size} atenuado${estado.ocultos.size === 1 ? '' : 's'}`
+    : 'Estados';
   if (cont.hidden) return;
   cont.appendChild(el('span', 'dv-filtro__etiqueta', 'Filtrar:'));
 
@@ -1459,6 +1464,77 @@ async function exportar(formato) {
   } catch {
     showToast('No se pudo exportar.', 'error');
   }
+}
+
+/* En el teléfono: el filtro se abre como lista desde "Estados" y lo que
+   no cabe en la barra (equipo, plantillas, tickets, exportar) va en "Más". */
+function enlazarMovil() {
+  const boton = $('filtroBoton');
+  const filtro = $('filtroEstados');
+  const cerrarFiltro = () => {
+    filtro.classList.remove('is-abierto');
+    boton.setAttribute('aria-expanded', 'false');
+  };
+  boton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const abierto = filtro.classList.toggle('is-abierto');
+    boton.setAttribute('aria-expanded', String(abierto));
+  });
+
+  const mas = $('masAcciones');
+  const menu = $('menuMas');
+  const cerrarMas = () => {
+    menu.hidden = true;
+    mas.setAttribute('aria-expanded', 'false');
+  };
+  const opcion = (nombre, hint, accion) => {
+    const b = el('button', 'dv-menu__item');
+    b.type = 'button';
+    b.setAttribute('role', 'menuitem');
+    b.append(el('span', 'dv-menu__nombre', nombre));
+    if (hint) b.append(el('span', 'dv-menu__hint', hint));
+    b.addEventListener('click', () => {
+      cerrarMas();
+      accion();
+    });
+    menu.appendChild(b);
+  };
+  mas.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!menu.hidden) {
+      cerrarMas();
+      return;
+    }
+    menu.replaceChildren();
+    // Sólo lo que la cuenta puede usar: los botones originales ya traen su hidden.
+    for (const [id, nombre, hint] of [
+      ['abrirEquipoEditor', 'Equipo', 'Quién entra y qué puede tocar'],
+      ['abrirPlantillas', 'Plantillas', 'Atributos por tipo de nodo'],
+      ['abrirTickets', 'Tickets', 'Un ticket por bloque pendiente'],
+    ]) {
+      if (!$(id).hidden) opcion(nombre, hint, () => $(id).click());
+    }
+    menu.appendChild(el('p', 'dv-menu__grupo', 'Exportar'));
+    for (const b of $('menuExportar').querySelectorAll('[data-formato]')) {
+      opcion(b.querySelector('.dv-menu__nombre').textContent, '', () => exportar(b.dataset.formato));
+    }
+    menu.hidden = false;
+    mas.setAttribute('aria-expanded', 'true');
+    menu.querySelector('button').focus();
+  });
+  menu.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      cerrarMas();
+      mas.focus();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    // Un chip del filtro se repinta al tocarlo: si ya no está en la página, fue adentro.
+    if (!document.contains(e.target)) return;
+    if (filtro.classList.contains('is-abierto') && !filtro.contains(e.target)) cerrarFiltro();
+    if (!menu.hidden && !menu.contains(e.target)) cerrarMas();
+  });
 }
 
 function enlazarExportar() {

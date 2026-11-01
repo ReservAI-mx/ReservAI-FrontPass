@@ -490,7 +490,9 @@ body.dv.dv--editor { height: 100dvh; overflow: hidden; }
   pointer-events: none;
 }
 
-.dv-nodo__tipo { font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.95; }
+/* Sin opacity ni transform dentro del foreignObject: Safari (iPhone) saca de su
+   lugar el HTML que crea su propia capa y lo pinta en la esquina del lienzo. */
+.dv-nodo__tipo { font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 
 .dv-nodo__nombre {
   font-size: 13px;
@@ -662,6 +664,41 @@ body.dv--redimensionando { cursor: ew-resize; user-select: none; }
 .dv-barra__sub { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; min-width: 0; }
 
 .dv-filtro { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+
+/* Botón del filtro y menú "Más": sólo en el teléfono. */
+.dv-filtro__boton,
+.dv-mas { display: none; }
+
+.dv-filtro__boton {
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 30px;
+  padding: 0 0.65rem;
+  border: 1px solid var(--ui-line-2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dv-filtro__boton svg { width: 15px; height: 15px; }
+.dv-filtro__boton[aria-expanded="true"] { border-color: var(--primary); background: rgba(9, 131, 214, 0.18); }
+
+.dv-mas { position: relative; }
+.dv-menu--mas { width: 240px; }
+
+.dv-menu__grupo {
+  margin: 0.35rem 0.7rem 0.15rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--ui-line);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-gray);
+}
 
 .dv-chip-estado {
   display: inline-flex;
@@ -1131,11 +1168,42 @@ body.dv--redimensionando { cursor: ew-resize; user-select: none; }
 
   /* En el teléfono el editor es para consultar: sin paleta, panel abajo. */
   .dv-paleta { display: none; }
-  .dv-barra { flex-wrap: wrap; gap: 0.5rem; }
-  .dv-barra__titulo { order: 1; flex-basis: calc(100% - 50px); }
-  .dv-guardado { order: 2; }
-  .dv-lectura { order: 2; }
-  .dv-barra__acciones { order: 3; margin-left: auto; }
+  .dv-barra { position: relative; flex-wrap: wrap; gap: 0.45rem 0.5rem; padding: 0.5rem 0.75rem; }
+  .dv-barra__titulo { order: 1; flex: 1 1 0; }
+  .dv-titulo { text-overflow: ellipsis; }
+  /* Sólo el punto de color; el texto queda para lectores de pantalla. */
+  .dv-guardado { order: 2; font-size: 0; }
+  .dv-guardado::before { width: 9px; height: 9px; margin-right: 0; }
+  .dv-lectura { order: 2; font-size: 0.72rem; }
+  .dv-barra__sub { flex-wrap: nowrap; gap: 0.5rem; }
+  .dv-migas { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; min-width: 0; }
+  .dv-barra__acciones { order: 3; flex-basis: 100%; justify-content: flex-end; }
+
+  /* Filtro: un botón que abre la lista de estados debajo de la barra. */
+  .dv-filtro__boton:not([hidden]) { display: inline-flex; flex-shrink: 0; }
+  .dv-filtro { display: none; }
+  .dv-filtro.is-abierto:not([hidden]) {
+    position: absolute;
+    z-index: 70;
+    top: calc(100% + 4px);
+    left: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    width: 220px;
+    padding: 0.6rem;
+    border: 1px solid var(--ui-line-2);
+    border-radius: 12px;
+    background: var(--bg-card);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+  }
+  .dv-filtro.is-abierto .dv-chip-estado { justify-content: space-between; min-height: 36px; padding: 0 0.75rem; font-size: 0.85rem; }
+  .dv-filtro.is-abierto .dv-filtro__todos { align-self: flex-start; padding: 0.3rem 0; font-size: 0.82rem; }
+
+  /* Lo que no cabe se va al menú "Más" (el pellizco ya acerca y aleja). */
+  #abrirEquipoEditor, #abrirPlantillas, #abrirTickets, #alejar, #acercar, .dv-exportar { display: none; }
+  .dv-mas { display: block; }
   .dv-dialogo.dv-buscar { margin-top: 1rem; }
   .dv-plantillas__fila { grid-template-columns: 1fr 1fr; }
   .dv-dialogo.dv-equipo { width: 100vw; max-width: none; max-height: 100dvh; margin: 0; border-radius: 0; }
