@@ -50,7 +50,8 @@ export async function render(cont) {
           h("div", s), h("div.dim", { style: { fontSize: ".78rem", marginTop: "2px" } }, d))))),
       conversacion.map((m) => fila(m.role, m.role === "user" ? m.content : conEnlaces(m.content))),
       pensando && fila("assistant", h("span.cargando-ia", puntos(), " Revisando los tickets")));
-    mensajes.scrollTop = mensajes.scrollHeight;
+    // Con conversación, al último mensaje; la bienvenida se lee desde arriba.
+    mensajes.scrollTop = conversacion.length ? mensajes.scrollHeight : 0;
   };
 
   const ajustarAltura = () => {
