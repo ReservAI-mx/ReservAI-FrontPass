@@ -455,6 +455,9 @@ textarea.titulo-editable:focus:not([readonly]) { border-color: var(--blue) !impo
 .valor-select select:focus { box-shadow: none; }
 .valor-select .bola-estado { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
 .valor-select[style*="--c"] select { color: var(--c); }
+/* Selector sin elegir (Mover a): como "Sin fecha", no como un valor. */
+.valor-select.vacio select { color: var(--dim); font-weight: 400 !important; }
+button.agregar-select { background: none; font-family: inherit; }
 .prio-sel { color: var(--blue-text); }
 .prio-sel.urgente { color: var(--red); }
 .prio-sel.alta { color: var(--amber); }
@@ -491,9 +494,19 @@ textarea.titulo-editable:focus:not([readonly]) { border-color: var(--blue) !impo
 .barra-progreso { height: 6px; background: var(--surface-3); border-radius: 6px; overflow: hidden; }
 .barra-progreso > div { height: 100%; background: linear-gradient(90deg, var(--blue), var(--blue-light)); border-radius: 6px; transition: width .4s ease; }
 
-.comentario { display: grid; grid-template-columns: 30px 1fr; gap: 10px; animation: entrar .25s ease-out both; }
-.comentario .burbuja { background: var(--surface); border: 1px solid var(--line); border-radius: 4px 14px 14px 14px; padding: .65rem .9rem; }
+/* Comentarios separados entre sí; los seguidos de la misma persona van más
+   juntos, sin repetir foto ni nombre (como en un chat). */
+.lista-comentarios { display: grid; gap: 14px; }
+.comentario { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; animation: entrar .25s ease-out both; }
+.comentario .burbuja { background: var(--surface); border: 1px solid var(--line); border-radius: 4px 14px 14px 14px; padding: .6rem .9rem .65rem; min-width: 0; }
 .comentario .meta { font-size: .8rem; color: var(--muted); margin-bottom: 3px; }
+.comentario.seguido { margin-top: -9px; }
+.comentario.seguido > .avatar { visibility: hidden; }
+.comentario.seguido .burbuja { border-radius: 14px; }
+.comentario.seguido .meta b, .comentario.seguido .meta .cuando { display: none; }
+.comentario.seguido .meta:not(:has(a)) { display: none; }
+.comentario.seguido .meta { float: right; margin: 0 0 0 10px; }
+.comentario.seguido .meta a { margin-left: 0 !important; }
 .comentario .texto { white-space: pre-wrap; word-break: break-word; }
 .mencion { color: var(--blue-text); font-weight: 600; }
 .actividad { font-size: .85rem; color: var(--muted); display: grid; gap: .5rem; border-left: 2px solid var(--line); padding-left: 14px; }
@@ -820,10 +833,17 @@ ol.pasos { margin: 0; padding-left: 1.2rem; display: grid; gap: .6rem; color: va
   .panel-principal { padding: 1.1rem 16px 1.5rem; gap: 1.4rem; }
   .prop { grid-template-columns: 116px minmax(0, 1fr); min-height: 46px; border-bottom: 1px solid rgba(255, 255, 255, .05); }
   .prop:last-child { border-bottom: none; }
-  .prop > .k { font-size: .9rem; }
-  .valor-select select { font-size: 16px; }
-  .agregar-select { height: 32px; font-size: .88rem; }
-  .fecha-campo { font-size: .98rem; }
+  /* Todos los valores al mismo tamaño: 16px es lo mínimo para que iPhone no
+     haga zoom al tocar un selector, así que el resto se iguala a eso. */
+  .prop { min-height: 50px; padding: 4px 0; }
+  .prop > .k { font-size: 15px; }
+  .prop > .v { gap: 8px; }
+  .valor-select select, .fecha-campo, .prop .valor { font-size: 16px; }
+  .valor-select select, .fecha-campo { font-weight: 600; }
+  .agregar-select { height: 34px; padding: 0 12px; font-size: 15px; }
+  .persona-chip { min-height: 34px; padding: 3px 10px 3px 3px; font-size: 15px; gap: 8px; }
+  .persona-chip .avatar { width: 28px; height: 28px; font-size: .68rem; }
+  .persona-chip .quitar { padding: 0 2px 0 4px; font-size: 1.1rem; line-height: 1; }
   .seccion-cab { min-height: 36px; }
   .seccion-cab .acciones .btn { height: 34px; }
   .check-item { padding: .55rem .4rem; min-height: 44px; }

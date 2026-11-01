@@ -268,6 +268,14 @@ function propiedades(t, editable, guardar, recargar) {
         },
       }, "×"))),
     !t.asignados.length && !editable && h("span.dim", "Sin asignar"),
+    // Sólo se asigna a quien está en el área. Si ya están todos, el + lo
+    // explica en lugar de desaparecer (parecía que no se podía asignar).
+    editable && !candidatos.length && h("button.agregar-select", {
+      type: "button", "aria-label": "Asignar a alguien más",
+      onclick: () => toast(administra(t.area_id)
+        ? `Ya están asignados todos los de ${area(t.area_id)?.nombre || "el área"}. Agrega personas al área en Configurar → Miembros.`
+        : `Ya están asignados todos los de ${area(t.area_id)?.nombre || "el área"}. Un admin del área puede agregar a más personas.`),
+    }, icono("mas", { tam: 14 }), t.asignados.length ? "" : "Asignar"),
     editable && candidatos.length > 0 && h("span.agregar-select",
       icono("mas", { tam: 14 }), t.asignados.length ? "" : "Asignar",
       h("select", {
@@ -316,7 +324,7 @@ function propiedades(t, editable, guardar, recargar) {
 
   // Mover de área (solo a áreas donde puedo editar)
   const otras = datos.areas.filter((x) => !x.archivada && x.id !== t.area_id && puedeEditar(x.id));
-  const mover = editable && !t.padre_id && otras.length > 0 && h("span.valor-select",
+  const mover = editable && !t.padre_id && otras.length > 0 && h("span.valor-select.vacio",
     h("select", {
       "aria-label": "Mover a otra área",
       onchange: async (e) => {
@@ -560,15 +568,21 @@ function cajaComentario(t, recargar) {
   return h("div.comentar", contenedor, boton);
 }
 
+// Varios comentarios seguidos de la misma persona (menos de 10 min entre uno
+// y otro) se juntan como en un chat: el nombre y la foto sólo en el primero.
+const SEGUIDO_MS = 10 * 60 * 1000;
+const esSeguido = (c, previo) => !!previo && previo.autor_id === c.autor_id &&
+  new Date(c.creado) - new Date(previo.creado) < SEGUIDO_MS;
+
 function comentarios(t, recargar) {
   return h("div.seccion",
     h("div.seccion-cab", h("h3", "Comentarios"), h("span.dim", t.comentarios.length || "")),
     !t.comentarios.length && h("div.dim", puedoEscribir() ? "Sin comentarios. Escribe el primero abajo." : "Sin comentarios."),
     h("div.lista-comentarios",
-    t.comentarios.map((c) => h("div.comentario",
+    t.comentarios.map((c, i) => h("div.comentario", { class: esSeguido(c, t.comentarios[i - 1]) ? "seguido" : "" },
       avatar(persona(c.autor_id)),
       h("div.burbuja",
-        h("div.meta", h("b", persona(c.autor_id)?.nombre || "—"), " · ", haceCuanto(c.creado),
+        h("div.meta", h("b", persona(c.autor_id)?.nombre || "—"), h("span.cuando", " · ", haceCuanto(c.creado)),
           c.autor_id === datos.yo.id && h("a", {
             href: "#", style: { marginLeft: "8px", color: "var(--dim)" },
             onclick: async (e) => {
