@@ -137,6 +137,12 @@ function montarApp() {
     crearRapido();
   });
   vaciar(raiz, h("div.app", lateral, h("div.principal", barra, contenido)), abajo);
+  // En la compu la barra del pass queda fija arriba; el menú y la barra de
+  // buscar se pegan debajo de ella (--alto-pass en StylesTickets.css).
+  const pass = document.querySelector("body > .navbar");
+  if (pass && "ResizeObserver" in window) {
+    new ResizeObserver(() => document.documentElement.style.setProperty("--alto-pass", pass.offsetHeight + "px")).observe(pass);
+  }
   pintarLateral();
   pintarAbajo();
   montarCronometro(document.getElementById("cronometro"));
@@ -295,9 +301,7 @@ async function enrutar() {
       contenido.classList.remove("vista");
       void contenido.offsetWidth;
       contenido.classList.add("vista");
-      // En la compu el que hace scroll es .principal; en el teléfono, la página.
       window.scrollTo(0, 0);
-      contenido.parentElement.scrollTop = 0;
       limpiarVista = (await modulo.render(contenido, partes.slice(1), params)) || null;
     } catch (e) {
       error(e, "No se pudo abrir la vista");
