@@ -221,6 +221,7 @@ export const PRIORIDADES = [
   { id: "alta", nombre: "Alta" },
   { id: "normal", nombre: "Normal" },
   { id: "baja", nombre: "Baja" },
+  { id: "on_hold", nombre: "On hold" },
 ];
 export const nombrePrioridad = (id) => (PRIORIDADES.find((p) => p.id === id) || {}).nombre || id;
 
@@ -261,7 +262,7 @@ export function avatares(ids, buscar) {
 }
 
 // Color de la franja izquierda de un ticket según prioridad.
-export const COLOR_PRIO = { urgente: "var(--red)", alta: "var(--amber)", normal: "transparent", baja: "transparent" };
+export const COLOR_PRIO = { urgente: "var(--red)", alta: "var(--amber)", normal: "transparent", baja: "transparent", on_hold: "transparent" };
 
 export function textoConMenciones(texto, personas) {
   // Resalta "@Nombre Apellido" de personas conocidas y convierte URLs en enlaces.

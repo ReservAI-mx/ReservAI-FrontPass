@@ -115,6 +115,9 @@ export const area = (id) => datos.areas.find((a) => a.id === id);
 export const areaPorClave = (clave) => datos.areas.find((a) => a.clave === clave);
 export const estado = (id) => datos.estados.find((e) => e.id === id);
 export const estadosDe = (areaId) => datos.estados.filter((e) => e.area_id === areaId);
+// On hold (para después), por estado o por prioridad: sigue abierto pero no
+// cuenta como vencido.
+export const enEspera = (t) => t.prioridad === "on_hold" || estado(t.estado_id)?.tipo === "en_espera";
 export const etiquetasDe = (areaId) => datos.etiquetas.filter((e) => e.area_id === areaId);
 export const etiqueta = (id) => datos.etiquetas.find((e) => e.id === id);
 export const personasActivas = () => datos.personas;
