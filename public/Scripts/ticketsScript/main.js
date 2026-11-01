@@ -122,7 +122,20 @@ function montarApp() {
         "aria-label": "Buscar",
         onclick: () => { barra.classList.add("buscando"); buscar.focus(); },
       }, icono("buscar", { tam: 22 })),
-      h("span#avisos.solo-escritorio")));
+      h("span#avisos.solo-escritorio"),
+      // En la compu, crear desde cualquier pantalla (en el teléfono es el + de abajo).
+      puedoEscribir() && h("button.btn.primario.chico.solo-escritorio", {
+        onclick: crearRapido, title: "Nuevo ticket (N)",
+      }, icono("mas", { tam: 16 }), "Nuevo ticket")));
+  // Atajo: N abre "Nuevo ticket" si no estás escribiendo en un campo.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "n" && e.key !== "N") return;
+    if (e.ctrlKey || e.metaKey || e.altKey || !puedoEscribir()) return;
+    if (document.querySelector(".modal") || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) return;
+    if (document.activeElement?.isContentEditable) return;
+    e.preventDefault();
+    crearRapido();
+  });
   vaciar(raiz, h("div.app", lateral, h("div.principal", barra, contenido)), abajo);
   pintarLateral();
   pintarAbajo();
