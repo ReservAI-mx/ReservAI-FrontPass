@@ -251,17 +251,17 @@ label.chk { display: inline-flex; gap: .55rem; align-items: center; color: var(-
 .contenido { flex: 1; padding: 1.75rem 2rem 2.5rem; min-width: 0; }
 .marca-movil, .cancelar-busqueda, .abajo { display: none; }
 
-/* Compu: la barra del pass arriba y, abajo, el menú lateral y el contenido a
-   lo que queda de alto, cada uno con su propio scroll. Antes el menú medía
-   toda la pantalla pero empezaba debajo de la barra del pass, y "Mi perfil"
-   quedaba fuera hasta bajar. */
+/* Compu: la página hace scroll como cualquier otra, pero la barra del pass
+   se queda arriba y, debajo de ella, el menú lateral (a lo que queda de alto,
+   con "Mi perfil" siempre a la vista) y la barra de buscar. --alto-pass lo
+   mide main.js; 74px es lo que mide la barra del pass normalmente.
+   (Con scroll propio en el contenido salía una segunda barra de scroll y la
+   barra de buscar quedaba encajonada.) */
 @media (min-width: 769px) {
-  body.tk { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-  body.tk > .navbar { flex: none; }
-  .tk-raiz { flex: 1; min-height: 0; overflow-y: auto; }
-  .app { height: 100%; min-height: 0; }
-  .lateral { position: static; height: 100%; }
-  .principal { height: 100%; min-height: 0; overflow-y: auto; }
+  body.tk > .navbar { position: sticky; top: 0; }
+  .lateral { top: var(--alto-pass, 74px); height: calc(100vh - var(--alto-pass, 74px)); }
+  .barra { top: var(--alto-pass, 74px); }
+  .principal { min-height: calc(100vh - var(--alto-pass, 74px)); }
 }
 /* El logo y los enlaces de la barra del pass no se subrayan. */
 .navbar a:hover { text-decoration: none; }
