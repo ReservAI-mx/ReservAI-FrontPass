@@ -295,7 +295,9 @@ async function enrutar() {
       contenido.classList.remove("vista");
       void contenido.offsetWidth;
       contenido.classList.add("vista");
+      // En la compu el que hace scroll es .principal; en el teléfono, la página.
       window.scrollTo(0, 0);
+      contenido.parentElement.scrollTop = 0;
       limpiarVista = (await modulo.render(contenido, partes.slice(1), params)) || null;
     } catch (e) {
       error(e, "No se pudo abrir la vista");
