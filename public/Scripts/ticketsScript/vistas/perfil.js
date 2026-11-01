@@ -54,7 +54,7 @@ export async function render(cont) {
         h("label.chk", avisosCorreo, "Mandarme avisos por correo")),
       h("div.tarjeta.col-4",
         h("h2", "Tu cuenta"),
-        h("p.muted", { style: { margin: 0 } }, "Tu nombre, tu contraseña y el código de acceso son los del pass: cámbialos desde el menú de tu cuenta (arriba a la derecha)."),
+        h("p.muted", { style: { margin: 0 } }, "Tu nombre, tu contraseña y el código de acceso son los del Pass Manager: se cambian ahí, no en Tickets. En el teléfono, la sesión de Tickets dura 30 días; \"Cerrar sesión\" la cierra en todos lados."),
         h("label.campo", h("span", "Correo"), h("input", { type: "text", value: datos.yo.correo, readonly: true }))),
       notificaciones));
 }

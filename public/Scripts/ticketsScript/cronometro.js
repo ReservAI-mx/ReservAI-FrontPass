@@ -2,6 +2,7 @@
 import { h, vaciar, error, reloj, toast } from "./ui.js";
 import { api } from "./datos.js";
 import { verTicket } from "./rutas.js";
+import { icono } from "./iconos.js";
 
 let nodo = null, corriendo = null, intervalo = null;
 
@@ -31,9 +32,8 @@ function pintar() {
   const t = { numero: corriendo.numero, titulo: corriendo.titulo };
   vaciar(nodo, h("span.cronometro",
     h("a", { href: "#", style: { color: "inherit" }, title: t ? t.titulo : "", onclick: (e) => { e.preventDefault(); t && verTicket(t.numero); } },
-      "T-" + (t ? t.numero : "?")),
-    tiempo,
-    h("button.btn.chico", { onclick: () => detenerCronometro() }, "■")));
+      h("span.cron-num", "T-" + (t ? t.numero : "?")), " ", tiempo),
+    h("button.btn.chico.icono", { onclick: () => detenerCronometro(), "aria-label": "Detener cronómetro", title: "Detener" }, icono("stop", { tam: 14 }))));
 }
 
 export async function iniciarCronometro(ticketId) {

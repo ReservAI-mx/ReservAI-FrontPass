@@ -63,7 +63,9 @@ router.get('/documentacion', (req, res) => {
 });
 /**
  * Tickets internos (Ventas por ahora). Vive bajo /tickets/ con barra final,
- * como Documentación; la navegación interna va en el hash (#/area/ventas).
+ * como la Bitácora: se instala en el teléfono y su service worker
+ * (/tickets/sw.js) sólo controla lo que está debajo de /tickets/. La
+ * navegación interna va en el hash (#/area/ventas).
  */
 router.get('/tickets', (req, res) => {
     if (req.originalUrl.split('?')[0] === '/tickets') {
@@ -72,6 +74,14 @@ router.get('/tickets', (req, res) => {
     }
     return res.sendFile(path.resolve(__dirname + "/../views/tickets.html"), { headers: { 'Cache-Control': 'no-cache' } });
 });
+router.get('/tickets/sw.js', (req, res) =>
+    res.sendFile(path.resolve(__dirname + "/ticketsScript/sw.js"), {
+        headers: { 'Cache-Control': 'no-cache', 'Content-Type': 'text/javascript; charset=utf-8' },
+    }));
+router.get('/tickets/manifest.webmanifest', (req, res) =>
+    res.sendFile(path.resolve(__dirname + "/ticketsScript/manifest.webmanifest"), {
+        headers: { 'Cache-Control': 'no-cache', 'Content-Type': 'application/manifest+json' },
+    }));
 router.get('/404', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/404.html")));
 router.get('/unauthorized', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/unauthorized.html")));
 /**

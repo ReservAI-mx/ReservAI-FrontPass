@@ -1,7 +1,7 @@
 // Vista de un área: filtros + Lista | Tablero | Calendario.
 import {
   h, vaciar, error, avatar, avatares, chipEstado, chipEtiqueta, chipFecha, nombrePrioridad, COLOR_PRIO, esqueletos,
-  PRIORIDADES, MESES_LARGOS, DIAS, isoDia, hoyIso, debounce, modal, toast,
+  PRIORIDADES, MESES_LARGOS, DIAS, isoDia, hoyIso, debounce, modal, toast, esTelefono, fechaLarga,
 } from "../ui.js";
 import {
   datos, areaPorClave, estadosDe, estado, etiquetasDe, etiqueta, persona, miembrosDe,
@@ -9,6 +9,7 @@ import {
 } from "../datos.js";
 import { verTicket, ir, cambiarParam } from "../rutas.js";
 import { crearConIA, buscarParecidos } from "../ia.js";
+import { icono } from "../iconos.js";
 
 const PESO_PRIO = { urgente: 0, alta: 1, normal: 2, baja: 3 };
 const ORDENES = {
@@ -74,7 +75,7 @@ export async function render(cont, [clave, vista = "lista"], params) {
     zona.classList.toggle("sin-animacion", pintadas++ > 0);
     const lista = filtrados();
     if (vista === "tablero") vaciar(zona, tablero(a, lista, editable, cargar));
-    else if (vista === "calendario") vaciar(zona, calendario(a, lista, editable, filtros, cargar));
+    else if (vista === "calendario") vaciar(zona, (esTelefono() ? calendarioMovil : calendario)(a, lista, editable, filtros, cargar, pintar));
     else vaciar(zona, listaAgrupada(a, lista, editable, cargar, ORDENES[filtros.orden]?.[1] || ORDENES.prioridad[1]));
   };
 
@@ -93,6 +94,8 @@ export async function render(cont, [clave, vista = "lista"], params) {
   };
 
   const miembros = miembrosDe(a.id);
+  // Cuántos filtros hay puestos (además del texto), para el botón del teléfono.
+  const activos = () => ["persona", "prioridad", "etiqueta"].filter((k) => filtros[k]).length + (filtros.cerrados ? 1 : 0);
   vaciar(cont,
     h("div.encabezado",
       h("span.icono-area", { style: { background: a.color } }, a.nombre[0]),
@@ -100,14 +103,25 @@ export async function render(cont, [clave, vista = "lista"], params) {
       h("nav.pestanas", pestana("lista", "Lista"), pestana("tablero", "Tablero"), pestana("calendario", "Calendario"),
         a.clave === "ventas" && pestana("bitacora", "◎ Bitácora")),
       h("div.acciones",
-        administra(a.id) && h("button.btn", { onclick: () => ir("#/admin/area/" + a.clave), title: "Estados, etiquetas, miembros y automatizaciones" }, "⚙ Configurar"),
-        h("button.btn", { onclick: () => ir("#/dashboard?area=" + a.clave) }, "▦ Dashboard"),
-        editable && h("button.btn.ia", { onclick: () => crearConIA(a, cargar) }, "✦ Crear con IA"),
+        administra(a.id) && h("button.btn", { onclick: () => ir("#/admin/area/" + a.clave), title: "Estados, etiquetas, miembros y automatizaciones" }, icono("engrane", { tam: 16 }), "Configurar"),
+        h("button.btn", { onclick: () => ir("#/dashboard?area=" + a.clave) }, icono("grafica", { tam: 16 }), "Dashboard"),
+        editable && h("button.btn.ia", { onclick: () => crearConIA(a, cargar) }, icono("chispa", { tam: 16 }), "Crear con IA"),
+        // En el teléfono crear va en el "+" de abajo.
         editable
-          ? h("button.btn.primario", { onclick: () => nuevoTicket(a, cargar) }, "+ Nuevo ticket")
+          ? h("button.btn.primario.solo-escritorio", { onclick: () => nuevoTicket(a, cargar) }, icono("mas", { tam: 16 }), "Nuevo ticket")
           : puedoEscribir() && h("button.btn.primario", { onclick: () => ir("#/solicitudes?pedir=" + a.clave) }, "Pedir un ticket a " + a.nombre))),
     h("div.filtros",
-      h("input", { type: "search", placeholder: "Filtrar por título o T-…", value: filtros.texto, oninput: debounce((e) => cambiarFiltro("texto", e.target.value), 200) }),
+      h("input", { type: "search", placeholder: "Filtrar por título o T-…", value: filtros.texto, enterkeyhint: "search", oninput: debounce((e) => cambiarFiltro("texto", e.target.value), 200) }),
+      // En el teléfono los demás filtros van detrás de este botón.
+      h("button.btn.solo-movil.boton-filtros", {
+        "aria-expanded": "false",
+        onclick: (e) => {
+          const abiertos = cont.querySelector(".filtros-extra").classList.toggle("abiertos");
+          e.currentTarget.setAttribute("aria-expanded", String(abiertos));
+        },
+      }, icono("filtro", { tam: 16 }), "Filtros",
+      activos() > 0 && h("span.cuenta", activos())),
+      h("div.filtros-extra",
       h("select", { onchange: (e) => cambiarFiltro("persona", e.target.value) },
         h("option", { value: "" }, "Todos los responsables"),
         h("option", { value: datos.yo.id, selected: filtros.persona === datos.yo.id }, "Asignados a mí"),
@@ -123,7 +137,7 @@ export async function render(cont, [clave, vista = "lista"], params) {
         Object.entries(ORDENES).map(([id, [nombre]]) => h("option", { value: id, selected: filtros.orden === id }, "Ordenar: " + nombre))),
       vista !== "calendario" && h("label.chk",
         h("input", { type: "checkbox", checked: filtros.cerrados, onchange: (e) => cambiarFiltro("cerrados", e.target.checked) }),
-        "Mostrar terminados")),
+        "Mostrar terminados"))),
     zona);
 
   if (vista === "bitacora") {
@@ -187,7 +201,7 @@ export function nuevoTicket(a, alCrear, valores = {}) {
         h("button.btn", { onclick: () => crear(true) }, "Crear y abrir"),
         h("button.btn.primario", { onclick: () => crear(false) }, "Crear")),
     ];
-  });
+  }, { enfocar: !valores.titulo, clase: "nuevo-ticket" });
 }
 
 // ---------- Piezas comunes ----------
@@ -207,7 +221,7 @@ function avance(t) {
 function extras(t) {
   return [
     avance(t),
-    t.comentarios > 0 && h("span.meta", { title: "Comentarios" }, `💬 ${t.comentarios}`),
+    t.comentarios > 0 && h("span.meta", { title: "Comentarios" }, icono("comentario", { tam: 14 }), t.comentarios),
     t.solicitado_por && h("span.chip", { title: "Pedido por " + (persona(t.solicitado_por)?.nombre || "otra área") }, "⇄ " + (persona(t.solicitado_por)?.nombre.split(" ")[0] || "Solicitud")),
   ];
 }
@@ -253,7 +267,7 @@ function listaAgrupada(a, tickets, editable, recargar, ordenar) {
               h("td.opcional", avatares(t.asignados, persona)),
               h("td", h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad))),
               h("td.opcional", chipFecha(t.vence, t.cerrado) || h("span.dim", "—")),
-              h("td.opcional", { style: { textAlign: "right" } }, h("span.dim", "›")))),
+              h("td.opcional.flecha-celda", { style: { textAlign: "right" } }, h("span.dim", "›")))),
             rapido))));
     return caja;
   }));
@@ -390,4 +404,63 @@ function calendario(a, tickets, editable, filtros, recargar) {
       h("span.dim", { style: { marginLeft: "auto" } }, editable ? "Arrastra un ticket para cambiar su fecha · doble clic en un día para crear" : "")),
     h("div.cal", DIAS.map((d) => h("div.dia-nombre", d)), dias),
     !tickets.length && h("p.dim", "No hay tickets con vencimiento este mes."));
+}
+
+// Teléfono: el mes en chico con puntos por día y, abajo, lo que vence el día
+// que toques (en la cuadrícula grande no se leían los títulos).
+function calendarioMovil(a, tickets, editable, filtros, recargar, repintar) {
+  const [anio, mes] = filtros.mes.split("-").map(Number);
+  const primero = new Date(anio, mes - 1, 1, 12);
+  const inicio = new Date(primero);
+  inicio.setDate(1 - ((primero.getDay() + 6) % 7));
+  const hoy = hoyIso();
+  if (!filtros.dia || !filtros.dia.startsWith(filtros.mes)) {
+    filtros.dia = hoy.startsWith(filtros.mes) ? hoy : filtros.mes + "-01";
+  }
+  const moverMes = (delta) => {
+    const f = new Date(anio, mes - 1 + delta, 1);
+    cambiarParam("mes", `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, "0")}`);
+  };
+  const celdas = [];
+  for (let i = 0; i < 42; i++) {
+    const f = new Date(inicio);
+    f.setDate(inicio.getDate() + i);
+    const iso = isoDia(f);
+    const delDia = tickets.filter((t) => t.vence === iso);
+    celdas.push(h("button.dia-m", {
+      class: [f.getMonth() !== mes - 1 ? "fuera" : "", iso === hoy ? "hoy" : "", iso === filtros.dia ? "elegido" : ""].join(" "),
+      "aria-label": fechaLarga(iso) + (delDia.length ? `, ${delDia.length} ticket${delDia.length > 1 ? "s" : ""}` : ""),
+      onclick: () => {
+        if (f.getMonth() !== mes - 1) return moverMes(f < primero ? -1 : 1);
+        filtros.dia = iso;
+        repintar();
+      },
+    }, h("span.n", f.getDate()),
+    h("span.puntos-dia", delDia.slice(0, 3).map((t) => h("i", { style: { background: estado(t.estado_id)?.color || "var(--blue)" } })))));
+    if (i >= 34 && f.getMonth() !== mes - 1 && (i + 1) % 7 === 0) break;
+  }
+  const delDia = tickets.filter((t) => t.vence === filtros.dia);
+  return h("div.cal-movil",
+    h("div.cal-cab",
+      h("button.btn.icono", { onclick: () => moverMes(-1), "aria-label": "Mes anterior" }, icono("atras", { tam: 18 })),
+      h("h2", `${MESES_LARGOS[mes - 1][0].toUpperCase() + MESES_LARGOS[mes - 1].slice(1)} ${anio}`),
+      h("button.btn.icono", { onclick: () => moverMes(1), "aria-label": "Mes siguiente" }, icono("adelante", { tam: 18 })),
+      h("button.btn.chico.fantasma", { style: { marginLeft: "auto" }, onclick: () => { filtros.dia = hoy; cambiarParam("mes", hoy.slice(0, 7)); } }, "Hoy")),
+    h("div.tarjeta.mes-m", DIAS.map((d) => h("span.dia-nombre", d[0].toUpperCase())), celdas),
+    h("div.grupo-simple",
+      h("div.grupo-cab", h("h3", fechaLarga(filtros.dia)), h("span.cuenta", delDia.length),
+        editable && h("button.btn.chico", { style: { marginLeft: "auto" }, onclick: () => nuevoTicket(a, recargar, { vence: filtros.dia }) }, icono("mas", { tam: 14 }), "Agregar")),
+      delDia.length
+        ? h("div.grupo.tabla-wrap", h("table.tabla", h("tbody", delDia.map((t) => filaTicket(t)))))
+        : h("div.tarjeta.vacio.chico", "No vence nada este día.")));
+}
+
+// Fila de ticket para las listas (en el teléfono se ve como tarjeta).
+function filaTicket(t) {
+  return h("tr.ticket", { class: t.cerrado ? "cerrado" : "", style: { "--franja": COLOR_PRIO[t.prioridad] }, onclick: () => verTicket(t.numero) },
+    h("td.titulo-celda",
+      h("div.fila", { style: { gap: "10px", flexWrap: "nowrap" } }, h("span.num", "T-" + t.numero), h("span.t", t.titulo)),
+      h("div.debajo", chipEstado(estado(t.estado_id)), etiquetasDeTicket(t), extras(t))),
+    h("td.opcional", avatares(t.asignados, persona)),
+    h("td", h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad))));
 }

@@ -1,15 +1,18 @@
 // "Mis tickets" (lo asignado a mí, en tablero por fecha o en lista) y la búsqueda general (#/buscar?q=).
 import {
   h, vaciar, error, avatares, chipEstado, chipEtiqueta, chipFecha, nombrePrioridad, fechaLocal, hoyIso,
-  debounce, esqueletos, COLOR_PRIO,
+  debounce, esqueletos, COLOR_PRIO, esTelefono,
 } from "../ui.js";
 import { area, estado, etiqueta, persona, escuchar, tickets as api } from "../datos.js";
 import { verTicket } from "../rutas.js";
+import { icono } from "../iconos.js";
 
 const PESO_PRIO = { urgente: 0, alta: 1, normal: 2, baja: 3 };
 
+// En el teléfono arranca en lista (el tablero de 5 columnas no cabe).
 function modoGuardado() {
-  try { return localStorage.getItem("tk-mis-modo") || "tablero"; } catch { return "tablero"; }
+  const porDefecto = esTelefono() ? "lista" : "tablero";
+  try { return localStorage.getItem("tk-mis-modo") || porDefecto; } catch { return porDefecto; }
 }
 
 export async function render(cont, _partes, params) {
@@ -21,7 +24,7 @@ export async function render(cont, _partes, params) {
 
   const pestanas = h("div.pestanas");
   const pintarPestanas = () => vaciar(pestanas,
-    [["tablero", "▥ Tablero"], ["lista", "☰ Lista"]].map(([id, texto]) => h("button", {
+    [["lista", "lista", "Lista"], ["tablero", "tablero", "Tablero"]].map(([id, ico, texto]) => h("button", {
       class: modo === id ? "activo" : "",
       onclick: () => {
         modo = id;
@@ -29,7 +32,7 @@ export async function render(cont, _partes, params) {
         pintarPestanas();
         pintar();
       },
-    }, texto)));
+    }, icono(ico, { tam: 15 }), texto)));
   pintarPestanas();
 
   vaciar(cont,
@@ -114,7 +117,7 @@ function carta(t) {
       t.prioridad !== "normal" && h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad)),
       chipFecha(t.vence, t.cerrado),
       total > 0 && h("span.meta", h("span.mini-barra", h("i", { style: { width: `${(t.checklist.hechos / total) * 100}%` } })), `${t.checklist.hechos}/${total}`),
-      t.comentarios > 0 && h("span.meta", `💬 ${t.comentarios}`),
+      t.comentarios > 0 && h("span.meta", icono("comentario", { tam: 14 }), t.comentarios),
       avatares(t.asignados, persona)));
 }
 
