@@ -251,6 +251,21 @@ label.chk { display: inline-flex; gap: .55rem; align-items: center; color: var(-
 .contenido { flex: 1; padding: 1.75rem 2rem 2.5rem; min-width: 0; }
 .marca-movil, .cancelar-busqueda, .abajo { display: none; }
 
+/* Compu: la barra del pass arriba y, abajo, el menú lateral y el contenido a
+   lo que queda de alto, cada uno con su propio scroll. Antes el menú medía
+   toda la pantalla pero empezaba debajo de la barra del pass, y "Mi perfil"
+   quedaba fuera hasta bajar. */
+@media (min-width: 769px) {
+  body.tk { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  body.tk > .navbar { flex: none; }
+  .tk-raiz { flex: 1; min-height: 0; overflow-y: auto; }
+  .app { height: 100%; min-height: 0; }
+  .lateral { position: static; height: 100%; }
+  .principal { height: 100%; min-height: 0; overflow-y: auto; }
+}
+/* El logo y los enlaces de la barra del pass no se subrayan. */
+.navbar a:hover { text-decoration: none; }
+
 /* Compu angosta (tableta): el menú lateral se hace más chico. */
 @media (min-width: 769px) and (max-width: 1000px) {
   .app { grid-template-columns: 210px minmax(0, 1fr); }
@@ -637,7 +652,8 @@ ol.pasos { margin: 0; padding-left: 1.2rem; display: grid; gap: .6rem; color: va
 @media (max-width: 520px) { .graficas { grid-template-columns: 1fr; } }
 
 /* ---------- Asistente ---------- */
-.asistente { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 1rem; height: calc(100vh - 64px - 1.75rem - 2.5rem - 70px); min-height: 480px; }
+/* 76px: la barra del pass de arriba (en la compu el contenido mide lo que queda debajo de ella). */
+.asistente { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 1rem; height: calc(100vh - 76px - 64px - 1.75rem - 2.5rem - 70px); min-height: 480px; }
 .chat { display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
 .chat .chat-cab { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.25rem; border-bottom: 1px solid var(--line); }
 .chat .bot { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 1.05rem; background: linear-gradient(135deg, var(--purple), var(--blue)); box-shadow: 0 0 14px rgba(167, 139, 250, .35); flex: none; }
@@ -661,7 +677,7 @@ ol.pasos { margin: 0; padding-left: 1.2rem; display: grid; gap: .6rem; color: va
 .asistente .lado { display: grid; gap: 1rem; align-content: start; }
 .asistente .lado .tarjeta { padding: 1rem 1.1rem; display: grid; gap: .5rem; }
 .asistente .lado ul { margin: 0; padding-left: 1.1rem; color: var(--ink-2); font-size: .88rem; display: grid; gap: .35rem; }
-@media (max-width: 1200px) { .asistente { grid-template-columns: 1fr; height: auto; } .asistente .lado { display: none; } .chat { height: calc(100vh - 190px); } }
+@media (max-width: 1200px) { .asistente { grid-template-columns: 1fr; height: auto; } .asistente .lado { display: none; } .chat { height: calc(100vh - 76px - 190px); } }
 
 /* ---------- Perfil ---------- */
 .perfil { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; }
