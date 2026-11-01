@@ -268,6 +268,14 @@ function propiedades(t, editable, guardar, recargar) {
         },
       }, "×"))),
     !t.asignados.length && !editable && h("span.dim", "Sin asignar"),
+    // Sólo se asigna a quien está en el área. Si ya están todos, el + lo
+    // explica en lugar de desaparecer (parecía que no se podía asignar).
+    editable && !candidatos.length && h("button.agregar-select", {
+      type: "button", "aria-label": "Asignar a alguien más",
+      onclick: () => toast(administra(t.area_id)
+        ? `Ya están asignados todos los de ${area(t.area_id)?.nombre || "el área"}. Agrega personas al área en Configurar → Miembros.`
+        : `Ya están asignados todos los de ${area(t.area_id)?.nombre || "el área"}. Un admin del área puede agregar a más personas.`),
+    }, icono("mas", { tam: 14 }), t.asignados.length ? "" : "Asignar"),
     editable && candidatos.length > 0 && h("span.agregar-select",
       icono("mas", { tam: 14 }), t.asignados.length ? "" : "Asignar",
       h("select", {
@@ -316,7 +324,7 @@ function propiedades(t, editable, guardar, recargar) {
 
   // Mover de área (solo a áreas donde puedo editar)
   const otras = datos.areas.filter((x) => !x.archivada && x.id !== t.area_id && puedeEditar(x.id));
-  const mover = editable && !t.padre_id && otras.length > 0 && h("span.valor-select",
+  const mover = editable && !t.padre_id && otras.length > 0 && h("span.valor-select.vacio",
     h("select", {
       "aria-label": "Mover a otra área",
       onchange: async (e) => {
