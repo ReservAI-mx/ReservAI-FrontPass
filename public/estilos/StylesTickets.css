@@ -458,6 +458,22 @@ textarea.titulo-editable:focus:not([readonly]) { border-color: var(--blue) !impo
 /* Selector sin elegir (Mover a): como "Sin fecha", no como un valor. */
 .valor-select.vacio select { color: var(--dim); font-weight: 400 !important; }
 button.agregar-select { background: none; font-family: inherit; }
+/* Fecha de formulario (fechaConTexto): se ve como un campo más. */
+.fecha-campo.fecha-form {
+  display: flex; width: 100%; height: 40px; margin: 0; padding: 0 .5rem 0 .85rem; gap: 8px;
+  background: var(--input); border: 1px solid var(--line); border-radius: var(--radio-sm);
+  font-weight: 400; font-size: .93rem; color: var(--ink);
+}
+.fecha-campo.fecha-form:hover { background: var(--input); border-color: var(--line-2); }
+.fecha-campo.fecha-form:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+.fecha-form .ico-fecha { color: var(--dim); display: grid; }
+/* Dentro de label.campo el span de la etiqueta va en mayúsculas: éste no. */
+label.campo > span.fecha-form { text-transform: none; letter-spacing: 0; }
+.fecha-form .quitar-fecha { margin-left: auto; font-size: 1.1rem; }
+/* Safari en iPhone da a la fecha nativa un ancho propio y la centra: se
+   salía de la caja. Así respeta el ancho y se alinea como los demás. */
+input[type=date] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; text-align: left; }
+input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; }
 .prio-sel { color: var(--blue-text); }
 .prio-sel.urgente { color: var(--red); }
 .prio-sel.alta { color: var(--amber); }
@@ -840,6 +856,7 @@ ol.pasos { margin: 0; padding-left: 1.2rem; display: grid; gap: .6rem; color: va
   .prop > .v { gap: 8px; }
   .valor-select select, .fecha-campo, .prop .valor { font-size: 16px; }
   .valor-select select, .fecha-campo { font-weight: 600; }
+  .fecha-campo.fecha-form { font-weight: 400; font-size: 16px; height: 44px; }
   .agregar-select { height: 34px; padding: 0 12px; font-size: 15px; }
   .persona-chip { min-height: 34px; padding: 3px 10px 3px 3px; font-size: 15px; gap: 8px; }
   .persona-chip .avatar { width: 28px; height: 28px; font-size: .68rem; }
