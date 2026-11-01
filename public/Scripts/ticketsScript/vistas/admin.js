@@ -247,12 +247,12 @@ function pintarEstados(zona, a, refrescar) {
     }
   };
   vaciar(zona,
-    h("p.dim", "El primer estado es donde entran los tickets nuevos. Los de tipo “Terminado” cuentan como cerrados."),
+    h("p.dim", "El primer estado es donde entran los tickets nuevos. Los de tipo “Terminado” cuentan como cerrados; los de tipo “On hold” siguen abiertos pero no avisan ni cuentan como vencidos."),
     h("div.admin-lista", estados.map((e, i) => h("div.tarjeta.admin-fila",
       h("input.color-input", { type: "color", value: e.color, onchange: (ev) => guardar(e, { color: ev.target.value }) }),
       h("input.crece", { type: "text", value: e.nombre, onchange: (ev) => ev.target.value.trim() && guardar(e, { nombre: ev.target.value.trim() }) }),
       h("select", { style: { width: "auto" }, onchange: (ev) => guardar(e, { tipo: ev.target.value }) },
-        [["abierto", "Por empezar"], ["en_curso", "En curso"], ["cerrado", "Terminado"]].map(([v, t]) => h("option", { value: v, selected: e.tipo === v }, t))),
+        [["abierto", "Por empezar"], ["en_curso", "En curso"], ["en_espera", "On hold"], ["cerrado", "Terminado"]].map(([v, t]) => h("option", { value: v, selected: e.tipo === v }, t))),
       h("button.btn.chico", { disabled: i === 0, onclick: () => mover(i, -1) }, "↑"),
       h("button.btn.chico", { disabled: i === estados.length - 1, onclick: () => mover(i, 1) }, "↓"),
       h("button.btn.chico.peligro", { onclick: () => borrar(e) }, "Borrar")))),
