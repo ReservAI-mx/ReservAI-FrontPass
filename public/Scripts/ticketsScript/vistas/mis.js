@@ -3,11 +3,11 @@ import {
   h, vaciar, error, avatares, chipEstado, chipEtiqueta, chipFecha, nombrePrioridad, fechaLocal, hoyIso,
   debounce, esqueletos, COLOR_PRIO, esTelefono,
 } from "../ui.js";
-import { area, estado, etiqueta, persona, escuchar, tickets as api } from "../datos.js";
+import { area, estado, etiqueta, persona, escuchar, tickets as api, enEspera } from "../datos.js";
 import { verTicket } from "../rutas.js";
 import { icono } from "../iconos.js";
 
-const PESO_PRIO = { urgente: 0, alta: 1, normal: 2, baja: 3 };
+const PESO_PRIO = { urgente: 0, alta: 1, normal: 2, baja: 3, on_hold: 4 };
 
 // En el teléfono arranca en lista (el tablero de 5 columnas no cabe).
 function modoGuardado() {
@@ -57,12 +57,15 @@ export async function render(cont, _partes, params) {
   const grupos = () => {
     const hoy = fechaLocal(hoyIso());
     const dias = (t) => (fechaLocal(t.vence) - hoy) / 86400000;
+    // Lo que está on hold va aparte, al final, aunque tenga fecha.
+    const activo = (t) => !enEspera(t);
     return [
-      { nombre: "Vencidos", color: "#f87171", filtro: (t) => t.vence && dias(t) < 0 },
-      { nombre: "Hoy", color: "#ffb547", filtro: (t) => t.vence && dias(t) === 0 },
-      { nombre: "Próximos 7 días", color: "#0983d6", filtro: (t) => t.vence && dias(t) > 0 && dias(t) <= 7 },
-      { nombre: "Después", color: "#7cc4f5", filtro: (t) => t.vence && dias(t) > 7 },
-      { nombre: "Sin fecha", color: "#6f6f6f", filtro: (t) => !t.vence },
+      { nombre: "Vencidos", color: "#f87171", filtro: (t) => activo(t) && t.vence && dias(t) < 0 },
+      { nombre: "Hoy", color: "#ffb547", filtro: (t) => activo(t) && t.vence && dias(t) === 0 },
+      { nombre: "Próximos 7 días", color: "#0983d6", filtro: (t) => activo(t) && t.vence && dias(t) > 0 && dias(t) <= 7 },
+      { nombre: "Después", color: "#7cc4f5", filtro: (t) => activo(t) && t.vence && dias(t) > 7 },
+      { nombre: "Sin fecha", color: "#6f6f6f", filtro: (t) => activo(t) && !t.vence },
+      { nombre: "On hold", color: "#a78bfa", filtro: enEspera },
     ].map((g) => ({
       ...g,
       tickets: tickets.filter(g.filtro).sort((a, b) => (a.vence || "").localeCompare(b.vence || "") || PESO_PRIO[a.prioridad] - PESO_PRIO[b.prioridad]),
@@ -74,7 +77,7 @@ export async function render(cont, _partes, params) {
     // La animación de entrada solo la primera vez (no en cada actualización en vivo).
     zona.classList.toggle("sin-animacion", pintadas++ > 0);
     if (busqueda === null) {
-      const vencidos = tickets.filter((t) => t.vence && fechaLocal(t.vence) < fechaLocal(hoyIso())).length;
+      const vencidos = tickets.filter((t) => !enEspera(t) && t.vence && fechaLocal(t.vence) < fechaLocal(hoyIso())).length;
       vaciar(resumen, tickets.length
         ? `${tickets.length} abiertos asignados a ti${vencidos ? ` · ${vencidos} vencido${vencidos > 1 ? "s" : ""}` : ""}`
         : "");
@@ -115,7 +118,7 @@ function carta(t) {
     t.etiquetas.length > 0 && h("div.arriba", t.etiquetas.map((id) => etiqueta(id)).filter(Boolean).map((x) => chipEtiqueta(x))),
     h("div.pie",
       t.prioridad !== "normal" && h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad)),
-      chipFecha(t.vence, t.cerrado),
+      chipFecha(t.vence, t.cerrado || enEspera(t)),
       total > 0 && h("span.meta", h("span.mini-barra", h("i", { style: { width: `${(t.checklist.hechos / total) * 100}%` } })), `${t.checklist.hechos}/${total}`),
       t.comentarios > 0 && h("span.meta", icono("comentario", { tam: 14 }), t.comentarios),
       avatares(t.asignados, persona)));
@@ -131,6 +134,6 @@ export function tabla(tickets, { mostrarArea = true } = {}) {
       h("td", chipEstado(estado(t.estado_id))),
       h("td.opcional", avatares(t.asignados, persona)),
       h("td", h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad))),
-      h("td.opcional", chipFecha(t.vence, t.cerrado) || h("span.dim", "—")));
+      h("td.opcional", chipFecha(t.vence, t.cerrado || enEspera(t)) || h("span.dim", "—")));
   }))));
 }

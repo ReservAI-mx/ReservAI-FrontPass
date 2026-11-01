@@ -7,7 +7,7 @@ import {
 import { icono } from "../iconos.js";
 import {
   api, datos, persona, area, estado, estadosDe, etiquetasDe, etiqueta, miembrosDe, personasActivas,
-  puedeEditar, administra, escuchar, tickets as tk, subirAdjunto, puedoEscribir,
+  puedeEditar, administra, escuchar, tickets as tk, subirAdjunto, puedoEscribir, enEspera,
 } from "../datos.js";
 import { cambiarParam, verTicket } from "../rutas.js";
 import { iniciarCronometro, detenerCronometro } from "../cronometro.js";
@@ -228,7 +228,7 @@ function campoFecha(t, campo, guardar) {
     onclick: (e) => { try { e.target.showPicker(); } catch { /* sin showPicker */ } },
     onchange: (e) => guardar({ [campo]: e.target.value || null }),
   });
-  return h("span.fecha-campo", { class: [valor ? "" : "vacia", campo === "vence" ? claseVence(valor, t.cerrado) : ""].join(" ") },
+  return h("span.fecha-campo", { class: [valor ? "" : "vacia", campo === "vence" ? claseVence(valor, t.cerrado || enEspera(t)) : ""].join(" ") },
     input,
     h("span.fecha-texto", { "aria-hidden": "true" }, valor ? fechaLarga(valor) : "Sin fecha"),
     valor && h("button.quitar-fecha", {

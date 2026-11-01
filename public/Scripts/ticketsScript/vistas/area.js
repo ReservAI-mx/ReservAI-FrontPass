@@ -5,13 +5,13 @@ import {
 } from "../ui.js";
 import {
   datos, areaPorClave, estadosDe, estado, etiquetasDe, etiqueta, persona, miembrosDe,
-  puedeEditar, administra, escuchar, tickets as api, puedoEscribir,
+  puedeEditar, administra, escuchar, tickets as api, puedoEscribir, enEspera,
 } from "../datos.js";
 import { verTicket, ir, cambiarParam } from "../rutas.js";
 import { crearConIA, buscarParecidos } from "../ia.js";
 import { icono } from "../iconos.js";
 
-const PESO_PRIO = { urgente: 0, alta: 1, normal: 2, baja: 3 };
+const PESO_PRIO = { urgente: 0, alta: 1, normal: 2, baja: 3, on_hold: 4 };
 const ORDENES = {
   prioridad: ["Prioridad", (x, y) => PESO_PRIO[x.prioridad] - PESO_PRIO[y.prioridad] || (x.vence || "9999").localeCompare(y.vence || "9999") || x.numero - y.numero],
   vence: ["Vencimiento", (x, y) => (x.vence || "9999").localeCompare(y.vence || "9999") || PESO_PRIO[x.prioridad] - PESO_PRIO[y.prioridad]],
@@ -288,7 +288,7 @@ function listaAgrupada(a, tickets, editable, recargar, ordenar) {
                 h("div.debajo", etiquetasDeTicket(t), extras(t))),
               h("td.opcional", avatares(t.asignados, persona)),
               h("td", h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad))),
-              h("td.opcional", chipFecha(t.vence, t.cerrado) || h("span.dim", "—")),
+              h("td.opcional", chipFecha(t.vence, t.cerrado || enEspera(t)) || h("span.dim", "—")),
               h("td.opcional.flecha-celda", { style: { textAlign: "right" } }, h("span.dim", "›")))),
             rapido))));
     return caja;
@@ -346,7 +346,7 @@ function tablero(a, tickets, editable, recargar) {
             h("div.titulo", t.titulo),
             h("div.pie",
               t.prioridad !== "normal" && h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad)),
-              chipFecha(t.vence, t.cerrado),
+              chipFecha(t.vence, t.cerrado || enEspera(t)),
               extras(t),
               avatares(t.asignados, persona)));
           return carta;
