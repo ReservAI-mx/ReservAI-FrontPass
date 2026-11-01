@@ -8,6 +8,7 @@ import {
 import { api, datos, esAdmin, puedeEditar, escuchar } from "../datos.js";
 import { verTicket } from "../rutas.js";
 import { cargarChart } from "./dashboard.js";
+import { icono } from "../iconos.js";
 
 const CERRADO = "Cerrado";
 // Mismos resultados "en juego" que usa la Bitácora para contar prospectos.
@@ -215,7 +216,7 @@ export async function render(zona, a) {
       perfiles.filter((p) => leads.some((l) => l.vendedor === p.id)).map((p) => h("option", { value: p.id, selected: filtros.vendedor === p.id }, p.nombre))),
     h("select", { onchange: (e) => { filtros.dias = e.target.value; pintar(); } },
       [["30", "Últimos 30 días"], ["90", "Últimos 90 días"], ["365", "Último año"], ["todo", "Todo"]].map(([v, t]) => h("option", { value: v, selected: filtros.dias === v }, t))),
-    esAdmin() && h("button.btn.chico", { onclick: editarRegla }, "⚙ Regla de comisión"));
+    esAdmin() && h("button.btn.chico", { onclick: editarRegla }, icono("engrane", { tam: 14 }), "Regla de comisión"));
 
   const editarRegla = () => {
     const tipo = h("select",

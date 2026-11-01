@@ -63,23 +63,33 @@ function traducirError(msg) {
   return msg;
 }
 
+// Teléfono: misma regla que el CSS (una columna, barra de abajo, hojas).
+const TELEFONO = window.matchMedia("(max-width: 768px)");
+export const esTelefono = () => TELEFONO.matches;
+export const alCambiarTamano = (f) => TELEFONO.addEventListener("change", f);
+
 // Modal genérico. Devuelve {cerrar}. contenido puede ser nodo o función(cerrar) => nodo.
-export function modal(titulo, contenido, { ancho = false, alCerrar } = {}) {
+// En el teléfono sale como hoja desde abajo (CSS) y no abre el teclado solo,
+// salvo que se pida con enfocar.
+export function modal(titulo, contenido, { ancho = false, alCerrar, clase = "", enfocar = !esTelefono() } = {}) {
   let fondo;
   const cerrar = () => {
     fondo.remove();
     document.removeEventListener("keydown", esc);
+    document.body.classList.toggle("con-hoja", !!document.querySelector(".modal"));
     alCerrar && alCerrar();
   };
   const esc = (e) => e.key === "Escape" && cerrar();
   const cuerpo = typeof contenido === "function" ? contenido(cerrar) : contenido;
-  fondo = h("div.modal", { onmousedown: (e) => e.target === fondo && cerrar() },
-    h("div.caja", { class: ancho ? "ancha" : "" },
+  fondo = h("div.modal", { class: clase, onmousedown: (e) => e.target === fondo && cerrar() },
+    h("div.caja", { class: ancho ? "ancha" : "", role: "dialog", "aria-label": titulo },
+      h("div.asa", { "aria-hidden": "true" }),
       h("div.cab", h("h2", titulo)),
       cuerpo));
   document.body.appendChild(fondo);
+  document.body.classList.add("con-hoja");
   document.addEventListener("keydown", esc);
-  const primero = fondo.querySelector("input, textarea, select");
+  const primero = enfocar && fondo.querySelector("input:not([type=checkbox]), textarea, select");
   primero && setTimeout(() => primero.focus(), 30);
   return { cerrar };
 }
@@ -129,6 +139,14 @@ export function fechaCorta(iso) {
   if (dif === -1) return "ayer";
   const anio = f.getFullYear() !== hoy.getFullYear() ? " " + f.getFullYear() : "";
   return `${f.getDate()} ${MESES[f.getMonth()]}${anio}`;
+}
+
+// "vie 31 oct" (con año si no es este). Para las fechas del ticket.
+export function fechaLarga(iso) {
+  const f = fechaLocal(iso);
+  if (!f) return "";
+  const anio = f.getFullYear() !== new Date().getFullYear() ? " " + f.getFullYear() : "";
+  return `${DIAS[(f.getDay() + 6) % 7]} ${f.getDate()} ${MESES[f.getMonth()]}${anio}`;
 }
 
 export function claseVence(iso, cerrado) {

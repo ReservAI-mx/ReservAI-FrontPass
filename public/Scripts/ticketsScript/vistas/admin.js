@@ -118,7 +118,8 @@ function pintarPersonas(zona, refrescar) {
           h("thead", h("tr", h("th", "Persona"), areas.map((a) => h("th", a.nombre)))),
           h("tbody", datos.personas.map((p) => h("tr",
             h("td", h("div.fila", avatar(p), h("div", h("div", p.nombre), h("div.dim", p.correo)))),
-            areas.map((a) => h("td", p.tipo === "admin"
+            // data-area: en el teléfono la tabla va en tarjetas y el nombre del área sale junto al rol.
+            areas.map((a) => h("td", { "data-area": a.nombre }, p.tipo === "admin"
               ? h("span.chip", "Admin")
               : h("select", { onchange: (e) => cambiarRol(p, a, e.target.value), title: "Rol efectivo: " + (efectivo(p.id, a.id) || "sin acceso") },
                 h("option", { value: "", selected: !explicito(p.id, a.id) }, a.tipos_cuenta.includes(p.tipo) ? "Por su tipo (miembro)" : "Sin acceso"),

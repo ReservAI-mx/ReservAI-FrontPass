@@ -2,7 +2,9 @@
 import {
   h, vaciar, toast, error, confirmar, avatar, chipEstado, chipEtiqueta, fechaHora, haceCuanto,
   duracion, PRIORIDADES, nombrePrioridad, textoConMenciones, debounce, hoyIso, esqueletos,
+  claseVence, fechaLarga,
 } from "../ui.js";
+import { icono } from "../iconos.js";
 import {
   api, datos, persona, area, estado, estadosDe, etiquetasDe, etiqueta, miembrosDe, personasActivas,
   puedeEditar, administra, escuchar, tickets as tk, subirAdjunto, puedoEscribir,
@@ -17,8 +19,16 @@ export function cerrarPanel() {
   if (!actual) return;
   actual.dejarDeEscuchar && actual.dejarDeEscuchar();
   actual.nodo.remove();
+  document.body.classList.remove("con-panel");
   document.removeEventListener("keydown", actual.esc);
   actual = null;
+}
+
+// En el teléfono el panel tapa la pantalla: se sale con "atrás" a la
+// izquierda, como en cualquier app. En la compu, la ✕ a la derecha.
+function botonCerrar(salir) {
+  return h("button.btn.fantasma.icono.cerrar-panel", { onclick: salir, "aria-label": "Cerrar", title: "Cerrar (Esc)" },
+    h("span.solo-movil", icono("atras", { tam: 24 })), h("span.solo-escritorio", icono("cerrar", { tam: 20 })));
 }
 
 export async function abrirTicket(numero) {
@@ -26,12 +36,16 @@ export async function abrirTicket(numero) {
   cerrarPanel();
   const cuerpo = h("div.panel-cuerpo", h("div.panel-principal", esqueletos(6)));
   const cab = h("div.panel-cab");
+  // La caja para comentar va fija abajo y no se repinta con los cambios en
+  // vivo: lo que estés escribiendo no se pierde.
+  const pie = h("div.panel-pie");
   const salir = () => cambiarParam("t", null);
   const esc = (e) => {
     if (e.key === "Escape" && !document.querySelector(".modal")) salir();
   };
-  const nodo = h("div", h("div.velo", { onclick: salir }), h("aside.panel", cab, cuerpo));
+  const nodo = h("div", h("div.velo", { onclick: salir }), h("aside.panel", { role: "dialog", "aria-label": "Ticket T-" + numero }, cab, cuerpo, pie));
   document.body.appendChild(nodo);
+  document.body.classList.add("con-panel");
   document.addEventListener("keydown", esc);
   actual = { numero, nodo, esc };
   const yo = actual;
@@ -43,8 +57,12 @@ export async function abrirTicket(numero) {
       if (actual !== yo) return;
       if (!t) {
         vaciar(cuerpo, h("div.vacio", "No existe el ticket T-" + numero + " o no tienes permiso para verlo."));
-        vaciar(cab, h("span.num", "T-" + numero), h("button.btn.fantasma", { style: { marginLeft: "auto" }, onclick: salir }, "✕"));
+        vaciar(cab, botonCerrar(salir), h("span.num", "T-" + numero));
         return;
+      }
+      if (!estadoPanel.comentar && puedoEscribir()) {
+        estadoPanel.comentar = cajaComentario(t, recargar);
+        vaciar(pie, estadoPanel.comentar);
       }
       // El aviso de cambios es de todo Tickets: si este ticket quedó igual,
       // no se repinta (se perdería, p. ej., el resumen de la IA en pantalla).
@@ -97,22 +115,30 @@ function pintar(t, cab, cuerpo, recargar, salir, estadoPanel) {
   };
 
   // ----- Cabecera -----
+  const enlace = location.origin + "/tickets/#/mis?t=" + t.numero;
   vaciar(cab,
+    botonCerrar(salir),
     h("span.num", "T-" + t.numero),
     a && h("span.chip", h("span.bola", { style: { background: a.color } }), a.nombre),
-    t.solicitado_por && h("span.chip", { title: "Pedido desde otra área" }, "Solicitud de " + (persona(t.solicitado_por)?.nombre || "—")),
-    t.origen === "documentacion" && h("span.chip", { title: "Se sincroniza con el bloque del diagrama" },
-      "◇ " + (t.origen_datos?.proyecto || t.origen_proyecto) + " › " + (t.origen_datos?.nombre || "bloque")),
-    h("div", { style: { marginLeft: "auto" }, class: "fila" },
-      h("button.btn.fantasma.chico", {
-        title: "Copiar enlace",
-        onclick: () => {
-          navigator.clipboard?.writeText(location.origin + "/tickets/#/mis?t=" + t.numero);
+    h("div.panel-acciones",
+      h("button.btn.fantasma.icono", {
+        title: "Copiar enlace", "aria-label": "Compartir enlace",
+        onclick: async () => {
+          // En el teléfono, la hoja de compartir del sistema (WhatsApp, etc.).
+          if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
+            try {
+              await navigator.share({ title: `T-${t.numero} · ${t.titulo}`, url: enlace });
+              return;
+            } catch (e) {
+              if (e.name === "AbortError") return;
+            }
+          }
+          navigator.clipboard?.writeText(enlace);
           toast("Enlace copiado");
         },
-      }, "🔗"),
-      administra(t.area_id) && h("button.btn.fantasma.chico.peligro", {
-        title: "Borrar ticket",
+      }, icono("enlace")),
+      administra(t.area_id) && h("button.btn.fantasma.icono.peligro", {
+        title: "Borrar ticket", "aria-label": "Borrar ticket",
         onclick: async () => {
           if (!(await confirmar(`¿Borrar T-${t.numero} y todo lo que tiene (comentarios, tiempo, adjuntos)?`, { si: "Borrar", peligro: true }))) return;
           try {
@@ -123,8 +149,7 @@ function pintar(t, cab, cuerpo, recargar, salir, estadoPanel) {
             error(e, "No se pudo borrar");
           }
         },
-      }, "🗑"),
-      h("button.btn.fantasma", { onclick: salir, title: "Cerrar (Esc)" }, "✕")));
+      }, icono("basura"))));
 
   // Si el usuario está escribiendo en una sección, no la repintamos.
   const secciones = cuerpo.__secciones || {};
@@ -144,10 +169,17 @@ function pintar(t, cab, cuerpo, recargar, salir, estadoPanel) {
     return nueva;
   };
 
-  // Dos columnas: contenido a la izquierda, propiedades y tiempo a la derecha.
-  const principal = h("div.panel-principal",
+  // Arriba el título a todo lo ancho. En la compu, dos columnas: contenido a
+  // la izquierda, propiedades y tiempo a la derecha. En el teléfono, una
+  // sola: título, propiedades, tiempo y luego el contenido.
+  const encabezado = h("div.panel-titulo",
     t.padre && h("div.muted", "Subtarea de ", h("a", { href: "#", onclick: (e) => { e.preventDefault(); verTicket(t.padre.numero); } }, `T-${t.padre.numero} · ${t.padre.titulo}`)),
     seccion("titulo", () => tituloEditable(t, editable, guardar)),
+    (t.solicitado_por || t.origen === "documentacion") && h("div.multi",
+      t.solicitado_por && h("span.chip", { title: "Pedido desde otra área" }, icono("flechas", { tam: 14 }), "Solicitud de " + (persona(t.solicitado_por)?.nombre || "—")),
+      t.origen === "documentacion" && h("span.chip", { title: "Se sincroniza con el bloque del diagrama" },
+        icono("documentacion", { tam: 14 }), (t.origen_datos?.proyecto || t.origen_proyecto) + " › " + (t.origen_datos?.nombre || "bloque"))));
+  const principal = h("div.panel-principal",
     seccion("descripcion", () => descripcion(t, editable, guardar)),
     seccion("ia", () => seccionIA(t, editable, recargar)),
     seccion("checklist", () => checklist(t, editable, recargar)),
@@ -158,36 +190,69 @@ function pintar(t, cab, cuerpo, recargar, salir, estadoPanel) {
   const lado = h("aside.panel-lado",
     seccion("props", () => propiedades(t, editable, guardar, recargar)),
     seccion("tiempo", () => tiempo(t, editable, recargar)));
-  vaciar(cuerpo, principal, lado);
+  vaciar(cuerpo, encabezado, principal, lado);
   cuerpo.__secciones = secciones;
 }
 
+// Título de varias líneas: en el teléfono no cabe en una sola y se cortaba.
 function tituloEditable(t, editable, guardar) {
-  const input = h("input.titulo-editable", {
-    type: "text", value: t.titulo, readonly: !editable,
-    onkeydown: (e) => e.key === "Enter" && e.target.blur(),
+  const campo = h("textarea.titulo-editable", {
+    rows: 1, value: t.titulo, readonly: !editable, "aria-label": "Título", enterkeyhint: "done",
+    onkeydown: (e) => {
+      if (e.key === "Enter") { e.preventDefault(); e.target.blur(); }
+    },
+    oninput: () => ajustar(),
     onchange: (e) => {
-      const v = e.target.value.trim();
+      const v = e.target.value.replace(/\s+/g, " ").trim();
       if (v && v !== t.titulo) guardar({ titulo: v });
       else e.target.value = t.titulo;
+      ajustar();
     },
   });
-  return h("div", input);
+  const ajustar = () => {
+    campo.style.height = "auto";
+    campo.style.height = campo.scrollHeight + "px";
+  };
+  requestAnimationFrame(ajustar);
+  return h("div", campo);
+}
+
+// Fecha con "Sin fecha" cuando está vacía (Safari deja la caja en blanco) y
+// una ✕ para quitarla.
+function campoFecha(t, campo, guardar) {
+  const valor = t[campo] || "";
+  const input = h("input", {
+    type: "date", value: valor, "aria-label": campo === "vence" ? "Vence" : "Inicio",
+    // En la compu el calendario sólo abre con su iconito: se abre al tocar
+    // cualquier parte del campo.
+    onclick: (e) => { try { e.target.showPicker(); } catch { /* sin showPicker */ } },
+    onchange: (e) => guardar({ [campo]: e.target.value || null }),
+  });
+  return h("span.fecha-campo", { class: [valor ? "" : "vacia", campo === "vence" ? claseVence(valor, t.cerrado) : ""].join(" ") },
+    input,
+    h("span.fecha-texto", { "aria-hidden": "true" }, valor ? fechaLarga(valor) : "Sin fecha"),
+    valor && h("button.quitar-fecha", {
+      "aria-label": "Quitar fecha", type: "button",
+      onclick: (e) => { e.preventDefault(); guardar({ [campo]: null }); },
+    }, icono("cerrar", { tam: 14 })));
 }
 
 function propiedades(t, editable, guardar, recargar) {
   const estados = estadosDe(t.area_id);
+  const est = estado(t.estado_id);
   const selEstado = editable
-    ? h("select", { onchange: (e) => guardar({ estado_id: e.target.value }) },
-      estados.map((e) => h("option", { value: e.id, selected: e.id === t.estado_id }, e.nombre)))
-    : chipEstado(estado(t.estado_id));
+    ? h("span.valor-select", { style: { "--c": est?.color || "var(--muted)" } },
+      h("span.bola-estado"),
+      h("select", { "aria-label": "Estado", onchange: (e) => guardar({ estado_id: e.target.value }) },
+        estados.map((e) => h("option", { value: e.id, selected: e.id === t.estado_id }, e.nombre))))
+    : chipEstado(est);
   const selPrio = editable
-    ? h("select", { onchange: (e) => guardar({ prioridad: e.target.value }) },
-      PRIORIDADES.map((p) => h("option", { value: p.id, selected: p.id === t.prioridad }, p.nombre)))
+    ? h("span.valor-select.prio-sel", { class: t.prioridad },
+      icono("bandera", { tam: 16 }),
+      h("select", { "aria-label": "Prioridad", onchange: (e) => guardar({ prioridad: e.target.value }) },
+        PRIORIDADES.map((p) => h("option", { value: p.id, selected: p.id === t.prioridad }, p.nombre))))
     : h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad));
-  const fecha = (campo) => editable
-    ? h("input", { type: "date", value: t[campo] || "", onchange: (e) => guardar({ [campo]: e.target.value || null }) })
-    : h("span", t[campo] || "—");
+  const fecha = (campo) => editable ? campoFecha(t, campo, guardar) : h("span.valor", t[campo] ? fechaLarga(t[campo]) : "—");
 
   // Responsables
   const candidatos = miembrosDe(t.area_id).filter((p) => !t.asignados.includes(p.id));
@@ -203,16 +268,18 @@ function propiedades(t, editable, guardar, recargar) {
         },
       }, "×"))),
     !t.asignados.length && !editable && h("span.dim", "Sin asignar"),
-    editable && candidatos.length > 0 && h("select", {
-      class: "compacto",
-      onchange: async (e) => {
-        if (!e.target.value) return;
-        try {
-          await tk.asignar(t.id, e.target.value);
-          recargar();
-        } catch (err) { error(err); }
-      },
-    }, h("option", { value: "" }, "+ Asignar"), candidatos.map((p) => h("option", { value: p.id }, p.nombre))));
+    editable && candidatos.length > 0 && h("span.agregar-select",
+      icono("mas", { tam: 14 }), t.asignados.length ? "" : "Asignar",
+      h("select", {
+        "aria-label": "Asignar a",
+        onchange: async (e) => {
+          if (!e.target.value) return;
+          try {
+            await tk.asignar(t.id, e.target.value);
+            recargar();
+          } catch (err) { error(err); }
+        },
+      }, h("option", { value: "" }, "Asignar a…"), candidatos.map((p) => h("option", { value: p.id }, p.nombre)))));
 
   // Etiquetas
   const disponibles = etiquetasDe(t.area_id).filter((e) => !t.etiquetas.includes(e.id));
@@ -224,50 +291,56 @@ function propiedades(t, editable, guardar, recargar) {
       } catch (err) { error(err); }
     }))),
     !t.etiquetas.length && !editable && h("span.dim", "—"),
-    editable && h("select", {
-      class: "compacto",
-      onchange: async (e) => {
-        let id = e.target.value;
-        if (!id) return;
-        try {
-          if (id === "__nueva") {
-            const nombre = prompt("Nombre de la etiqueta nueva:");
-            if (!nombre || !nombre.trim()) return recargar();
-            const nueva = await api(`/areas/${t.area_id}/etiquetas`, { method: "POST", body: { nombre: nombre.trim() } });
-            datos.etiquetas.push(nueva);
-            id = nueva.id;
-          }
-          await tk.etiquetar(t.id, id);
-          recargar();
-        } catch (err) { error(err); recargar(); }
-      },
-    }, h("option", { value: "" }, "+ Etiqueta"),
-      disponibles.map((e) => h("option", { value: e.id }, e.nombre)),
-      h("option", { value: "__nueva" }, "Nueva etiqueta…")));
+    editable && h("span.agregar-select",
+      icono("mas", { tam: 14 }), t.etiquetas.length ? "" : "Etiqueta",
+      h("select", {
+        "aria-label": "Agregar etiqueta",
+        onchange: async (e) => {
+          let id = e.target.value;
+          if (!id) return;
+          try {
+            if (id === "__nueva") {
+              const nombre = prompt("Nombre de la etiqueta nueva:");
+              if (!nombre || !nombre.trim()) return recargar();
+              const nueva = await api(`/areas/${t.area_id}/etiquetas`, { method: "POST", body: { nombre: nombre.trim() } });
+              datos.etiquetas.push(nueva);
+              id = nueva.id;
+            }
+            await tk.etiquetar(t.id, id);
+            recargar();
+          } catch (err) { error(err); recargar(); }
+        },
+      }, h("option", { value: "" }, "Agregar etiqueta…"),
+        disponibles.map((e) => h("option", { value: e.id }, e.nombre)),
+        h("option", { value: "__nueva" }, "Nueva etiqueta…"))));
 
   // Mover de área (solo a áreas donde puedo editar)
   const otras = datos.areas.filter((x) => !x.archivada && x.id !== t.area_id && puedeEditar(x.id));
-  const mover = editable && !t.padre_id && otras.length > 0 && h("select", {
-    class: "compacto",
-    onchange: async (e) => {
-      const destino = area(e.target.value);
-      if (!destino) return;
-      if (await confirmar(`¿Mover T-${t.numero} a ${destino.nombre}? Pasará al primer estado de esa área.`, { si: "Mover" })) {
-        guardar({ area_id: destino.id });
-      } else e.target.value = "";
-    },
-  }, h("option", { value: "" }, "Mover a otra área…"), otras.map((x) => h("option", { value: x.id }, x.nombre)));
+  const mover = editable && !t.padre_id && otras.length > 0 && h("span.valor-select",
+    h("select", {
+      "aria-label": "Mover a otra área",
+      onchange: async (e) => {
+        const destino = area(e.target.value);
+        if (!destino) return;
+        if (await confirmar(`¿Mover T-${t.numero} a ${destino.nombre}? Pasará al primer estado de esa área.`, { si: "Mover" })) {
+          guardar({ area_id: destino.id });
+        } else e.target.value = "";
+      },
+    }, h("option", { value: "" }, "Elegir área…"), otras.map((x) => h("option", { value: x.id }, x.nombre))));
 
-  const prop = (k, valor) => h("div.prop", h("div.k", k), valor);
+  // Una fila por propiedad: ícono y nombre a la izquierda, valor a la derecha
+  // (toda la fila abre el selector del teléfono).
+  const prop = (ico, k, valor) => h("div.prop", h("div.k", icono(ico, { tam: 16 }), h("span", k)), h("div.v", valor));
   return h("div.props",
-    prop("Estado", selEstado),
-    prop("Prioridad", selPrio),
-    prop("Responsables", responsables),
-    h("div.rejilla-2", { style: { gap: ".6rem" } }, prop("Inicio", fecha("inicio")), prop("Vence", fecha("vence"))),
-    prop("Etiquetas", etiquetas),
-    mover && prop("Mover a otra área", mover),
-    prop("Creado", h("div.valor", (persona(t.creado_por)?.nombre || "—") + " · " + fechaHora(t.creado))),
-    t.cerrado && prop("Terminado", h("div.valor", fechaHora(t.cerrado))));
+    prop("estado", "Estado", selEstado),
+    prop("bandera", "Prioridad", selPrio),
+    prop("persona", "Responsables", responsables),
+    prop("calendario", "Inicio", fecha("inicio")),
+    prop("calendario", "Vence", fecha("vence")),
+    prop("etiqueta", "Etiquetas", etiquetas),
+    mover && prop("flechas", "Mover a", mover),
+    prop("reloj", "Creado", h("span.valor", (persona(t.creado_por)?.nombre || "—") + " · " + fechaHora(t.creado))),
+    t.cerrado && prop("check", "Terminado", h("span.valor", fechaHora(t.cerrado))));
 }
 
 function descripcion(t, editable, guardar) {
@@ -422,9 +495,9 @@ function tiempo(t, editable, recargar) {
   };
   const botonesTiempo = h("div.acciones",
     mio
-      ? h("button.btn.chico", { onclick: async () => { await detenerCronometro(); recargar(); } }, "■ Detener")
-      : h("button.btn.chico", { onclick: async () => { await iniciarCronometro(t.id); recargar(); } }, "▶ Iniciar"),
-    h("button.btn.chico", { onclick: manual }, "+ Manual"));
+      ? h("button.btn.chico.detener", { onclick: async () => { await detenerCronometro(); recargar(); } }, icono("stop", { tam: 14 }), "Detener")
+      : h("button.btn.chico", { onclick: async () => { await iniciarCronometro(t.id); recargar(); } }, icono("play", { tam: 14 }), "Iniciar"),
+    h("button.btn.chico", { onclick: manual }, icono("mas", { tam: 14 }), "Manual"));
   const porPersona = {};
   for (const x of t.tiempo) porPersona[x.persona_id] = (porPersona[x.persona_id] || 0) + x.minutos;
   return h("div.seccion",
@@ -448,26 +521,50 @@ function tiempo(t, editable, recargar) {
     t.tiempo.length > 8 && h("div.dim", `y ${t.tiempo.length - 8} registros más (ver en Tiempo).`));
 }
 
-function comentarios(t, recargar) {
-  const caja = h("textarea", { rows: 3, placeholder: "Escribe un comentario… usa @ para mencionar" });
-  const contenedor = h("div", { style: { position: "relative" } }, caja);
-  activarMenciones(caja, contenedor);
+// Caja fija abajo del panel para comentar (con @menciones). Se arma una vez
+// por ticket abierto.
+function cajaComentario(t, recargar) {
+  const caja = h("textarea", { rows: 1, placeholder: "Comentar… usa @ para mencionar", "aria-label": "Comentario", enterkeyhint: "send" });
+  const contenedor = h("div.comentar-caja", caja);
+  activarMenciones(caja, contenedor, { arriba: true });
+  const boton = h("button.btn.primario.icono.enviar", { "aria-label": "Enviar comentario", title: "Enviar (Ctrl+Enter)", disabled: true }, icono("enviar", { tam: 18 }));
+  const ajustar = () => {
+    caja.style.height = "auto";
+    caja.style.height = Math.min(caja.scrollHeight + 2, 140) + "px";
+    caja.classList.toggle("larga", caja.scrollHeight + 2 > 140);
+    boton.disabled = !caja.value.trim();
+  };
   const enviar = async () => {
     const texto = caja.value.trim();
     if (!texto) return;
     const menciones = personasActivas().filter((p) => texto.includes("@" + p.nombre)).map((p) => p.id);
+    boton.disabled = true;
     try {
       await tk.comentar(t.id, texto, menciones);
       caja.value = "";
-      caja.blur();
-      recargar();
-    } catch (e) { error(e, "No se envió"); }
+      ajustar();
+      await recargar();
+      // Que se vea el comentario recién puesto.
+      const lista = document.querySelector(".panel .lista-comentarios");
+      lista && lista.lastElementChild && lista.lastElementChild.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } catch (e) {
+      error(e, "No se envió");
+      ajustar();
+    }
   };
+  caja.addEventListener("input", ajustar);
   caja.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) enviar();
   });
+  boton.addEventListener("click", enviar);
+  return h("div.comentar", contenedor, boton);
+}
+
+function comentarios(t, recargar) {
   return h("div.seccion",
     h("div.seccion-cab", h("h3", "Comentarios"), h("span.dim", t.comentarios.length || "")),
+    !t.comentarios.length && h("div.dim", puedoEscribir() ? "Sin comentarios. Escribe el primero abajo." : "Sin comentarios."),
+    h("div.lista-comentarios",
     t.comentarios.map((c) => h("div.comentario",
       avatar(persona(c.autor_id)),
       h("div.burbuja",
@@ -483,14 +580,12 @@ function comentarios(t, recargar) {
               } catch (err) { error(err); }
             },
           }, "borrar")),
-        h("div.texto", textoConMenciones(c.texto, datos.personas))))),
-    // Con permiso de sólo ver, se leen los comentarios pero no se escribe.
-    puedoEscribir() && contenedor,
-    puedoEscribir() && h("div.fila", h("button.btn.primario.chico", { onclick: enviar }, "Comentar"), h("span.dim", "Ctrl+Enter para enviar")));
+        h("div.texto", textoConMenciones(c.texto, datos.personas)))))));
 }
 
-// Autocompletar de "@Nombre" en un textarea.
-export function activarMenciones(caja, contenedor) {
+// Autocompletar de "@Nombre" en un textarea. arriba: la lista sale encima
+// (la caja de comentar está pegada abajo de la pantalla).
+export function activarMenciones(caja, contenedor, { arriba = false } = {}) {
   let lista = null, opciones = [], indice = 0, inicio = -1;
   const cerrar = () => { lista && lista.remove(); lista = null; inicio = -1; };
   const elegir = (p) => {
@@ -505,7 +600,7 @@ export function activarMenciones(caja, contenedor) {
   const pintarLista = () => {
     lista && lista.remove();
     if (!opciones.length) return cerrar();
-    lista = h("div.autocompletar", { style: { left: "0", top: "100%" } },
+    lista = h("div.autocompletar", { style: arriba ? { left: "0", bottom: "calc(100% + 6px)" } : { left: "0", top: "100%" } },
       opciones.map((p, i) => h("div", {
         class: i === indice ? "activo" : "",
         onmousedown: (e) => { e.preventDefault(); elegir(p); },
