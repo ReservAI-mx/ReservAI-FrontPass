@@ -1,7 +1,7 @@
 // Vista de un área: filtros + Lista | Tablero | Calendario.
 import {
   h, vaciar, error, avatar, avatares, chipEstado, chipEtiqueta, chipFecha, nombrePrioridad, COLOR_PRIO, esqueletos,
-  PRIORIDADES, MESES_LARGOS, DIAS, isoDia, hoyIso, debounce, modal, toast, esTelefono, fechaLarga,
+  PRIORIDADES, MESES_LARGOS, DIAS, isoDia, hoyIso, debounce, modal, toast, esTelefono, fechaLarga, fechaConTexto,
 } from "../ui.js";
 import {
   datos, areaPorClave, estadosDe, estado, etiquetasDe, etiqueta, persona, miembrosDe,
@@ -152,13 +152,34 @@ export async function render(cont, [clave, vista = "lista"], params) {
 // ---------- Nuevo ticket ----------
 
 export function nuevoTicket(a, alCrear, valores = {}) {
-  const titulo = h("input", { type: "text", placeholder: "¿Qué hay que hacer?", value: valores.titulo || "" });
+  const titulo = h("input", { type: "text", placeholder: "¿Qué hay que hacer?", value: valores.titulo || "", autofocus: true });
   const desc = h("textarea", { rows: 4, placeholder: "Detalles (opcional)", value: valores.descripcion || "" });
-  const estadoSel = h("select", estadosDe(a.id).map((e) => h("option", { value: e.id, selected: e.id === valores.estado_id }, e.nombre)));
+  const estadoSel = h("select");
   const prio = h("select", PRIORIDADES.map((p) => h("option", { value: p.id, selected: p.id === (valores.prioridad || "normal") }, p.nombre)));
-  const resp = h("select", h("option", { value: "" }, "Sin asignar"),
-    miembrosDe(a.id).map((p) => h("option", { value: p.id, selected: p.id === valores.responsable }, p.nombre)));
+  const resp = h("select");
   const vence = h("input", { type: "date", value: valores.vence || "" });
+  // Estados y responsables son de cada área: se rellenan al elegirla.
+  const llenarArea = (estadoId, responsable) => {
+    vaciar(estadoSel, estadosDe(a.id).map((e) => h("option", { value: e.id, selected: e.id === estadoId }, e.nombre)));
+    vaciar(resp, h("option", { value: "" }, "Sin asignar"),
+      miembrosDe(a.id).map((p) => h("option", { value: p.id, selected: p.id === responsable }, p.nombre)));
+  };
+  llenarArea(valores.estado_id, valores.responsable);
+  // Con más de un área donde puedo crear, se elige aquí (el "+" del teléfono
+  // abre en la que estás viendo, pero no te deja amarrado a ella).
+  const posibles = datos.areas.filter((x) => !x.archivada && puedeEditar(x.id));
+  let etiquetas = valores.etiquetas || [];
+  const areaSel = posibles.length > 1 && !valores.origen && h("select", {
+    onchange: () => {
+      a = posibles.find((x) => x.id === areaSel.value) || a;
+      // Las etiquetas que propuso la IA son del área anterior.
+      etiquetas = [];
+      llenarArea(null, resp.value);
+      const cab = areaSel.closest(".caja")?.querySelector(".cab h2");
+      if (cab) cab.textContent = "Nuevo ticket en " + a.nombre;
+      buscarParecidos(a.id, titulo.value, parecidos);
+    },
+  }, posibles.map((x) => h("option", { value: x.id, selected: x.id === a.id }, x.nombre)));
   const parecidos = h("div");
   titulo.addEventListener("blur", () => buscarParecidos(a.id, titulo.value, parecidos));
   if (valores.titulo) buscarParecidos(a.id, valores.titulo, parecidos);
@@ -171,7 +192,7 @@ export function nuevoTicket(a, alCrear, valores = {}) {
         const t = await api.crear({
           area_id: a.id, titulo: titulo.value.trim(), descripcion: desc.value, estado_id: estadoSel.value,
           prioridad: prio.value, vence: vence.value || null,
-          asignados: resp.value ? [resp.value] : [], checklist, etiquetas: valores.etiquetas || [],
+          asignados: resp.value ? [resp.value] : [], checklist, etiquetas,
           ...(valores.origen ? { origen: valores.origen } : {}),
         });
         cerrar();
@@ -185,6 +206,7 @@ export function nuevoTicket(a, alCrear, valores = {}) {
     titulo.addEventListener("keydown", (e) => e.key === "Enter" && crear(false));
     return [
       h("div.cuerpo",
+        areaSel && h("label.campo", h("span", "Área"), areaSel),
         h("label.campo", h("span", "Título"), titulo),
         parecidos,
         h("label.campo", h("span", "Descripción"), desc),
@@ -192,7 +214,7 @@ export function nuevoTicket(a, alCrear, valores = {}) {
           h("label.campo", h("span", "Estado"), estadoSel),
           h("label.campo", h("span", "Prioridad"), prio),
           h("label.campo", h("span", "Responsable"), resp),
-          h("label.campo", h("span", "Vence"), vence)),
+          h("label.campo", h("span", "Vence"), fechaConTexto(vence))),
         checklist.length > 0 && h("div.caja-ia",
           h("div.cab-ia", "✦ Checklist sugerido"),
           checklist.map((c) => h("div.check-item", h("span", "☐ " + c))))),

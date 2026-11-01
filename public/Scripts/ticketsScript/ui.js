@@ -1,4 +1,5 @@
 // Utilidades de interfaz: crear elementos, avisos flotantes, modales y formatos.
+import { icono } from "./iconos.js";
 
 // h("div.clase#id", {atributos o on*}, ...hijos)
 export function h(selector, props, ...hijos) {
@@ -89,7 +90,7 @@ export function modal(titulo, contenido, { ancho = false, alCerrar, clase = "", 
   document.body.appendChild(fondo);
   document.body.classList.add("con-hoja");
   document.addEventListener("keydown", esc);
-  const primero = enfocar && fondo.querySelector("input:not([type=checkbox]), textarea, select");
+  const primero = enfocar && (fondo.querySelector("[autofocus]") || fondo.querySelector("input:not([type=checkbox]), textarea, select"));
   primero && setTimeout(() => primero.focus(), 30);
   return { cerrar };
 }
@@ -147,6 +148,35 @@ export function fechaLarga(iso) {
   if (!f) return "";
   const anio = f.getFullYear() !== new Date().getFullYear() ? " " + f.getFullYear() : "";
   return `${DIAS[(f.getDay() + 6) % 7]} ${f.getDate()} ${MESES[f.getMonth()]}${anio}`;
+}
+
+/**
+ * Campo de fecha para formularios: se ve la fecha escrita ("vie 31 oct") o
+ * "Sin fecha", con ✕ para quitarla, y el selector del sistema queda encima,
+ * invisible. En iPhone la caja nativa se salía del ancho y, vacía, mostraba
+ * la fecha de hoy como si ya estuviera puesta.
+ */
+export function fechaConTexto(input, { vacio = "Sin fecha" } = {}) {
+  const texto = h("span.fecha-texto");
+  const quitar = h("button.quitar-fecha", {
+    type: "button", "aria-label": "Quitar fecha",
+    onclick: (e) => {
+      e.preventDefault();
+      input.value = "";
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    },
+  }, "×");
+  const caja = h("span.fecha-campo.fecha-form", input, h("span.ico-fecha", icono("calendario", { tam: 16 })), texto, quitar);
+  const pintar = () => {
+    caja.classList.toggle("vacia", !input.value);
+    texto.textContent = input.value ? fechaLarga(input.value) : vacio;
+    quitar.hidden = !input.value;
+  };
+  input.addEventListener("change", pintar);
+  input.addEventListener("input", pintar);
+  input.addEventListener("click", () => { try { input.showPicker(); } catch { /* sin showPicker */ } });
+  pintar();
+  return caja;
 }
 
 export function claseVence(iso, cerrado) {

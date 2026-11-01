@@ -1,5 +1,5 @@
 // Pedir tickets a otra área y seguir lo que pedí / lo que me pidieron.
-import { h, vaciar, error, toast, esqueletos, PRIORIDADES, debounce } from "../ui.js";
+import { h, vaciar, error, toast, esqueletos, PRIORIDADES, debounce, fechaConTexto } from "../ui.js";
 import { datos, areaPorClave, puedeEditar, misAreas, escuchar, tickets as api, subirAdjunto, puedoEscribir } from "../datos.js";
 import { verTicket, cambiarParam } from "../rutas.js";
 import { tabla } from "./mis.js";
@@ -65,7 +65,7 @@ export async function render(cont, _partes, params) {
       parecidos,
       h("label.campo", h("span", "Descripción"), desc),
       h("div.rejilla-2",
-        h("label.campo", h("span", "¿Para cuándo lo necesitas? (opcional)"), vence),
+        h("label.campo", h("span", "¿Para cuándo lo necesitas? (opcional)"), fechaConTexto(vence)),
         h("label.campo", h("span", "Archivos (opcional)"), archivos)),
       h("div.fila", boton, h("button.btn", { onclick: () => { caja.remove(); cambiarParam("pedir", null); } }, "Cancelar")));
     boton.addEventListener("click", async () => {
