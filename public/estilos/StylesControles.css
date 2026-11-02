@@ -1,0 +1,111 @@
+/* Listas desplegables y calendario propios (Scripts/controles.js).
+   Viven en <body>, encima de todo (modales, panel del ticket, menú). */
+
+.ctl-caja {
+  --ctl-fondo: #161616;
+  --ctl-linea: rgba(255, 255, 255, .12);
+  --ctl-texto: #ececec;
+  --ctl-tenue: #8b9099;
+  --ctl-hover: rgba(255, 255, 255, .07);
+  --ctl-acento: var(--primary, #0983d6);
+  --ctl-acento-suave: rgba(9, 131, 214, .18);
+  position: fixed; z-index: 2001;
+  display: flex; flex-direction: column;
+  background: var(--ctl-fondo); color: var(--ctl-texto);
+  border: 1px solid var(--ctl-linea);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .35);
+  font-family: inherit; font-size: .9rem; line-height: 1.3;
+}
+
+/* Compu: pegado al campo. */
+.ctl-pop {
+  border-radius: 12px; padding: 6px; max-width: min(360px, calc(100vw - 16px)); overflow: hidden;
+  animation: ctl-abrir .12s ease-out both; transform-origin: top left;
+}
+.ctl-pop.arriba { transform-origin: bottom left; }
+@keyframes ctl-abrir { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+
+/* Teléfono: hoja desde abajo. */
+.ctl-velo {
+  position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, .55);
+  animation: ctl-velo .18s ease both;
+}
+@keyframes ctl-velo { from { opacity: 0; } }
+.ctl-hoja {
+  left: 0; right: 0; bottom: 0; max-height: min(72vh, 560px);
+  border-radius: 18px 18px 0 0; border-bottom: none;
+  padding: 0 10px calc(12px + env(safe-area-inset-bottom));
+  font-size: 16px;
+  animation: ctl-subir .24s cubic-bezier(.2, .8, .2, 1) both;
+}
+@keyframes ctl-subir { from { transform: translateY(100%); } }
+.ctl-hoja-cab { display: grid; justify-items: center; gap: 8px; padding: 8px 6px 10px; flex: none; }
+.ctl-asa { width: 38px; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .22); }
+.ctl-hoja-titulo { justify-self: start; font-size: .82rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ctl-tenue); padding: 0 8px; }
+html.ctl-con-hoja, html.ctl-con-hoja body { overflow: hidden; }
+
+/* ---------- Lista ---------- */
+
+.ctl-buscar {
+  flex: none; width: 100%; height: 36px; margin: 0 0 6px; padding: 0 10px;
+  background: rgba(255, 255, 255, .05); color: var(--ctl-texto);
+  border: 1px solid var(--ctl-linea); border-radius: 8px; font: inherit; outline: none;
+}
+.ctl-buscar:focus { border-color: var(--ctl-acento); }
+.ctl-hoja .ctl-buscar { height: 44px; font-size: 16px; border-radius: 10px; }
+.ctl-lista { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 1px; align-content: start; }
+.ctl-grupo { padding: 8px 10px 4px; font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ctl-tenue); }
+.ctl-op {
+  display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 6px 10px;
+  border-radius: 8px; cursor: pointer; user-select: none;
+}
+.ctl-op[hidden] { display: none; }
+.ctl-op.activa { background: var(--ctl-hover); }
+.ctl-op.elegida { color: #fff; font-weight: 600; background: var(--ctl-acento-suave); }
+.ctl-op.elegida.activa { background: rgba(9, 131, 214, .26); }
+.ctl-op.desactivada { color: var(--ctl-tenue); cursor: default; }
+.ctl-op.desactivada.activa { background: none; }
+.ctl-texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ctl-bola { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
+.ctl-palomita { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--ctl-acento); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.ctl-op.elegida .ctl-palomita { visibility: visible; }
+.ctl-vacio { padding: 10px; color: var(--ctl-tenue); }
+.ctl-hoja .ctl-op { min-height: 48px; padding: 10px 12px; border-radius: 10px; }
+.ctl-hoja .ctl-texto { white-space: normal; }
+
+/* ---------- Calendario ---------- */
+
+.ctl-cal { width: 280px; padding: 4px; }
+.ctl-hoja .ctl-cal { width: 100%; max-width: 420px; margin: 0 auto; padding: 0 2px; }
+.ctl-cal-cab { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.ctl-cal-titulo { flex: 1; text-align: center; font-weight: 700; text-transform: capitalize; }
+.ctl-cal-flecha {
+  width: 32px; height: 32px; border: none; border-radius: 8px; background: none; color: var(--ctl-texto);
+  font-size: 1.3rem; line-height: 1; cursor: pointer;
+}
+.ctl-cal-flecha:hover { background: var(--ctl-hover); }
+.ctl-cal-semana, .ctl-cal-dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.ctl-cal-semana span { text-align: center; font-size: .72rem; font-weight: 700; color: var(--ctl-tenue); padding: 4px 0; }
+.ctl-dia {
+  height: 34px; border: none; border-radius: 50%; background: none; color: var(--ctl-texto);
+  font: inherit; font-size: .86rem; cursor: pointer; aspect-ratio: 1; justify-self: center;
+}
+.ctl-dia:hover:not(:disabled) { background: var(--ctl-hover); }
+.ctl-dia.fuera { color: rgba(255, 255, 255, .3); }
+.ctl-dia.hoy { box-shadow: inset 0 0 0 1px var(--ctl-acento); color: #7cc4f5; font-weight: 700; }
+.ctl-dia.foco:not(.elegido) { background: var(--ctl-hover); }
+.ctl-dia.elegido { background: var(--ctl-acento); color: #fff; font-weight: 700; box-shadow: none; }
+.ctl-dia:disabled { color: rgba(255, 255, 255, .15); cursor: default; }
+.ctl-cal-pie { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--ctl-linea); }
+.ctl-cal-boton {
+  height: 30px; padding: 0 12px; border: none; border-radius: 8px; background: none; color: var(--ctl-tenue);
+  font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
+}
+.ctl-cal-boton:hover:not(:disabled) { background: var(--ctl-hover); color: var(--ctl-texto); }
+.ctl-cal-boton.fuerte { color: #7cc4f5; margin-left: auto; }
+.ctl-cal-boton:disabled { opacity: .4; cursor: default; }
+.ctl-hoja .ctl-dia { height: 44px; font-size: 16px; }
+.ctl-hoja .ctl-cal-flecha { width: 44px; height: 44px; }
+.ctl-hoja .ctl-cal-boton { height: 44px; font-size: 16px; padding: 0 16px; }
+
+select, input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }

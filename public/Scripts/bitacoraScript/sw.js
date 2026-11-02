@@ -16,7 +16,7 @@
    teléfonos que ya la abrieron siguen con la copia vieja.
    ------------------------------------------------------------------ */
 
-const VERSION = 'bitacora-pass-v5';
+const VERSION = 'bitacora-pass-v6';
 
 const PAGINA = '/bitacora/';
 
@@ -26,10 +26,12 @@ const CRITICOS = [
   '/static/estilos/StylesInicio.css',
   '/static/estilos/StylesUI.css',
   '/static/estilos/StylesBitacora.css',
+  '/static/estilos/StylesControles.css',
   '/static/Scripts/api.js',
   '/static/Scripts/AppStorage.js',
   '/static/Scripts/toast.js',
   '/static/Scripts/accountMenu.js',
+  '/static/Scripts/controles.js',
   '/static/Scripts/bitacoraScript/campos.js',
   '/static/Scripts/bitacoraScript/calculos.js',
   '/static/Scripts/bitacoraScript/excel.js',
