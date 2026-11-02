@@ -129,7 +129,7 @@ export async function render(cont, [clave, vista = "lista"], params) {
         miembros.filter((p) => p.id !== datos.yo.id).map((p) => h("option", { value: p.id, selected: filtros.persona === p.id }, p.nombre))),
       h("select", { onchange: (e) => cambiarFiltro("prioridad", e.target.value) },
         h("option", { value: "" }, "Cualquier prioridad"),
-        PRIORIDADES.map((p) => h("option", { value: p.id, selected: filtros.prioridad === p.id }, p.nombre))),
+        PRIORIDADES.map((p) => h("option", { value: p.id, selected: filtros.prioridad === p.id, "data-color": p.color }, p.nombre))),
       etiquetasDe(a.id).length > 0 && h("select", { onchange: (e) => cambiarFiltro("etiqueta", e.target.value) },
         h("option", { value: "" }, "Cualquier etiqueta"),
         etiquetasDe(a.id).map((x) => h("option", { value: x.id, selected: filtros.etiqueta === x.id }, x.nombre))),
@@ -155,12 +155,12 @@ export function nuevoTicket(a, alCrear, valores = {}) {
   const titulo = h("input", { type: "text", placeholder: "¿Qué hay que hacer?", value: valores.titulo || "", autofocus: true });
   const desc = h("textarea", { rows: 4, placeholder: "Detalles (opcional)", value: valores.descripcion || "" });
   const estadoSel = h("select");
-  const prio = h("select", PRIORIDADES.map((p) => h("option", { value: p.id, selected: p.id === (valores.prioridad || "normal") }, p.nombre)));
+  const prio = h("select", PRIORIDADES.map((p) => h("option", { value: p.id, selected: p.id === (valores.prioridad || "normal"), "data-color": p.color }, p.nombre)));
   const resp = h("select");
   const vence = h("input", { type: "date", value: valores.vence || "" });
   // Estados y responsables son de cada área: se rellenan al elegirla.
   const llenarArea = (estadoId, responsable) => {
-    vaciar(estadoSel, estadosDe(a.id).map((e) => h("option", { value: e.id, selected: e.id === estadoId }, e.nombre)));
+    vaciar(estadoSel, estadosDe(a.id).map((e) => h("option", { value: e.id, selected: e.id === estadoId, "data-color": e.color }, e.nombre)));
     vaciar(resp, h("option", { value: "" }, "Sin asignar"),
       miembrosDe(a.id).map((p) => h("option", { value: p.id, selected: p.id === responsable }, p.nombre)));
   };

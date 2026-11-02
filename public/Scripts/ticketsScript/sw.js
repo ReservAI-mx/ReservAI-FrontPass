@@ -19,7 +19,7 @@
    tests/tickets.test.js lo revisa) y sube VERSION.
    ------------------------------------------------------------------ */
 
-const VERSION = 'tickets-pass-v2';
+const VERSION = 'tickets-pass-v3';
 
 const PAGINA = '/tickets/';
 const S = '/static/Scripts/ticketsScript/';
@@ -30,9 +30,11 @@ const CRITICOS = [
   '/static/estilos/StylesInicio.css',
   '/static/estilos/StylesUI.css',
   '/static/estilos/StylesTickets.css',
+  '/static/estilos/StylesControles.css',
   '/static/Scripts/api.js',
   '/static/Scripts/AppStorage.js',
   '/static/Scripts/accountMenu.js',
+  '/static/Scripts/controles.js',
   S + 'pagina.js',
   S + 'main.js',
   S + 'ui.js',

@@ -216,12 +216,13 @@ export function reloj(segundos) {
 
 // ---------- Piezas visuales ----------
 
+// color: el puntito de cada una en las listas desplegables (controles.js).
 export const PRIORIDADES = [
-  { id: "urgente", nombre: "Urgente" },
-  { id: "alta", nombre: "Alta" },
-  { id: "normal", nombre: "Normal" },
-  { id: "baja", nombre: "Baja" },
-  { id: "on_hold", nombre: "On hold" },
+  { id: "urgente", nombre: "Urgente", color: "var(--red)" },
+  { id: "alta", nombre: "Alta", color: "var(--amber)" },
+  { id: "normal", nombre: "Normal", color: "var(--blue-text)" },
+  { id: "baja", nombre: "Baja", color: "var(--muted)" },
+  { id: "on_hold", nombre: "On hold", color: "var(--purple)" },
 ];
 export const nombrePrioridad = (id) => (PRIORIDADES.find((p) => p.id === id) || {}).nombre || id;
 
