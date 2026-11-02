@@ -157,7 +157,7 @@ function pintar(t, cab, cuerpo, recargar, salir, estadoPanel) {
     const previa = secciones[clave];
     const activo = document.activeElement;
     const enCampo = previa && previa.contains(activo) &&
-      /^(INPUT|TEXTAREA)$/.test(activo.tagName) && activo.type !== "checkbox";
+      /^(INPUT|TEXTAREA)$/.test(activo.tagName) && activo.type !== "checkbox" && activo.type !== "date";
     // Con texto a medias no se toca; vacío (p. ej. recién se agregó un paso)
     // sí se repinta y el cursor vuelve al mismo campo para seguir agregando.
     if (enCampo && activo.value) return previa;
@@ -244,13 +244,13 @@ function propiedades(t, editable, guardar, recargar) {
     ? h("span.valor-select", { style: { "--c": est?.color || "var(--muted)" } },
       h("span.bola-estado"),
       h("select", { "aria-label": "Estado", onchange: (e) => guardar({ estado_id: e.target.value }) },
-        estados.map((e) => h("option", { value: e.id, selected: e.id === t.estado_id }, e.nombre))))
+        estados.map((e) => h("option", { value: e.id, selected: e.id === t.estado_id, "data-color": e.color }, e.nombre))))
     : chipEstado(est);
   const selPrio = editable
     ? h("span.valor-select.prio-sel", { class: t.prioridad },
       icono("bandera", { tam: 16 }),
       h("select", { "aria-label": "Prioridad", onchange: (e) => guardar({ prioridad: e.target.value }) },
-        PRIORIDADES.map((p) => h("option", { value: p.id, selected: p.id === t.prioridad }, p.nombre))))
+        PRIORIDADES.map((p) => h("option", { value: p.id, selected: p.id === t.prioridad, "data-color": p.color }, p.nombre))))
     : h("span.prio", { class: t.prioridad }, nombrePrioridad(t.prioridad));
   const fecha = (campo) => editable ? campoFecha(t, campo, guardar) : h("span.valor", t[campo] ? fechaLarga(t[campo]) : "—");
 

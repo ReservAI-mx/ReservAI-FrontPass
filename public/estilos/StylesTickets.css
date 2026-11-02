@@ -429,11 +429,11 @@ h3 { font-size: .75rem; margin: 0; color: var(--muted); text-transform: uppercas
 .cerrar-panel { order: 10; }
 .panel-cuerpo {
   flex: 1; overflow-y: auto; overscroll-behavior: contain; display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: "titulo titulo" "principal lado"; align-items: start;
+  grid-template-columns: minmax(0, 1fr) 360px; grid-template-areas: "titulo titulo" "principal lado"; align-items: start;
 }
 .panel-titulo { grid-area: titulo; padding: 1.25rem 1.5rem .5rem; display: grid; gap: .5rem; }
 .panel-principal { grid-area: principal; padding: 1rem 1.5rem 1.5rem; display: grid; gap: 1.5rem; min-width: 0; }
-.panel-lado { grid-area: lado; padding: 1rem 1.25rem 1.5rem; border-left: 1px solid var(--line); display: grid; gap: 1.25rem; position: sticky; top: 0; background: rgba(22, 22, 22, .55); border-radius: 0 0 0 var(--radio); }
+.panel-lado { grid-area: lado; padding: 1rem 1.5rem 1.5rem; border-left: 1px solid var(--line); display: grid; gap: 1.25rem; position: sticky; top: 0; background: rgba(22, 22, 22, .55); border-radius: 0 0 0 var(--radio); }
 /* Caja para comentar, fija abajo del panel. */
 .panel-pie { border-top: 1px solid var(--line); background: var(--bg); padding: .7rem 1.5rem; }
 .panel-pie:empty { display: none; }
@@ -454,13 +454,17 @@ textarea.titulo-editable:hover:not([readonly]) { background-color: var(--surface
 textarea.titulo-editable:focus:not([readonly]) { border-color: var(--blue) !important; background-color: var(--input) !important; }
 
 /* Propiedades: una fila por cosa (nombre a la izquierda, valor a la derecha),
-   como en ClickUp. Los selectores son los del sistema: en el teléfono abren
-   la rueda o la lista nativa. */
+   como en ClickUp, con una rayita entre filas para que respiren. Las listas y
+   el calendario que abren son los de controles.js. */
 .props { display: grid; }
-.prop { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 42px; }
+.prop {
+  display: grid; grid-template-columns: 116px minmax(0, 1fr); align-items: center; gap: 10px;
+  min-height: 50px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, .05);
+}
+.prop:last-child { border-bottom: none; }
 .prop > .k { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .86rem; }
 .prop > .k .ico-svg { color: var(--dim); }
-.prop > .v { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.prop > .v { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .prop .valor { font-size: .9rem; color: var(--ink-2); padding: 0 2px; }
 .valor-select { position: relative; display: inline-flex; align-items: center; gap: 7px; max-width: 100%; height: 32px; padding: 0 8px; margin-left: -8px; border-radius: 8px; color: var(--ink); transition: background .12s; }
 .valor-select:hover, .valor-select:focus-within { background: var(--surface-3); }
@@ -510,7 +514,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; }
 .seccion { display: grid; gap: .7rem; }
 .seccion-cab { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .seccion-cab .acciones { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
-.multi { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.multi { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .multi .quitar { cursor: pointer; color: var(--dim); margin-left: 2px; }
 .multi .quitar:hover { color: var(--red); }
 .persona-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px 2px 2px; border-radius: 999px; background: var(--surface-3); font-size: .82rem; }
