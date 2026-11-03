@@ -19,7 +19,7 @@
    tests/tickets.test.js lo revisa) y sube VERSION.
    ------------------------------------------------------------------ */
 
-const VERSION = 'tickets-pass-v3';
+const VERSION = 'tickets-pass-v4';
 
 const PAGINA = '/tickets/';
 const S = '/static/Scripts/ticketsScript/';
@@ -45,6 +45,7 @@ const CRITICOS = [
   S + 'avisos.js',
   S + 'cronometro.js',
   S + 'ia.js',
+  S + 'estados.js',
   S + 'vistas/login.js',
   S + 'vistas/ticket.js',
   S + 'vistas/mis.js',

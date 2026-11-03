@@ -8,6 +8,7 @@ import {
 } from "../datos.js";
 import { apiJson } from "../../api.js";
 import { ir, avisarCatalogos } from "../rutas.js";
+import { nuevoEstado, TIPOS_ESTADO } from "../estados.js";
 
 const ROLES = [["", "—"], ["lector", "Lector"], ["miembro", "Miembro"], ["admin", "Admin del área"]];
 const NIVELES = [["ninguno", "Sin acceso"], ["ver", "Sólo ver"], ["editar", "Ver y editar"]];
@@ -252,20 +253,13 @@ function pintarEstados(zona, a, refrescar) {
       h("input.color-input", { type: "color", value: e.color, onchange: (ev) => guardar(e, { color: ev.target.value }) }),
       h("input.crece", { type: "text", value: e.nombre, onchange: (ev) => ev.target.value.trim() && guardar(e, { nombre: ev.target.value.trim() }) }),
       h("select", { style: { width: "auto" }, onchange: (ev) => guardar(e, { tipo: ev.target.value }) },
-        [["abierto", "Por empezar"], ["en_curso", "En curso"], ["en_espera", "On hold"], ["cerrado", "Terminado"]].map(([v, t]) => h("option", { value: v, selected: e.tipo === v }, t))),
+        TIPOS_ESTADO.map(([v, t]) => h("option", { value: v, selected: e.tipo === v }, t))),
       h("button.btn.chico", { disabled: i === 0, onclick: () => mover(i, -1) }, "↑"),
       h("button.btn.chico", { disabled: i === estados.length - 1, onclick: () => mover(i, 1) }, "↓"),
       h("button.btn.chico.peligro", { onclick: () => borrar(e) }, "Borrar")))),
     h("div", { style: { marginTop: "8px" } }, h("button.btn.chico", {
-      onclick: async () => {
-        const nombre = prompt("Nombre del estado nuevo:");
-        if (!nombre || !nombre.trim()) return;
-        try {
-          await api(`/areas/${a.id}/estados`, { method: "POST", body: { nombre: nombre.trim(), tipo: "en_curso" } });
-          await refrescar();
-        } catch (err) { error(err); }
-      },
-    }, "+ Estado")));
+      onclick: async () => { if (await nuevoEstado(a.id)) await refrescar(); },
+    }, "+ Nuevo estado")));
 }
 
 function pintarEtiquetas(zona, a, refrescar) {
