@@ -943,3 +943,35 @@ ol.pasos { margin: 0; padding-left: 1.2rem; display: grid; gap: .6rem; color: va
 
 /* App instalada: sin la barra de Safari, los avisos y hojas respetan la muesca. */
 body.instalada .barra { background: rgba(13, 13, 13, .97); }
+
+/* ---------- Estado nuevo (estados.js) ---------- */
+.form-estado .pie { padding: .3rem 0 0; }
+.form-estado div.campo { display: grid; gap: .4rem; font-size: .85rem; color: var(--muted); }
+.form-estado div.campo > span { text-transform: uppercase; letter-spacing: .05em; font-size: .72rem; font-weight: 500; }
+.tipos-estado { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tipo-estado { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 10px; cursor: pointer; transition: var(--transicion); }
+.tipo-estado:hover { background: var(--surface-3); }
+.tipo-estado:has(input:checked) { border-color: var(--blue); background: var(--blue-soft); }
+.tipo-estado input { width: 16px; height: 16px; margin: 2px 0 0; flex: none; accent-color: var(--blue); box-shadow: none; }
+.tipo-estado span { display: grid; gap: 2px; }
+.tipo-estado b { color: var(--ink); font-size: .9rem; font-weight: 600; }
+.tipo-estado small { color: var(--muted); font-size: .78rem; line-height: 1.35; }
+.muestras { display: flex; flex-wrap: wrap; gap: 8px; }
+.muestra { position: relative; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid transparent; background: var(--c); cursor: pointer; box-shadow: inset 0 0 0 2px var(--surface); transition: transform .12s; }
+.muestra:hover { transform: scale(1.08); }
+.muestra.elegida { border-color: var(--ink); }
+.muestra.otra { display: grid; place-items: center; overflow: hidden; color: #fff; font-weight: 700; background: conic-gradient(#F0655C, #E8A33D, #3DD68C, #1AACF5, #A78BFA, #F0655C); }
+.muestra.otra.elegida { background: var(--c); }
+.muestra.otra input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.nuevo-estado {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: .8rem;
+  background: none; border: 1px dashed var(--line-2); border-radius: var(--radio-lg); color: var(--muted);
+  font: inherit; font-size: .88rem; cursor: pointer; transition: var(--transicion);
+}
+.nuevo-estado:hover { color: var(--ink); border-color: var(--blue); background: var(--blue-soft); }
+.nuevo-estado.columna-nueva { flex: 0 0 200px; width: auto; align-self: flex-start; padding: 1rem; }
+@media (max-width: 768px) {
+  .tipos-estado { grid-template-columns: 1fr; }
+  .muestra { width: 36px; height: 36px; }
+  .nuevo-estado { min-height: 48px; font-size: 15px; }
+}
