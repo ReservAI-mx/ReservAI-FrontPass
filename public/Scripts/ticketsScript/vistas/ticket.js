@@ -5,6 +5,7 @@ import {
   claseVence, fechaLarga,
 } from "../ui.js";
 import { icono } from "../iconos.js";
+import { nuevoEstado, NUEVO, opcionNuevo } from "../estados.js";
 import {
   api, datos, persona, area, estado, estadosDe, etiquetasDe, etiqueta, miembrosDe, personasActivas,
   puedeEditar, administra, escuchar, tickets as tk, subirAdjunto, puedoEscribir, enEspera,
@@ -243,8 +244,17 @@ function propiedades(t, editable, guardar, recargar) {
   const selEstado = editable
     ? h("span.valor-select", { style: { "--c": est?.color || "var(--muted)" } },
       h("span.bola-estado"),
-      h("select", { "aria-label": "Estado", onchange: (e) => guardar({ estado_id: e.target.value }) },
-        estados.map((e) => h("option", { value: e.id, selected: e.id === t.estado_id, "data-color": e.color }, e.nombre))))
+      h("select", {
+        "aria-label": "Estado",
+        onchange: async (e) => {
+          if (e.target.value !== NUEVO) return guardar({ estado_id: e.target.value });
+          e.target.value = t.estado_id;
+          const creado = await nuevoEstado(t.area_id);
+          if (creado) guardar({ estado_id: creado.id });
+        },
+      },
+        estados.map((e) => h("option", { value: e.id, selected: e.id === t.estado_id, "data-color": e.color }, e.nombre)),
+        administra(t.area_id) && opcionNuevo()))
     : chipEstado(est);
   const selPrio = editable
     ? h("span.valor-select.prio-sel", { class: t.prioridad },

@@ -10,6 +10,7 @@ import {
 import { verTicket, ir, cambiarParam } from "../rutas.js";
 import { crearConIA, buscarParecidos } from "../ia.js";
 import { icono } from "../iconos.js";
+import { nuevoEstado, NUEVO, opcionNuevo } from "../estados.js";
 
 const PESO_PRIO = { urgente: 0, alta: 1, normal: 2, baja: 3, on_hold: 4 };
 const ORDENES = {
@@ -154,13 +155,21 @@ export async function render(cont, [clave, vista = "lista"], params) {
 export function nuevoTicket(a, alCrear, valores = {}) {
   const titulo = h("input", { type: "text", placeholder: "¿Qué hay que hacer?", value: valores.titulo || "", autofocus: true });
   const desc = h("textarea", { rows: 4, placeholder: "Detalles (opcional)", value: valores.descripcion || "" });
-  const estadoSel = h("select");
+  const estadoSel = h("select", {
+    onchange: async () => {
+      if (estadoSel.value !== NUEVO) return;
+      estadoSel.selectedIndex = 0;
+      const creado = await nuevoEstado(a.id);
+      if (creado) llenarArea(creado.id, resp.value);
+    },
+  });
   const prio = h("select", PRIORIDADES.map((p) => h("option", { value: p.id, selected: p.id === (valores.prioridad || "normal"), "data-color": p.color }, p.nombre)));
   const resp = h("select");
   const vence = h("input", { type: "date", value: valores.vence || "" });
   // Estados y responsables son de cada área: se rellenan al elegirla.
   const llenarArea = (estadoId, responsable) => {
-    vaciar(estadoSel, estadosDe(a.id).map((e) => h("option", { value: e.id, selected: e.id === estadoId, "data-color": e.color }, e.nombre)));
+    vaciar(estadoSel, estadosDe(a.id).map((e) => h("option", { value: e.id, selected: e.id === estadoId, "data-color": e.color }, e.nombre)),
+      administra(a.id) && opcionNuevo());
     vaciar(resp, h("option", { value: "" }, "Sin asignar"),
       miembrosDe(a.id).map((p) => h("option", { value: p.id, selected: p.id === responsable }, p.nombre)));
   };
@@ -292,7 +301,9 @@ function listaAgrupada(a, tickets, editable, recargar, ordenar) {
               h("td.opcional.flecha-celda", { style: { textAlign: "right" } }, h("span.dim", "›")))),
             rapido))));
     return caja;
-  }));
+  }), administra(a.id) && h("button.nuevo-estado", {
+    onclick: async () => { if (await nuevoEstado(a.id)) recargar(); },
+  }, icono("mas", { tam: 16 }), "Nuevo estado"));
 }
 
 // ---------- Tablero (Kanban) ----------
@@ -363,7 +374,9 @@ function tablero(a, tickets, editable, recargar) {
           },
         })));
     return col;
-  }));
+  }), administra(a.id) && h("button.nuevo-estado.columna-nueva", {
+    onclick: async () => { if (await nuevoEstado(a.id)) recargar(); },
+  }, icono("mas", { tam: 16 }), "Nuevo estado"));
 }
 
 // ---------- Calendario ----------
