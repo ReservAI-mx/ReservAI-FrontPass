@@ -242,7 +242,6 @@ function menuMas() {
         esAdmin() && fila("#/admin/personas", "engrane", "Acceso y áreas", "Quién entra y qué puede hacer")),
       h("div.menu-titulo", "Pass Manager"),
       h("div.menu-grupo",
-        (tipo === "admin" || tipo === "seller") && fila("/prospeccion/", "mapa", "Prospección"),
         (tipo === "admin" || tipo === "seller") && fila("/bitacora/", "bitacora", "Bitácora de visitas"),
         tipo === "admin" && fila("/documentacion/", "documentacion", "Documentación"),
         tipo === "admin" && fila("/inicioAdmin", "candado", "Gestión de cuentas"),
