@@ -72,26 +72,11 @@ export function MapView(props: Props) {
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+    // OpenFreeMap: vector tiles gratis, sin API key (OSM.org y Carto ya no
+    // sirven para apps: 403 / "API KEY REQUIRED").
     const map = new maplibregl.Map({
       container: host,
-      style: {
-        version: 8,
-        sources: {
-          // OSM.org bloquea apps (403 Tile Usage Policy). Carto CDN es el
-          // basemap raster libre habitual para MapLibre sin API key.
-          basemap: {
-            type: 'raster',
-            tiles: [
-              'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-              'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-              'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-            ],
-            tileSize: 256,
-            attribution: '© OpenStreetMap © CARTO',
-          },
-        },
-        layers: [{ id: 'basemap', type: 'raster', source: 'basemap' }],
-      },
+      style: 'https://tiles.openfreemap.org/styles/liberty',
       center: [-103.3912, 20.6732],
       zoom: 12.5,
     });
