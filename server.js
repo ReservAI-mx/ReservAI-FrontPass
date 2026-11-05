@@ -112,32 +112,37 @@ app.use(VerifyProxySecret);
 
 if (!isProduction) {
   const apiTarget = new URL(process.env.API_PROXY_TARGET || 'http://127.0.0.1:3000');
-  app.use('/api', (req, res) => {
-    const headers = { ...req.headers, host: apiTarget.host };
-    delete headers['x-proxy-secret'];
-    if (process.env.PROXY_SECRET_HEADER) {
-      headers['x-proxy-secret'] = process.env.PROXY_SECRET_HEADER;
-    }
-    const proxyReq = http.request(
-      {
-        hostname: apiTarget.hostname,
-        port: apiTarget.port || 80,
-        path: req.originalUrl,
-        method: req.method,
-        headers,
-      },
-      (proxyRes) => {
-        res.writeHead(proxyRes.statusCode || 502, proxyRes.headers);
-        proxyRes.pipe(res);
+  const prospeccionTarget = new URL(process.env.PROSPECCION_PROXY_TARGET || 'http://127.0.0.1:3100');
+  function pipeApi(target) {
+    return (req, res) => {
+      const headers = { ...req.headers, host: target.host };
+      delete headers['x-proxy-secret'];
+      if (process.env.PROXY_SECRET_HEADER) {
+        headers['x-proxy-secret'] = process.env.PROXY_SECRET_HEADER;
       }
-    );
-    proxyReq.on('error', () => {
-      if (!res.headersSent) {
-        res.status(502).json({ error: 'API no disponible en ' + apiTarget.origin });
-      }
-    });
-    req.pipe(proxyReq);
-  });
+      const proxyReq = http.request(
+        {
+          hostname: target.hostname,
+          port: target.port || 80,
+          path: req.originalUrl,
+          method: req.method,
+          headers,
+        },
+        (proxyRes) => {
+          res.writeHead(proxyRes.statusCode || 502, proxyRes.headers);
+          proxyRes.pipe(res);
+        }
+      );
+      proxyReq.on('error', () => {
+        if (!res.headersSent) {
+          res.status(502).json({ error: 'API no disponible en ' + target.origin });
+        }
+      });
+      req.pipe(proxyReq);
+    };
+  }
+  app.use('/api/prospeccion', pipeApi(prospeccionTarget));
+  app.use('/api', pipeApi(apiTarget));
 }
 
 app.use(express.json());

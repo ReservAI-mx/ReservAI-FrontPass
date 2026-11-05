@@ -82,6 +82,13 @@ router.get('/tickets/manifest.webmanifest', (req, res) =>
     res.sendFile(path.resolve(__dirname + "/ticketsScript/manifest.webmanifest"), {
         headers: { 'Cache-Control': 'no-cache', 'Content-Type': 'application/manifest+json' },
     }));
+router.get('/prospeccion', (req, res) => {
+    if (req.originalUrl.split('?')[0] === '/prospeccion') {
+        const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+        return res.redirect(302, `/prospeccion/${qs}`);
+    }
+    return res.sendFile(path.resolve(__dirname + "/../views/prospeccion.html"), { headers: { 'Cache-Control': 'no-cache' } });
+});
 router.get('/404', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/404.html")));
 router.get('/unauthorized', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/unauthorized.html")));
 /**

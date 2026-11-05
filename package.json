@@ -2,7 +2,8 @@
   "scripts": {
     "start": "node server.js 3000",
     "local": "node server.js 3002",
-    "test": "jest"
+    "test": "jest",
+    "prospeccion": "npm run build --prefix prospeccion"
   },
   "dependencies": {
     "express": "^5.1.0",

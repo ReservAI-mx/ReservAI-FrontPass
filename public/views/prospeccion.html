@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>ReservAI - Prospección</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/StylesInicio.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesUI.css" />
+  <link rel="stylesheet" href="/static/estilos/StylesControles.css" />
+  <link rel="stylesheet" href="/static/prospeccion-app/prospeccion-index.css" />
+</head>
+<body class="ui-page">
+  <nav class="navbar">
+    <div class="logo">
+      <img src="/static/Images/ReservAiLogo.png" alt="ReservAI logo" class="logo-img">
+      <span class="logo-text">ReservAI Admin</span>
+    </div>
+    <div class="profile">
+      <a class="ui-btn ui-btn--ghost" href="/invitations">Invitaciones</a>
+      <a class="ui-btn ui-btn--ghost" href="/bitacora/">Bitácora</a>
+      <a class="ui-btn ui-btn--ghost" href="/tickets/" data-herramienta="tickets" hidden>Tickets</a>
+    </div>
+  </nav>
+  <main class="container">
+    <header class="ui-head">
+      <div class="ui-head__titulo">
+        <div>
+          <h2>Prospección</h2>
+          <p class="ui-head__sub">Leads, direcciones y teléfonos por zona</p>
+        </div>
+      </div>
+    </header>
+    <div id="root"></div>
+  </main>
+  <script type="module" src="/static/Scripts/controles.js"></script>
+  <script type="module" src="/static/prospeccion-app/prospeccion.js"></script>
+</body>
+</html>
