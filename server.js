@@ -34,13 +34,18 @@ const helmetOptions = {
       scriptSrc: isProduction ? ["'self'"] : ["'self'", "'unsafe-eval'"],
       scriptSrcAttr: isProduction ? ["'none'"] : ["'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      // MapLibre pide los tiles OSM por fetch (connect-src), no como <img>.
+      // MapLibre pide los tiles por fetch (connect-src), no como <img>.
+      // Carto CDN: OSM.org bloquea uso directo (403 Tile Usage Policy).
       connectSrc: [
         "'self'",
         "https://passmanager.reservai.com.mx",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://tile.openstreetmap.org",
+        "https://*.basemaps.cartocdn.com",
+        "https://a.basemaps.cartocdn.com",
+        "https://b.basemaps.cartocdn.com",
+        "https://c.basemaps.cartocdn.com",
+        "https://d.basemaps.cartocdn.com",
       ],
       // Workers de MapLibre (blob:). Sin esto el mapa queda en gris.
       workerSrc: ["'self'", "blob:"],

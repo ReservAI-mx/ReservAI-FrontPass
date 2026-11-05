@@ -19,7 +19,7 @@ export const EXPORT_COLUMNS = [
 
 export type ExportColumnId = (typeof EXPORT_COLUMNS)[number]['id'];
 
-const PALETTE = ['#1d4e89', '#0f6e56', '#8a5a12', '#6b3f69', '#3d5a40', '#1f4b6e', '#7a3b2e'];
+const PALETTE = ['#0983d6', '#4ade80', '#fbbf24', '#a78bfa', '#7cc4f5', '#008bbd', '#ff8484'];
 
 const FIT: Record<string, string> = {
   high: 'Alto potencial',

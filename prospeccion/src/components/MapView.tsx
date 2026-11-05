@@ -77,14 +77,20 @@ export function MapView(props: Props) {
       style: {
         version: 8,
         sources: {
-          osm: {
+          // OSM.org bloquea apps (403 Tile Usage Policy). Carto CDN es el
+          // basemap raster libre habitual para MapLibre sin API key.
+          basemap: {
             type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tiles: [
+              'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+              'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+              'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+            ],
             tileSize: 256,
-            attribution: '© OpenStreetMap',
+            attribution: '© OpenStreetMap © CARTO',
           },
         },
-        layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+        layers: [{ id: 'basemap', type: 'raster', source: 'basemap' }],
       },
       center: [-103.3912, 20.6732],
       zoom: 12.5,
@@ -107,13 +113,13 @@ export function MapView(props: Props) {
         type: 'fill',
         source: 'zone',
         filter: ['==', ['geometry-type'], 'Polygon'],
-        paint: { 'fill-color': '#1d4e89', 'fill-opacity': 0.16 },
+        paint: { 'fill-color': '#0983d6', 'fill-opacity': 0.16 },
       });
       map.addLayer({
         id: 'zone-line',
         type: 'line',
         source: 'zone',
-        paint: { 'line-color': '#1d4e89', 'line-width': 2 },
+        paint: { 'line-color': '#0983d6', 'line-width': 2 },
       });
       map.addSource('prospects', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       map.addLayer({
@@ -122,7 +128,7 @@ export function MapView(props: Props) {
         source: 'prospects',
         paint: {
           'circle-radius': 6,
-          'circle-color': ['coalesce', ['get', 'color'], '#1d4e89'],
+          'circle-color': ['coalesce', ['get', 'color'], '#0983d6'],
           'circle-stroke-width': 1.5,
           'circle-stroke-color': '#ffffff',
         },
@@ -182,7 +188,7 @@ export function MapView(props: Props) {
     const markers: maplibregl.Marker[] = [];
     if (props.mode === 'polygon') {
       props.polygon.forEach((point, index) => {
-        const marker = new maplibregl.Marker({ draggable: true, color: '#1d4e89' }).setLngLat(point).addTo(map);
+        const marker = new maplibregl.Marker({ draggable: true, color: '#0983d6' }).setLngLat(point).addTo(map);
         marker.getElement().addEventListener('mousedown', (event: MouseEvent) => event.stopPropagation());
         marker.on('dragend', () => {
           const next = marker.getLngLat();
@@ -191,7 +197,7 @@ export function MapView(props: Props) {
         markers.push(marker);
       });
     } else if (props.center) {
-      const marker = new maplibregl.Marker({ draggable: true, color: '#1d4e89' })
+      const marker = new maplibregl.Marker({ draggable: true, color: '#0983d6' })
         .setLngLat([props.center.lng, props.center.lat])
         .addTo(map);
       marker.getElement().addEventListener('mousedown', (event: MouseEvent) => event.stopPropagation());
