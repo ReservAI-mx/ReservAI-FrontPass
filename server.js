@@ -29,12 +29,15 @@ const helmetOptions = {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
+      // MapLibre inyecta <style> y style="" en el canvas; sin unsafe-inline
+      // en style-src-elem el mapa queda blanco.
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-      styleSrcElem: ["'self'", "https://cdnjs.cloudflare.com"],
-      scriptSrc: isProduction ? ["'self'"] : ["'self'", "'unsafe-eval'"],
+      styleSrcElem: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      // blob: en script-src: el worker de MapLibre se crea como Blob URL.
+      scriptSrc: isProduction ? ["'self'", "blob:"] : ["'self'", "'unsafe-eval'", "blob:"],
       scriptSrcAttr: isProduction ? ["'none'"] : ["'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      // MapLibre (estilo + tiles OpenFreeMap) pide por fetch (connect-src).
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      // Estilo, tiles y glifos de OpenFreeMap.
       connectSrc: [
         "'self'",
         "https://passmanager.reservai.com.mx",
@@ -42,10 +45,9 @@ const helmetOptions = {
         "http://127.0.0.1:3000",
         "https://tiles.openfreemap.org",
       ],
-      // Workers de MapLibre (blob:). Sin esto el mapa queda en gris.
       workerSrc: ["'self'", "blob:"],
       childSrc: ["'self'", "blob:"],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "data:"],
+      fontSrc: ["'self'", "data:", "https://cdnjs.cloudflare.com", "https://tiles.openfreemap.org"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
