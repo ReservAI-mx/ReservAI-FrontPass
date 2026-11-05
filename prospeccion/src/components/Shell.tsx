@@ -65,13 +65,12 @@ export function Shell() {
       <a className="skip" href="#contenido">Saltar al contenido</a>
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">P</span>
-          <span>
-            <strong>Prospección</strong>
-            <small>ReservAI</small>
+          <span className="brand-mark" aria-hidden="true">
+            <Icon d="M9 20l-6-3V5l6 3m0 12l6-3m-6 3V8m6 9V5l6 3v12l-6-3" />
           </span>
+          <strong>Prospección</strong>
         </div>
-        <nav aria-label="Principal">
+        <nav aria-label="Secciones de prospección">
           {NAV.map((item) => (
             <NavLink
               key={item.key}
@@ -85,7 +84,6 @@ export function Shell() {
             </NavLink>
           ))}
         </nav>
-        <p className="side-foot">Uso interno</p>
       </aside>
       <div className="workspace-col">
         <header className="topbar">
@@ -97,7 +95,6 @@ export function Shell() {
             <button type="button" className="primary" onClick={() => navigate('/map', { state: { reset: Date.now() } })}>
               + Nuevo análisis
             </button>
-            <span className="user"><span className="avatar" aria-hidden="true">IN</span> Staff interno</span>
           </div>
         </header>
         <ContextBar id={id} />

@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const express = require('express');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
@@ -33,7 +34,17 @@ const helmetOptions = {
       scriptSrc: isProduction ? ["'self'"] : ["'self'", "'unsafe-eval'"],
       scriptSrcAttr: isProduction ? ["'none'"] : ["'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://passmanager.reservai.com.mx", "http://localhost:3000", "http://127.0.0.1:3000"],
+      // MapLibre pide los tiles OSM por fetch (connect-src), no como <img>.
+      connectSrc: [
+        "'self'",
+        "https://passmanager.reservai.com.mx",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://tile.openstreetmap.org",
+      ],
+      // Workers de MapLibre (blob:). Sin esto el mapa queda en gris.
+      workerSrc: ["'self'", "blob:"],
+      childSrc: ["'self'", "blob:"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -149,6 +160,36 @@ app.use(express.json());
 app.use(helmet(helmetOptions));
 app.use(globalLimiter);
 app.disable('x-powered-by');
+
+// Geocoder de Prospección: el browser pega /nominatim (same-origin) y aquí se
+// reenvía a OSM. Así no hay que abrir nominatim en la CSP.
+app.use('/nominatim', (req, res) => {
+  const target = new URL('https://nominatim.openstreetmap.org');
+  const pathAndQuery = req.originalUrl.replace(/^\/nominatim/, '') || '/';
+  const headers = {
+    accept: req.headers.accept || 'application/json',
+    'user-agent': 'ReservAI-Prospeccion/1.0 (uso interno)',
+  };
+  const proxyReq = https.request(
+    {
+      hostname: target.hostname,
+      path: pathAndQuery,
+      method: 'GET',
+      headers,
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 502, {
+        'content-type': proxyRes.headers['content-type'] || 'application/json',
+        'cache-control': 'public, max-age=300',
+      });
+      proxyRes.pipe(res);
+    }
+  );
+  proxyReq.on('error', () => {
+    if (!res.headersSent) res.status(502).json({ error: 'Nominatim no disponible' });
+  });
+  proxyReq.end();
+});
 
 // ============================
 // CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS
