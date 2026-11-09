@@ -56,11 +56,18 @@ export class Lienzo {
     this.cont.appendChild(this.svg);
 
     this.gesto = null;
+    // Dedos sobre la pantalla (pointerId → punto): con dos se acerca y aleja.
+    this.toques = new Map();
     this.svg.addEventListener('pointerdown', (e) => this.alPresionar(e));
     this.svg.addEventListener('pointermove', (e) => this.alMover(e));
     this.svg.addEventListener('pointerup', (e) => this.alSoltar(e));
-    this.svg.addEventListener('pointercancel', () => this.cancelarGesto());
+    this.svg.addEventListener('pointercancel', (e) => {
+      this.toques.delete(e.pointerId);
+      this.cancelarGesto();
+    });
     this.svg.addEventListener('wheel', (e) => this.alRueda(e), { passive: false });
+    // Safari en iPhone: que el pellizco no haga zoom a toda la página.
+    this.svg.addEventListener('gesturestart', (e) => e.preventDefault());
     // El doble clic se detecta en pointerdown: con setPointerCapture el
     // evento dblclick llega al <svg> y ya no se sabe sobre qué nodo fue.
     this.ultimoToque = { id: null, t: 0 };
@@ -352,7 +359,7 @@ export class Lienzo {
       const hijo = document.createElementNS(XHTML, 'span');
       hijo.className = 'dv-nodo__hijo';
       hijo.textContent = '▸ detalle';
-      hijo.title = 'Tiene diagrama hijo (doble clic para abrir)';
+      hijo.title = 'Tiene diagrama de detalle: doble clic y luego "Abrir diagrama de detalle"';
       pie.appendChild(hijo);
     }
     caja.appendChild(pie);
@@ -398,6 +405,18 @@ export class Lienzo {
 
   alPresionar(e) {
     if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 2) return;
+    if (e.pointerType === 'touch') {
+      this.toques.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.toques.size >= 2) {
+        // El segundo dedo convierte lo que se estaba haciendo en un pellizco.
+        if (this.gesto) this.cancelarGesto();
+        this.capturar(e);
+        this.ultimoToque = { id: null, t: 0 };
+        const [a, b] = [...this.toques.values()];
+        this.gesto = { tipo: 'pellizco', dist: Math.hypot(b.x - a.x, b.y - a.y) || 1, centro: this.centroToques(), vp: { ...this.vp } };
+        return;
+      }
+    }
     if (e.button === 2) {
       this.capturar(e);
       this.gesto = { tipo: 'caja', inicio: { x: e.clientX, y: e.clientY }, sumar: e.shiftKey || e.ctrlKey || e.metaKey, movido: false };
@@ -449,6 +468,13 @@ export class Lienzo {
     this.gesto = { tipo: 'desplazar', inicio, vp: { ...this.vp }, movido: false };
   }
 
+  /** Punto medio entre los dos primeros dedos, relativo al lienzo. */
+  centroToques() {
+    const r = this.svg.getBoundingClientRect();
+    const [a, b] = [...this.toques.values()];
+    return { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top };
+  }
+
   /** Captura el puntero para seguir el gesto aunque salga del lienzo. */
   capturar(e) {
     try {
@@ -468,8 +494,19 @@ export class Lienzo {
   }
 
   alMover(e) {
+    if (this.toques.has(e.pointerId)) this.toques.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const g = this.gesto;
     if (!g) return;
+    if (g.tipo === 'pellizco') {
+      if (this.toques.size < 2) return;
+      // Zoom por cuánto se abren los dedos; el punto bajo ellos los sigue.
+      const [a, b] = [...this.toques.values()];
+      const zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, g.vp.zoom * (Math.hypot(b.x - a.x, b.y - a.y) / g.dist)));
+      const k = zoom / g.vp.zoom;
+      const c = this.centroToques();
+      this.fijarViewport({ x: c.x - (g.centro.x - g.vp.x) * k, y: c.y - (g.centro.y - g.vp.y) * k, zoom }, false);
+      return;
+    }
     const dx = e.clientX - g.inicio.x;
     const dy = e.clientY - g.inicio.y;
     if (!g.movido && Math.hypot(dx, dy) < UMBRAL_ARRASTRE) return;
@@ -509,6 +546,7 @@ export class Lienzo {
   }
 
   alSoltar(e) {
+    this.toques.delete(e.pointerId);
     const g = this.gesto;
     this.gesto = null;
     this.svg.classList.remove('is-desplazando');
@@ -516,7 +554,10 @@ export class Lienzo {
     this.capaTemporal.replaceChildren();
     if (!g) return;
 
-    if (g.tipo === 'desplazar') {
+    // Al soltar un dedo del pellizco el otro no arrastra: se vuelve a tocar.
+    if (g.tipo === 'pellizco') {
+      this.cb.onViewport({ ...this.vp });
+    } else if (g.tipo === 'desplazar') {
       if (g.movido) this.cb.onViewport({ ...this.vp });
       else this.seleccionar([], []);
     } else if (g.tipo === 'caja') {
