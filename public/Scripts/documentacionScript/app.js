@@ -510,7 +510,7 @@ function enlazarEditor() {
       if (nuevo) cambiar(nuevo);
       else repintar();
     },
-    onAbrir: entrarAHijo,
+    onAbrir: abrirInspector,
     onViewport: (vp) => {
       // La vista viaja con el siguiente guardado, pero sola no guarda: si
       // no, dos personas que sólo miran el mismo proyecto chocarían por
@@ -705,6 +705,7 @@ function agregar(tipo, punto) {
   const { doc, id } = M.agregarNodo(estado.doc, idActual(), tipo, pos);
   cambiar(doc);
   lienzo.seleccionar([id], []);
+  abrirInspector(id); // recién puesto: lo siguiente es ponerle nombre
 }
 
 /** Todo cambio del documento pasa por aquí: historial, repintar y autoguardado. */
@@ -795,6 +796,10 @@ function teclado(e) {
   } else if (e.key === 'Enter' && estado.nodoInspector) {
     e.preventDefault();
     entrarAHijo(estado.nodoInspector);
+  } else if (e.key === 'Enter' && lienzo.seleccion().nodos.length === 1) {
+    // Enter con un nodo seleccionado abre su panel; otro Enter entra al detalle.
+    e.preventDefault();
+    abrirInspector(lienzo.seleccion().nodos[0]);
   }
 }
 
@@ -903,6 +908,7 @@ function irAResultado(r) {
   lienzo.seleccionar([], [], false);
   pintarDiagrama(true);
   lienzo.seleccionar([r.nodoId], []);
+  abrirInspector(r.nodoId);
   lienzo.centrarEn(r.nodoId);
 }
 
@@ -1150,6 +1156,7 @@ function irAProblema(p) {
   pintarDiagrama(false);
   if (p.nodoId) {
     lienzo.seleccionar([p.nodoId], []);
+    abrirInspector(p.nodoId);
     lienzo.centrarEn(p.nodoId);
   }
 }
@@ -1675,8 +1682,16 @@ async function sobrescribir() {
    Inspector
    ================================================================== */
 
+/* Un clic sólo selecciona (para mover sin que se abra nada); el panel se
+   abre con doble clic. Ya abierto, sigue al nodo que se seleccione. */
 function alSeleccionar(sel) {
+  if (!estado.nodoInspector) return;
   estado.nodoInspector = sel.nodos.length === 1 ? sel.nodos[0] : null;
+  pintarInspector();
+}
+
+function abrirInspector(id) {
+  estado.nodoInspector = id;
   pintarInspector();
 }
 
