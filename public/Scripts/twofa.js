@@ -1,7 +1,8 @@
 import SessionStorageManager from "./AppStorage.js";
 import { apiFetch, apiJson } from "./api.js";
 import { setButtonLoading, shakeElement } from "./buttonLoading.js";
-import { captureReturnTo, consumeReturnTo } from "./oauthReturnTo.js";
+import { captureReturnTo } from "./oauthReturnTo.js";
+import { redirectAfterAuthentication, saveAuthenticatedSession } from "./postAuth.js";
 
 const MAX_RECOVERY_SIZE = 1024 * 1024; // 1 MB: el documento son unos cuantos KB.
 const VERIFIED_HOLD_MS = 1100; // Cuánto se queda la palomita antes de continuar.
@@ -39,55 +40,6 @@ function downloadRecovery(documentObj, filename) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-}
-
-async function goHome() {
-  const returnTo = consumeReturnTo();
-  if (returnTo) {
-    window.location.href = returnTo;
-    return;
-  }
-  let type = SessionStorageManager.getSession().account_type;
-  if (!type) {
-    const { ok } = await apiJson('/a?page=1');
-    type = ok ? 'admin' : 'client';
-    SessionStorageManager.saveSession({ account_type: type });
-  }
-  if (type === 'admin') {
-    window.location.href = '/inicioAdmin';
-    return;
-  }
-  if (type === 'seller') {
-    window.location.href = '/invitations';
-    return;
-  }
-  let dest = '/inicio';
-  try {
-    const onboard = globalThis.PassOnboard;
-    const res = await apiFetch('/billing/setup?page=1', {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-    });
-    let setups = [];
-    if (res.status === 200) {
-      const data = await res.json().catch(() => ({}));
-      setups = data.data || data.provisions || [];
-    }
-    if (onboard && onboard.shouldRedirectToBilling({
-      role: type,
-      dismissed: onboard.isDismissed(),
-      status: res.status,
-      setups,
-    })) {
-      dest = '/billing';
-    }
-  } catch (err) {
-    if (err && err.message === 'Session expired') return;
-    dest = '/inicio';
-  }
-  window.location.href = dest;
 }
 
 const ICON_SHIELD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.75 4.75 5.5v5.25c0 4.45 3.1 8.15 7.25 9.25 4.15-1.1 7.25-4.8 7.25-9.25V5.5L12 2.75Z"/><path d="M12 8.5v5"/><path d="m9.75 11.25 2.25 2.25 2.25-2.25"/></svg>`;
@@ -260,7 +212,7 @@ function showRecoveryGate(data) {
     continueBtn.disabled = true;
     continueBtn.classList.add('is-loading');
     continueBtn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><span>Entrando...</span>';
-    goHome();
+    redirectAfterAuthentication();
   });
 
   downloadBtn.focus();
@@ -409,8 +361,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        SessionStorageManager.saveSession({
+        saveAuthenticatedSession({
+            ...data,
             token_type: data.token_type || 'access',
+            verified: true,
             twofaenabled: true,
         });
 
@@ -420,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showRecoveryGate(data);
             return;
         }
-        goHome();
+        redirectAfterAuthentication();
       });
     }
 

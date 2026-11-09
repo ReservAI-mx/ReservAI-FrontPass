@@ -1,6 +1,6 @@
-import SessionStorageManager from './AppStorage.js';
 import { apiJson } from './api.js';
 import { setButtonLoading, shakeElement } from './buttonLoading.js';
+import { redirectAfterAuthentication, saveAuthenticatedSession } from './postAuth.js';
 
 import { evaluar } from './passwordRules.js';
 
@@ -123,10 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
         shakeElement(form);
         return;
       }
-      SessionStorageManager.saveSession({
-        token_type: data.token_type || 'two_factor_authentication',
-      });
-      window.location.href = '/twofa';
+      const tokenType = data.token_type || 'two_factor_authentication';
+      saveAuthenticatedSession({ ...data, token_type: tokenType });
+      if (tokenType === 'access') {
+        await redirectAfterAuthentication({ allowReturnTo: false });
+      } else {
+        window.location.href = '/twofa';
+      }
     } catch (err) {
       errores.form.textContent = err.message || 'Error de red al guardar la contraseña';
       shakeElement(form);
