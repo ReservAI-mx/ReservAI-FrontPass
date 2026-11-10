@@ -47,6 +47,19 @@ export function equipo() {
   return pedir('/bitacora/resumen');
 }
 
+/* Negocios de Prospección para ligar la visita a su lugar. Necesitan señal. */
+export function prospectosCerca(lat, lng) {
+  return pedir(`/bitacora/prospectos?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+}
+
+export function buscarProspectos(q) {
+  return pedir(`/bitacora/prospectos?q=${encodeURIComponent(q)}`);
+}
+
+export function prospecto(id) {
+  return pedir(`/bitacora/prospectos/${encodeURIComponent(id)}`);
+}
+
 /** Deja en el teléfono la sesión larga (30 días). Sólo con la sesión del pass. */
 export function pedirSesionDispositivo() {
   return pedir('/bitacora/sesion', { method: 'POST', body: '{}' });
@@ -72,7 +85,9 @@ async function subir(cuenta) {
 }
 
 async function bajar(cuenta) {
-  const clave = `cursor:${cuenta}`;
+  // v2: desde que todos ven las visitas de todos. Con el cursor viejo el
+  // teléfono sólo bajaría lo que el resto cambie de aquí en adelante.
+  const clave = `cursor:v2:${cuenta}`;
   let cursor = await leerMeta(clave);
   let bajadas = 0;
   for (let vuelta = 0; vuelta < 100; vuelta++) {

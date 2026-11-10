@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getInsights, getKpis, getProspects, getSearch, computeKpis } from './api';
+import { getInsights, getKpis, getProspects, getSearch, getSearchVisits, computeKpis } from './api';
 import { mockSearch } from './mock';
 import type { Prospect, SearchJob } from './types';
 
@@ -53,4 +54,27 @@ export function useInsights(id: string | undefined, poll: boolean) {
     queryFn: () => getInsights(id!),
     refetchInterval: poll ? 2500 : false,
   });
+}
+
+/** Visitas de la Bitácora en la zona; se refrescan solas cada minuto. */
+export function useZoneVisits(id: string | undefined) {
+  return useQuery({
+    queryKey: ['zone-visits', id],
+    enabled: Boolean(id),
+    retry: false,
+    queryFn: () => getSearchVisits(id!),
+    refetchInterval: 60_000,
+  });
+}
+
+/** true en pantallas angostas (teléfono): tarjetas en lugar de tabla. */
+export function useNarrow(query = '(max-width: 760px)') {
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const onChange = () => setNarrow(media.matches);
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, [query]);
+  return narrow;
 }

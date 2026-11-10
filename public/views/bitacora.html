@@ -254,7 +254,12 @@
           <button type="button" class="ui-seg__btn" data-filtro="pendientes" aria-pressed="false">Por subir</button>
           <button type="button" class="ui-seg__btn" data-filtro="archivadas" aria-pressed="false">Archivadas</button>
         </div>
-        <input type="search" class="bt-buscar" id="buscar" placeholder="Buscar negocio, colonia, contacto…" autocomplete="off" />
+        <!-- Todo el equipo: para no repetir un negocio que ya visitó otro. -->
+        <div class="ui-seg bt-seg" id="segQuien" role="group" aria-label="De quién">
+          <button type="button" class="ui-seg__btn" data-quien="todos" aria-pressed="true">Todo el equipo</button>
+          <button type="button" class="ui-seg__btn" data-quien="mias" aria-pressed="false">Mías</button>
+        </div>
+        <input type="search" class="bt-buscar" id="buscar" placeholder="Buscar negocio, teléfono, colonia, vendedor…" autocomplete="off" />
       </div>
       <div class="bt-lista" id="listaTodas"></div>
     </section>

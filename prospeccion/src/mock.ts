@@ -30,6 +30,7 @@ export const MOCK_CATEGORIES: Category[] = [
 export const MOCK_PROSPECTS: Prospect[] = [
   {
     id: 'mock-1',
+    place_id: null,
     name: 'The Barber Club (ejemplo)',
     address: 'Av. Chapultepec 480',
     category_id: 'mock-barberia',
@@ -56,9 +57,11 @@ export const MOCK_PROSPECTS: Prospect[] = [
     analyzed_at: null,
     lng: -103.381,
     lat: 20.674,
+    visit: null,
   },
   {
     id: 'mock-2',
+    place_id: null,
     name: 'Mesa Norte (ejemplo)',
     address: 'Prisciliano Sánchez 215',
     category_id: 'mock-restaurante',
@@ -85,9 +88,11 @@ export const MOCK_PROSPECTS: Prospect[] = [
     analyzed_at: null,
     lng: -103.368,
     lat: 20.676,
+    visit: null,
   },
   {
     id: 'mock-3',
+    place_id: null,
     name: 'Dental Centro (ejemplo)',
     address: 'López Cotilla 901',
     category_id: 'mock-dental',
@@ -114,9 +119,11 @@ export const MOCK_PROSPECTS: Prospect[] = [
     analyzed_at: null,
     lng: -103.355,
     lat: 20.669,
+    visit: null,
   },
   {
     id: 'mock-4',
+    place_id: null,
     name: 'Corte Sur (ejemplo)',
     address: 'Av. México 1500',
     category_id: 'mock-barberia',
@@ -143,6 +150,7 @@ export const MOCK_PROSPECTS: Prospect[] = [
     analyzed_at: null,
     lng: -103.372,
     lat: 20.662,
+    visit: null,
   },
 ];
 
@@ -159,6 +167,8 @@ export function mockSearch(id: string): SearchJob {
     city: 'Guadalajara',
     zone: 'Col. Americana',
     created_at: null,
+    area: null,
+    visited_count: null,
   };
 }
 

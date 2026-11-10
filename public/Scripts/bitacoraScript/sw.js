@@ -16,7 +16,7 @@
    teléfonos que ya la abrieron siguen con la copia vieja.
    ------------------------------------------------------------------ */
 
-const VERSION = 'bitacora-pass-v6';
+const VERSION = 'bitacora-pass-v7';
 
 const PAGINA = '/bitacora/';
 
