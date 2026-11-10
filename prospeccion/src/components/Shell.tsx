@@ -7,12 +7,14 @@ import { setActiveSearch, useActiveSearch } from '../store';
 import type { GeoHit } from '../types';
 import { useDialog } from './ui';
 
+// En el orden en que se usan: zona → negocios → análisis → archivo. Giros
+// es configuración y va aparte, abajo.
 const NAV = [
-  { key: 'map', label: 'Mapa', icon: 'M9 20l-6-3V5l6 3m0 12l6-3m-6 3V8m6 9V5l6 3v12l-6-3m-6-9l6-3 6 3' },
-  { key: 'results', label: 'Resultados', icon: 'M4 6h16M4 12h16M4 18h10' },
-  { key: 'export', label: 'Exportar', icon: 'M12 3v12m0 0l-4-4m4 4l4-4M5 21h14' },
-  { key: 'insights', label: 'Análisis', icon: 'M12 3a6 6 0 00-3.5 10.9V19h7v-5.1A6 6 0 0012 3z' },
-  { key: 'settings', label: 'Configuración', icon: 'M4 7h16M4 17h16M8 5v4M16 15v4' },
+  { key: 'map', label: 'Mapa', hint: 'Marca una zona', icon: 'M9 20l-6-3V5l6 3m0 12l6-3m-6 3V8m6 9V5l6 3v12l-6-3m-6-9l6-3 6 3' },
+  { key: 'results', label: 'Negocios', hint: 'Lo que encontró', icon: 'M4 6h16M4 12h16M4 18h10' },
+  { key: 'insights', label: 'Análisis', hint: 'Qué tiene la zona', icon: 'M4 19V9m6 10V5m6 14v-7m4 7H3' },
+  { key: 'export', label: 'Exportar', hint: 'CSV o PDF', icon: 'M12 3v12m0 0l-4-4m4 4l4-4M5 21h14' },
+  { key: 'settings', label: 'Giros', hint: 'Qué buscar', icon: 'M4 7h16M4 17h16M8 5v4M16 15v4' },
 ] as const;
 
 function Icon({ d }: { d: string }) {
@@ -36,7 +38,7 @@ export function Shell() {
     const name = path.startsWith('/settings') ? 'Giros'
       : path.includes('/export') ? 'Exportar'
       : path.includes('/insights') ? 'Análisis'
-      : path.includes('/searches') ? 'Resultados'
+      : path.includes('/searches') ? 'Negocios'
       : 'Mapa';
     document.title = `${name} · Prospección`;
   }, [location.pathname]);
@@ -76,11 +78,14 @@ export function Shell() {
               key={item.key}
               to={links[item.key]}
               end={item.key === 'map' || item.key === 'results' || item.key === 'settings'}
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}${!id && item.key !== 'map' && item.key !== 'settings' ? ' quiet' : ''}`}
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}${item.key === 'settings' ? ' nav-config' : ''}${!id && item.key !== 'map' && item.key !== 'settings' ? ' quiet' : ''}`}
               title={!id && item.key !== 'map' && item.key !== 'settings' ? 'Sin búsqueda activa' : undefined}
             >
               <Icon d={item.icon} />
-              {item.label}
+              <span className="nav-text">
+                <span>{item.label}</span>
+                <span className="nav-hint">{item.hint}</span>
+              </span>
             </NavLink>
           ))}
         </nav>

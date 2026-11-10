@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteCategory, errorMessage, getCategories, saveCategory } from '../api';
 import { ConfirmDialog, EmptyState, FallbackBanner, Loading } from '../components/ui';
-import { slugify, splitList } from '../format';
+import { colorFor, slugify, splitList } from '../format';
 import { MOCK_CATEGORIES } from '../mock';
 import type { Category } from '../types';
 
@@ -89,8 +89,9 @@ export function SettingsPage() {
     <div className="page">
       <header className="page-head">
         <div>
+          <p className="eyebrow">Configuración</p>
           <h1>Giros</h1>
-          <p className="lede">Categorías que la búsqueda usa en el servidor. Aquí no se guardan llaves de API.</p>
+          <p className="lede">Un giro le dice a la búsqueda qué negocios traer de Google Maps. Los activos aparecen como opciones en el mapa.</p>
         </div>
       </header>
       {categoriesQ.isError ? (
@@ -107,55 +108,64 @@ export function SettingsPage() {
           {!categoriesQ.isPending && categories.length === 0 ? (
             <EmptyState title="Sin giros" body="Crea el primero para poder buscar en el mapa." />
           ) : null}
-          {categories.length > 0 ? (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr><th>Nombre</th><th>Tipos Google</th><th>Términos</th><th>Estado</th><th>Acciones</th></tr>
-                </thead>
-                <tbody>
-                  {categories.map((category) => (
-                    <tr key={category.id}>
-                      <td><strong>{category.name}</strong><div className="muted">{category.slug}</div></td>
-                      <td>{category.google_place_types.join(', ') || '—'}</td>
-                      <td>{category.search_terms.join(', ') || '—'}</td>
-                      <td><span className={category.is_active ? 'badge fit-high' : 'badge'}>{category.is_active ? 'Activo' : 'Inactivo'}</span></td>
-                      <td className="actions">
-                        <button type="button" className="ghost" disabled={locked} onClick={() => beginEdit(category)}>Editar</button>
-                        <button type="button" className="ghost" disabled={locked || toggle.isPending} onClick={() => toggle.mutate(category)}>
-                          {category.is_active ? 'Desactivar' : 'Activar'}
-                        </button>
-                        <button type="button" className="danger" disabled={locked} onClick={() => setPendingDelete(category)}>Eliminar</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
+          <div className="giro-grid">
+            {categories.map((category) => (
+              <article key={category.id} className={`giro-card${category.is_active ? '' : ' off'}`}>
+                <header>
+                  <span className="dot big" style={{ background: colorFor(category.name) }} />
+                  <strong>{category.name}</strong>
+                  <label className="toggle mini" title={category.is_active ? 'Activo: sale en el mapa' : 'Inactivo: no sale en el mapa'}>
+                    <input type="checkbox" checked={category.is_active} disabled={locked || toggle.isPending} onChange={() => toggle.mutate(category)} />
+                    <span>{category.is_active ? 'Activo' : 'Inactivo'}</span>
+                  </label>
+                </header>
+                <div>
+                  <p className="section-label">Lo busca como</p>
+                  <div className="chips small-chips">
+                    {category.search_terms.length ? category.search_terms.map((term) => <span key={term} className="chip static">{term}</span>) : <span className="muted">—</span>}
+                  </div>
+                </div>
+                <div>
+                  <p className="section-label">Tipo en Google</p>
+                  <p className="code-list">{category.google_place_types.join(', ') || '—'}</p>
+                </div>
+                <footer>
+                  <button type="button" className="ghost sm" disabled={locked} onClick={() => beginEdit(category)}>Editar</button>
+                  <button type="button" className="danger sm" disabled={locked} onClick={() => setPendingDelete(category)}>Eliminar</button>
+                </footer>
+              </article>
+            ))}
+          </div>
         </div>
         <form className="panel" onSubmit={onSubmit}>
-          <h2>{editing ? 'Editar giro' : 'Nuevo giro'}</h2>
+          <h2>{editing ? `Editar “${editing.name}”` : 'Nuevo giro'}</h2>
           <label className="field">Nombre
             <input
               value={form.name}
               disabled={locked}
+              placeholder="Barberías"
               onChange={(event) => {
                 const name = event.target.value;
                 setForm((current) => ({ ...current, name, slug: slugEdited ? current.slug : slugify(name) }));
               }}
             />
+            <span className="hint">Como lo verán los vendedores en el mapa.</span>
           </label>
-          <label className="field">Slug
-            <input value={form.slug} disabled={locked} onChange={(event) => { setSlugEdited(true); setForm((current) => ({ ...current, slug: event.target.value })); }} />
-          </label>
-          <label className="field">Tipos de Google
-            <input value={form.types} disabled={locked} placeholder="barber_shop, hair_care" onChange={(event) => setForm((current) => ({ ...current, types: event.target.value }))} />
-          </label>
-          <label className="field">Términos
+          <label className="field">Palabras de búsqueda
             <input value={form.terms} disabled={locked} placeholder="barbería, barber shop" onChange={(event) => setForm((current) => ({ ...current, terms: event.target.value }))} />
+            <span className="hint">Lo que escribirías en Google Maps. Separa con comas.</span>
           </label>
-          <label className="switch"><input type="checkbox" checked={form.active} disabled={locked} onChange={(event) => setForm((current) => ({ ...current, active: event.target.checked }))} /> Activo</label>
+          <label className="field">Tipos de Google (opcional)
+            <input value={form.types} disabled={locked} placeholder="barber_shop, hair_care" onChange={(event) => setForm((current) => ({ ...current, types: event.target.value }))} />
+            <span className="hint">Categorías oficiales de Google Places; afinan la búsqueda.</span>
+          </label>
+          <details className="more">
+            <summary>Avanzado</summary>
+            <label className="field">Identificador (slug)
+              <input value={form.slug} disabled={locked} onChange={(event) => { setSlugEdited(true); setForm((current) => ({ ...current, slug: event.target.value })); }} />
+            </label>
+          </details>
+          <label className="toggle"><input type="checkbox" checked={form.active} disabled={locked} onChange={(event) => setForm((current) => ({ ...current, active: event.target.checked }))} /><span>Activo (sale en el mapa)</span></label>
           <div className="dialog-actions">
             {editing ? <button type="button" className="ghost" onClick={() => { setEditing(null); setForm(EMPTY_FORM); setSlugEdited(false); }}>Cancelar</button> : null}
             <button type="submit" className="primary" disabled={locked || save.isPending}>{save.isPending ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear giro'}</button>
