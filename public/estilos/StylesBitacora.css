@@ -401,6 +401,7 @@ body.bt {
 .bt-campo__etiqueta em { font-style: normal; font-weight: 400; color: var(--text-gray); }
 
 .bt-campo input,
+.bt-campo select,
 .bt-campo textarea {
   width: 100%;
   padding: 0.7rem 0.8rem;
@@ -468,6 +469,96 @@ body.bt {
 }
 
 .ui-btn--peligro { border: 1px solid var(--ui-error); background: transparent; color: var(--ui-error); }
+
+/* ---------- Leads del equipo y Prospección ---------- */
+
+.bt-item__compartida { font-size: 0.78rem; color: var(--ui-info); }
+
+/* Otra visita al mismo negocio: se avisa antes de duplicar. */
+.bt-aviso-repetida {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.35rem;
+  margin: -0.4rem 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(240, 173, 78, 0.55);
+  background: rgba(240, 173, 78, 0.12);
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.bt-aviso-repetida[hidden] { display: none; }
+.bt-aviso-repetida strong { color: var(--ui-warn); }
+.bt-aviso-repetida span { color: var(--text-gray); }
+.bt-aviso-repetida .bt-link { padding: 0; margin-left: auto; font-size: 0.85rem; }
+
+/* Negocios de Prospección cerca o por nombre. */
+.bt-sugerencias { margin: -0.4rem 0 1rem; }
+.bt-sugerencias[hidden] { display: none; }
+
+.bt-sugerencias__titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-gray);
+}
+
+.bt-sugerencias__titulo .ui-loading__spinner { width: 12px; height: 12px; }
+
+.bt-sugerencia {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  margin-bottom: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--ui-line-2);
+  background: var(--ui-card);
+  color: var(--text-light);
+  text-align: left;
+  cursor: pointer;
+}
+
+.bt-sugerencia:hover { border-color: var(--primary); }
+.bt-sugerencia__nombre { font-weight: 650; }
+.bt-sugerencia__meta { font-size: 0.78rem; color: var(--text-gray); }
+.bt-sugerencia__ya { font-size: 0.78rem; color: var(--ui-warn); }
+
+.bt-lugar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.6rem;
+  margin: -0.5rem 0 1rem;
+  font-size: 0.8rem;
+  color: var(--text-gray);
+}
+
+.bt-lugar[hidden] { display: none; }
+.bt-lugar .bt-link { padding: 0; font-size: 0.8rem; }
+
+/* Ficha de sólo lectura (visita de otro vendedor). */
+.bt-lectura { margin: 1rem 0 0; }
+
+.bt-lectura__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--ui-line);
+  font-size: 0.88rem;
+}
+
+.bt-lectura__fila dt { color: var(--text-gray); }
+.bt-lectura__fila dd { margin: 0; color: var(--text-light); overflow-wrap: anywhere; }
 
 /* ---------- Tarjetas, gráficas y filtros (teléfono y escritorio) ---------- */
 

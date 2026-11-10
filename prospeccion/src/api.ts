@@ -8,8 +8,11 @@ import type {
   Kpis,
   Prospect,
   ProspectPage,
+  ProspectVisit,
+  SearchArea,
   SearchJob,
   SearchStatus,
+  ZoneVisits,
 } from './types';
 
 const BASE = import.meta.env.VITE_API_BASE ?? '';
@@ -172,6 +175,43 @@ export function normalizeSearch(raw: unknown): SearchJob | null {
     city,
     zone,
     created_at: str(record.created_at),
+    area: normalizeArea(record.area),
+    visited_count: num(record.visited_count),
+  };
+}
+
+function normalizeArea(raw: unknown): SearchArea | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const area = raw as Record<string, unknown>;
+  if (area.type === 'radius' && area.center && typeof area.center === 'object') {
+    const center = area.center as Record<string, unknown>;
+    const lng = num(center.lng);
+    const lat = num(center.lat);
+    const radius = num(area.radius_m);
+    return lng != null && lat != null && radius != null ? { type: 'radius', center: { lng, lat }, radius_m: radius } : null;
+  }
+  if (area.type === 'polygon' && Array.isArray(area.coordinates)) {
+    const ring = area.coordinates
+      .map((point) => (Array.isArray(point) ? [num(point[0]), num(point[1])] : [null, null]))
+      .filter((point): point is [number, number] => point[0] != null && point[1] != null);
+    return ring.length >= 3 ? { type: 'polygon', coordinates: ring } : null;
+  }
+  return null;
+}
+
+function normalizeVisit(raw: unknown): ProspectVisit | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const visit = raw as Record<string, unknown>;
+  const id = str(visit.id);
+  if (!id) return null;
+  return {
+    id,
+    seller_id: str(visit.seller_id),
+    seller_name: str(visit.seller_name),
+    date: str(visit.date),
+    result: str(visit.result),
+    shared_with: str(visit.shared_with),
+    count: num(visit.count) ?? 1,
   };
 }
 
@@ -232,6 +272,7 @@ export function normalizeProspect(raw: unknown): Prospect | null {
   if (lat == null) lat = num(record.lat ?? record.latitude);
   return {
     id,
+    place_id: str(record.place_id),
     name,
     address: str(record.address),
     category_id: categoryId,
@@ -258,6 +299,7 @@ export function normalizeProspect(raw: unknown): Prospect | null {
     analyzed_at: str(record.analyzed_at),
     lng,
     lat,
+    visit: normalizeVisit(record.visit),
   };
 }
 
@@ -285,6 +327,7 @@ export function normalizeKpis(raw: unknown): Kpis | null {
     without_booking_system: pair(record.without_booking_system ?? record.no_booking_system, total),
     avg_rating: num(record.avg_rating ?? record.average_rating),
     avg_lead_score: num(record.avg_lead_score ?? record.average_lead_score ?? record.avg_score),
+    visited: pair(record.visited, total),
   };
 }
 
@@ -295,6 +338,7 @@ export function computeKpis(rows: Prospect[]): Kpis {
   const whatsapp = rows.filter((row) => row.has_whatsapp).length;
   const email = rows.filter((row) => row.email).length;
   const noBooking = rows.filter((row) => row.booking_system_detected === false).length;
+  const visited = rows.filter((row) => row.visit).length;
   return {
     prospects_total: total,
     with_whatsapp: { count: whatsapp, pct: pct(whatsapp) },
@@ -302,6 +346,7 @@ export function computeKpis(rows: Prospect[]): Kpis {
     without_booking_system: { count: noBooking, pct: pct(noBooking) },
     avg_rating: avg(rows.map((row) => row.rating).filter((value): value is number => value != null)),
     avg_lead_score: avg(rows.map((row) => row.lead_score).filter((value): value is number => value != null)),
+    visited: { count: visited, pct: pct(visited) },
   };
 }
 
@@ -397,6 +442,51 @@ export async function getProspect(id: string) {
   const prospect = normalizeProspect(await api<unknown>(`/api/prospeccion/prospects/${encodeURIComponent(id)}`));
   if (!prospect) throw new ApiError(500, 'Prospecto inválido');
   return prospect;
+}
+
+/** Visitas de la Bitácora dentro de la zona de la búsqueda. */
+export async function getSearchVisits(id: string): Promise<ZoneVisits> {
+  const raw = await api<unknown>(`/api/prospeccion/searches/${encodeURIComponent(id)}/visits`);
+  const record = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  const items = unwrapList(raw).flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const row = item as Record<string, unknown>;
+    const location = (row.location && typeof row.location === 'object' ? row.location : {}) as Record<string, unknown>;
+    const visitId = str(row.id);
+    const lng = num(location.lng);
+    const lat = num(location.lat);
+    if (!visitId || lng == null || lat == null) return [];
+    return [{
+      id: visitId,
+      business: str(row.business),
+      category: str(row.category),
+      date: str(row.date),
+      result: str(row.result),
+      seller_id: str(row.seller_id),
+      seller_name: str(row.seller_name),
+      place_id: str(row.place_id),
+      interest: num(row.interest),
+      lng,
+      lat,
+    }];
+  });
+  const s = (record.summary && typeof record.summary === 'object' ? record.summary : {}) as Record<string, unknown>;
+  return {
+    items,
+    summary: {
+      total: num(s.total) ?? items.length,
+      closed: num(s.closed) ?? 0,
+      in_progress: num(s.in_progress) ?? 0,
+      linked: num(s.linked) ?? 0,
+      last_date: str(s.last_date),
+      by_seller: Array.isArray(s.by_seller)
+        ? s.by_seller.map((row) => {
+          const r = (row && typeof row === 'object' ? row : {}) as Record<string, unknown>;
+          return { seller_id: str(r.seller_id), name: str(r.name), count: num(r.count) ?? 0 };
+        })
+        : [],
+    },
+  };
 }
 
 export function analyzeSearch(id: string) {
