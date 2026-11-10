@@ -1,9 +1,12 @@
 import { showToast } from '../toast.js';
 import { goLogout } from '../api.js';
 import { setupAccountMenu } from '../accountMenu.js';
-import { visitasDe, guardarLocal, leerMeta, guardarMeta, disponible } from './store.js';
 import {
-  sincronizar, yo, pedirSesionDispositivo, equipo, prospectosCerca, buscarProspectos, prospecto, SinSesion, SinRed,
+  visitasDe, guardarLocal, leerMeta, guardarMeta, disponible, borrarLocal, AVISO_VERSION,
+} from './store.js';
+import {
+  sincronizar, yo, pedirSesionDispositivo, equipo, prospectosCerca, buscarProspectos, prospecto, olvidarCursor,
+  SinSesion, SinRed,
 } from './sync.js';
 
 const C = globalThis.BitacoraCampos;
@@ -208,8 +211,10 @@ function item(v, { fecha = false, seguimiento = false, vendedor = false } = {}) 
       h('span', { class: `bt-badge ${CLASE_RESULTADO[v.resultado] || ''}`, text: etiqueta })),
     meta && h('span', { class: 'bt-item__meta', text: meta }),
     v.compartido_con && h('span', { class: 'bt-item__compartida', text: textoCompartida(v) }),
-    v._rechazo && h('span', { class: 'bt-item__aviso bt-item__aviso--error', text: `No se subió: ${v._rechazo}` }),
-    !v._rechazo && v._pendiente && h('span', { class: 'bt-item__aviso', text: 'Por subir' }));
+    v._rechazo && v._rechazo !== AVISO_VERSION
+      && h('span', { class: 'bt-item__aviso bt-item__aviso--error', text: `No se subió: ${v._rechazo} Ábrela para corregirla o descartarla.` }),
+    (v._rechazo === AVISO_VERSION || (!v._rechazo && v._pendiente))
+      && h('span', { class: 'bt-item__aviso', text: 'Por subir' }));
 }
 
 /* Ícono fijo (no lleva datos), por eso se arma desde texto una sola vez. */
@@ -374,7 +379,7 @@ function tablaVisitas(lista, conVendedor) {
     .filter(Boolean);
   const filas = lista.map((v) => {
     const etiqueta = v.resultado || (v.decisor && v.decisor !== 'Sí' ? 'Sin decisor' : 'Sin cerrar');
-    const estadoSubida = v._rechazo
+    const estadoSubida = v._rechazo && v._rechazo !== AVISO_VERSION
       ? h('span', { class: 'bt-item__aviso bt-item__aviso--error', text: ' · no se subió' })
       : v._pendiente && h('span', { class: 'bt-item__aviso', text: ' · por subir' });
     const celdas = [
@@ -800,7 +805,12 @@ function pintarLugar() {
     h('span', { text: texto }),
     editable && v.place_id && h('button', {
       type: 'button', class: 'bt-link',
-      onclick: () => { v.place_id = ''; if (gps) { v.lat = String(gps.lat); v.lng = String(gps.lng); } pintarLugar(); },
+      onclick: () => {
+        vaciar(v, 'place_id');
+        v.place_id = '';
+        if (gps) { v.lat = String(gps.lat); v.lng = String(gps.lng); }
+        pintarLugar();
+      },
       text: 'Quitar liga',
     }));
 }
@@ -830,7 +840,13 @@ function cerrarHoja() {
   document.body.style.overflow = '';
 }
 
+/* Un extra que se quita a propósito sí se manda vacío (ver paraSubir). */
+function vaciar(v, clave) {
+  v._vaciar = [...new Set([...(v._vaciar || []), clave])];
+}
+
 function set(clave, valor) {
+  if (C.EXTRAS.includes(clave) && !valor && estado.hoja.v[clave]) vaciar(estado.hoja.v, clave);
   estado.hoja.v[clave] = valor;
   if (estado.hoja.modo === 'rapido' && estado.hoja.paso === 0) pintarPie();
   if (clave === 'negocio' || clave === 'telefono' || clave === 'municipio') pintarRepetida();
@@ -1018,7 +1034,10 @@ function cuerpoCompleto() {
     chips('Motivo de pérdida', 'motivo_perdida', O.motivo_perdida),
     campoCompartir(),
     texto('Notas', 'notas', { largo: true }),
-    v._rechazo && h('div', { class: 'bt-caja-nota', text: `El servidor no la aceptó: ${v._rechazo}. Corrige y guarda de nuevo.` }),
+    v._rechazo && h('div', { class: 'bt-caja-nota bt-caja-nota--error' },
+      v._rechazo === AVISO_VERSION
+        ? 'Todavía no sube: el servidor no se ha actualizado. Se vuelve a intentar sola; no tienes que hacer nada.'
+        : `El servidor no la aceptó: ${v._rechazo}. Corrígela y guarda, o descártala.`),
   ];
 }
 
@@ -1042,7 +1061,8 @@ function pintarPie() {
     botones = [boton('Cerrar', 'ui-btn--ghost', cerrarHoja)];
   } else {
     botones = [
-      !esNueva && (esDueno(v) || esAdmin()) && boton('Eliminar', 'ui-btn--peligro', eliminarHoja),
+      !esNueva && v._rechazo && boton('Descartar', 'ui-btn--ghost', descartarHoja),
+      !esNueva && !v._rechazo && (esDueno(v) || esAdmin()) && boton('Eliminar', 'ui-btn--peligro', eliminarHoja),
       boton('Guardar', 'ui-btn--primary', () => guardarHoja()),
     ].filter(Boolean);
   }
@@ -1107,10 +1127,47 @@ function guardarHoja() {
   guardar(v, estado.hoja.esNueva ? 'Puerta registrada' : 'Guardado');
 }
 
+/* Nunca llegó al servidor: no hay nada que avisarle. */
+const soloEnTelefono = (v) => !v.actualizado_en;
+
 function eliminarHoja() {
+  const v = estado.hoja.v;
   // eslint-disable-next-line no-alert
   if (!window.confirm('¿Eliminar esta visita? Deja de contar en el tablero.')) return;
-  guardar({ ...estado.hoja.v, eliminada: true }, 'Eliminada');
+  if (soloEnTelefono(v)) {
+    descartar(v, 'Eliminada');
+    return;
+  }
+  guardar({ ...v, eliminada: true }, 'Eliminada');
+}
+
+/*
+ * Una visita que el servidor no aceptó. Si nunca subió, se borra del
+ * teléfono; si ya existía allá, se tiran los cambios de aquí y se vuelve a
+ * bajar la del servidor.
+ */
+function descartarHoja() {
+  const v = estado.hoja.v;
+  const texto = soloEnTelefono(v)
+    ? '¿Descartar esta visita? Nunca llegó al servidor y se borra de este dispositivo.'
+    : '¿Descartar tus cambios? Se queda la versión que está en el servidor.';
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(texto)) return;
+  descartar(v, soloEnTelefono(v) ? 'Visita descartada' : 'Cambios descartados');
+}
+
+async function descartar(v, mensaje) {
+  try {
+    await borrarLocal(v.id);
+    if (!soloEnTelefono(v)) await olvidarCursor(estado.cuenta.id);
+  } catch {
+    showToast('No se pudo descartar en este dispositivo.', 'error');
+    return;
+  }
+  cerrarHoja();
+  showToast(mensaje, 'success', 2200);
+  await recargar();
+  if (!soloEnTelefono(v)) programarSync(300);
 }
 
 /* ------------------------------------------------------------------

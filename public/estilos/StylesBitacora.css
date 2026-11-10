@@ -468,6 +468,8 @@ body.bt {
   color: var(--text-gray);
 }
 
+.bt-caja-nota--error { border-left-color: var(--ui-error); color: var(--text-light); }
+
 .ui-btn--peligro { border: 1px solid var(--ui-error); background: transparent; color: var(--ui-error); }
 
 /* ---------- Leads del equipo y Prospección ---------- */

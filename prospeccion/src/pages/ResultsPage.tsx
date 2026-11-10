@@ -3,12 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { analyzeSearch, errorMessage, getProspect, listSearches } from '../api';
 import { DetailDrawer } from '../components/DetailDrawer';
+import { Bullets, Funnel } from '../components/charts';
 import {
   ConfirmDialog, EmptyState, FallbackBanner, Loading, Pager, ProgressBanner, ScoreCell, StatusBadge,
   VisitBadge, VisitedBar, ZoneWork,
 } from '../components/ui';
 import {
-  bitacoraHref, colorFor, filterProspects, filtersActive, fmtDay, fmtNum, PAGE_SIZE, sortProspects, telHref, waHref, zoneText,
+  bitacoraHref, colorFor, filterProspects, filtersActive, fmtDay, fmtNum, PAGE_SIZE, sortProspects, telHref, visitTone, waHref, zoneText,
 } from '../format';
 import { useInsights, useKpiSet, useNarrow, useProspects, useSearchJob, useZoneVisits } from '../hooks';
 import { MOCK_SEARCHES } from '../mock';
@@ -217,6 +218,24 @@ function SearchResults({ searchId }: { searchId: string }) {
       {notice ? <p className="banner ok">{notice}</p> : null}
       {analyze.isError ? <p className="banner err">{errorMessage(analyze.error)}</p> : null}
       <ProgressBanner search={search} />
+      {prospects.rows.length > 0 ? (
+        <section className="card funnel-card">
+          <header className="card-head">
+            <div>
+              <h2>Cómo va la zona</h2>
+              <p className="hint">De todo lo que encontró la búsqueda hasta lo que ya se cerró con la Bitácora.</p>
+            </div>
+          </header>
+          <Funnel steps={[
+            { label: 'Encontrados', value: prospects.rows.length, hint: 'negocios en la zona' },
+            { label: 'Con contacto', value: prospects.rows.filter((row) => row.phone || row.has_whatsapp).length, hint: 'teléfono o WhatsApp' },
+            { label: 'Visitados', value: visitedCount, hint: 'alguien del equipo fue' },
+            { label: 'En seguimiento', value: prospects.rows.filter((row) => ['open', 'won'].includes(visitTone(row.visit))).length, hint: 'demo, propuesta o cierre' },
+            { label: 'Cerrados', value: prospects.rows.filter((row) => visitTone(row.visit) === 'won').length, hint: 'ya son clientes' },
+          ]}
+          />
+        </section>
+      ) : null}
       {!prospects.fallback && prospects.total > prospects.rows.length ? (
         <p className="muted">Se cargaron {fmtNum(prospects.rows.length)} de {fmtNum(prospects.total)} prospectos.</p>
       ) : null}
@@ -339,7 +358,7 @@ function SearchResults({ searchId }: { searchId: string }) {
             {insightsQ.isPending && search.status === 'completed' ? <Loading label="Cargando hallazgos…" /> : null}
             {insightsQ.isError ? <p className="hint">No se pudieron cargar los hallazgos.</p> : null}
             {insightsQ.data && insightsQ.data.length > 0 ? (
-              <ul>{insightsQ.data.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul>
+              <Bullets icon="→" items={insightsQ.data.slice(0, 3)} />
             ) : null}
             {insightsQ.data && insightsQ.data.length === 0 && search.status === 'completed' ? <p className="hint">Aún no hay análisis de zona.</p> : null}
             <Link to={`/searches/${searchId}/insights`}>Ver análisis completo</Link>

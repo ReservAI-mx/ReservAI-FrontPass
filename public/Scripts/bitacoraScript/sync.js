@@ -1,6 +1,7 @@
 import { apiFetch } from '../api.js';
 import {
   pendientesDe, confirmarSubidas, marcarRechazadas, aplicarDelServidor, leerMeta, guardarMeta,
+  reencolarAtoradas, rechazoDeVersion,
 } from './store.js';
 
 const { paraSubir, desdeServidor } = globalThis.BitacoraCampos;
@@ -66,6 +67,7 @@ export function pedirSesionDispositivo() {
 }
 
 async function subir(cuenta) {
+  await reencolarAtoradas(cuenta);
   const pendientes = await pendientesDe(cuenta);
   let rechazadas = 0;
   for (let i = 0; i < pendientes.length; i += LOTE) {
@@ -77,7 +79,8 @@ async function subir(cuenta) {
     });
     await confirmarSubidas((data.guardadas || []).map((g) => ({ ...g, _rev: revs.get(g.id) })));
     if (data.rechazadas && data.rechazadas.length) {
-      rechazadas += data.rechazadas.length;
+      // Las de "servidor sin actualizar" se reintentan solas: no se avisan.
+      rechazadas += data.rechazadas.filter((r) => r.motivo === 'ajena' || !rechazoDeVersion(r.errores)).length;
       await marcarRechazadas(data.rechazadas);
     }
   }
@@ -111,6 +114,11 @@ async function bajar(cuenta) {
  * Una vuelta completa: primero sube (lo del teléfono es lo que se puede
  * perder), luego baja lo que cambió.
  */
+/** Para "descartar cambios": el siguiente bajar trae todo de nuevo. */
+export async function olvidarCursor(cuenta) {
+  await guardarMeta(`cursor:v2:${cuenta}`, null);
+}
+
 export async function sincronizar(cuenta) {
   const subida = await subir(cuenta);
   const bajada = await bajar(cuenta);

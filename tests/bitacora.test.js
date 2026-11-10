@@ -134,7 +134,11 @@ describe('leads del equipo', () => {
   test('paraSubir y desdeServidor llevan compartido, lugar y punto', () => {
     const s = C.paraSubir(visita({ compartido_con: OTRO, place_id: 'ChIJ1', lat: '20.67', lng: '-103.39' }));
     expect(s).toMatchObject({ compartido_con: OTRO, place_id: 'ChIJ1', lat: 20.67, lng: -103.39 });
-    expect(C.paraSubir(visita({})).compartido_con).toBeNull();
+    // Vacíos no se mandan (un servicio sin actualizar los rechazaría)…
+    expect(C.paraSubir(visita({}))).not.toHaveProperty('compartido_con');
+    expect(C.paraSubir(visita({}))).not.toHaveProperty('place_id');
+    // …salvo los que se quitaron a propósito.
+    expect(C.paraSubir(visita({ compartido_con: '', _vaciar: ['compartido_con'] })).compartido_con).toBeNull();
     const v = C.desdeServidor({ id: 'x', compartido_con: null, place_id: 'ChIJ1', lat: 20.67, lng: -103.39 });
     expect(v).toMatchObject({ compartido_con: '', place_id: 'ChIJ1', lat: '20.67' });
   });
