@@ -165,9 +165,14 @@ function nuevaVisita({ visitador = '', ultimoMunicipio = '', ultimaColonia = '' 
 
 /**
  * Lo que se sube: sólo columnas editables, '' → null y números como número.
+ *
+ * Los EXTRAS vacíos no se mandan (no cambiar es lo mismo que no tener), salvo
+ * los que el vendedor quitó a propósito (`_vaciar`): así una visita sin lugar
+ * ni compartido también sube a un servicio que todavía no los conoce.
  */
 function paraSubir(v) {
   const out = { id: v.id };
+  const vaciar = new Set(v._vaciar || []);
   for (const c of EDITABLES) {
     let valor = v[c];
     if (c === 'archivada' || c === 'eliminada') {
@@ -175,6 +180,7 @@ function paraSubir(v) {
       continue;
     }
     if (valor === '' || valor === undefined || valor === null) {
+      if (EXTRAS.includes(c) && !vaciar.has(c)) continue;
       out[c] = null;
       continue;
     }

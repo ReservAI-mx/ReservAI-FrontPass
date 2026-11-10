@@ -92,11 +92,26 @@ export async function confirmarSubidas(confirmadas) {
     const actual = await promesa(store.get(c.id));
     if (!actual) continue;
     actual.actualizado_en = c.actualizado_en;
-    if (actual._rev === c._rev) actual._pendiente = false;
+    if (actual._rev === c._rev) {
+      actual._pendiente = false;
+      delete actual._rechazo;
+    }
     store.put(actual);
   }
   await fin(tx);
 }
+
+/*
+ * "campo desconocido" quiere decir que el servicio todavía no se actualizó
+ * (la pantalla nueva llegó antes). No es culpa de la visita: se reintenta
+ * sola en cada vuelta en vez de quedarse atorada.
+ */
+export function rechazoDeVersion(errores) {
+  return Array.isArray(errores) && errores.length > 0
+    && errores.every((e) => /campo desconocido$/.test(String(e)));
+}
+
+export const AVISO_VERSION = 'El servidor todavía no se actualiza; se vuelve a intentar sola.';
 
 /** Visitas que el servidor rechazó: se quedan marcadas para revisarlas. */
 export async function marcarRechazadas(rechazadas) {
@@ -107,12 +122,38 @@ export async function marcarRechazadas(rechazadas) {
     if (!r.id) continue;
     const actual = await promesa(store.get(r.id));
     if (!actual) continue;
-    actual._pendiente = false;
+    const deVersion = r.motivo !== 'ajena' && rechazoDeVersion(r.errores);
+    actual._pendiente = deVersion;
     actual._rechazo = r.motivo === 'ajena'
       ? 'Esta visita es de otro vendedor.'
-      : (r.errores || []).join(' · ') || 'El servidor la rechazó.';
+      : deVersion ? AVISO_VERSION : (r.errores || []).join(' · ') || 'El servidor la rechazó.';
     store.put(actual);
   }
+  await fin(tx);
+}
+
+/**
+ * Las que se atoraron con "campo desconocido" antes de que existiera el
+ * reintento: vuelven a la cola.
+ */
+export async function reencolarAtoradas(cuenta) {
+  const db = await abrir();
+  const tx = db.transaction('visitas', 'readwrite');
+  const store = tx.objectStore('visitas');
+  const todas = await promesa(store.index('cuenta').getAll(cuenta));
+  for (const v of todas) {
+    if (!v._rechazo || v._pendiente) continue;
+    if (v._rechazo !== AVISO_VERSION && !/campo desconocido/.test(v._rechazo)) continue;
+    store.put({ ...v, _pendiente: true, _rechazo: AVISO_VERSION });
+  }
+  await fin(tx);
+}
+
+/** Quita una visita del teléfono (una que nunca llegó al servidor). */
+export async function borrarLocal(id) {
+  const db = await abrir();
+  const tx = db.transaction('visitas', 'readwrite');
+  tx.objectStore('visitas').delete(id);
   await fin(tx);
 }
 
