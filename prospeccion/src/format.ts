@@ -302,3 +302,11 @@ const STATUS: Record<SearchStatus, string> = {
 export function statusLabel(status: SearchStatus) {
   return STATUS[status] ?? status;
 }
+
+/** Bandas del score con su color y qué quieren decir. */
+export const SCORE_BANDS = [
+  { key: 'high', label: 'Alto', sub: '80–100', min: 80, max: 101, color: '#4ade80', text: 'Visítalos primero' },
+  { key: 'potential', label: 'Potencial', sub: '60–79', min: 60, max: 80, color: '#7cc4f5', text: 'Buenos candidatos' },
+  { key: 'medium', label: 'Medio', sub: '40–59', min: 40, max: 60, color: '#fbbf24', text: 'Si vas por la zona' },
+  { key: 'low', label: 'Bajo', sub: '0–39', min: 0, max: 40, color: '#a0a0a0', text: 'Al final' },
+] as const;

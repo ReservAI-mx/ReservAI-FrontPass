@@ -10,6 +10,7 @@ import { loadDraft, saveDraft, setActiveSearch, useActiveSearch } from '../store
 import { EMPTY_DRAFT, type Draft, type FlyTo } from '../types';
 import { MapLegend, MapView, type MarkerPoint } from '../components/MapView';
 import { DetailDrawer } from '../components/DetailDrawer';
+import { Steps } from '../components/charts';
 import { FallbackBanner, Loading, StatusBadge, VisitedBar } from '../components/ui';
 
 function freshDraft(): Draft {
@@ -216,7 +217,7 @@ export function MapPage() {
                 <>
                   <div className="active-card-nums">
                     <span><strong>{fmtNum(prospects.total || search.businesses_found)}</strong> negocios</span>
-                    <span><strong>{fmtNum(zoneVisits.data?.summary.total ?? 0)}</strong> visitas en la zona</span>
+                    <span><strong>{zoneVisits.data ? fmtNum(zoneVisits.data.summary.total) : '…'}</strong> visitas en la zona</span>
                   </div>
                   <VisitedBar visited={visitedCount} total={rows.length} />
                 </>
@@ -230,9 +231,18 @@ export function MapPage() {
           ) : null}
 
           <div className="panel-title">
-            <h2>Nueva zona</h2>
-            <p className="hint">Marca la zona en el mapa, elige giros y busca.</p>
+            <h2>Buscar en una zona nueva</h2>
           </div>
+          <Steps steps={[
+            {
+              title: 'Marca la zona',
+              text: draft.mode === 'polygon' ? 'Toca el mapa en 3 o más esquinas.' : 'Toca el mapa donde va el centro.',
+              done: draft.mode === 'polygon' ? draft.polygon.length >= 3 : Boolean(draft.center),
+            },
+            { title: 'Elige qué giros', text: draft.categoryIds.length ? `${draft.categoryIds.length} elegidos.` : 'Barberías, estéticas…', done: draft.categoryIds.length > 0 },
+            { title: 'Busca', text: 'Tarda un par de minutos; te avisa al terminar.', done: false },
+          ]}
+          />
           <div className="segment" role="group" aria-label="Modo de zona">
             <button type="button" className={draft.mode === 'polygon' ? 'on' : ''} onClick={() => set({ mode: 'polygon' })}>Polígono</button>
             <button type="button" className={draft.mode === 'radius' ? 'on' : ''} onClick={() => set({ mode: 'radius' })}>Radio</button>
