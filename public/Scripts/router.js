@@ -82,7 +82,12 @@ router.get('/tickets/manifest.webmanifest', (req, res) =>
     res.sendFile(path.resolve(__dirname + "/ticketsScript/manifest.webmanifest"), {
         headers: { 'Cache-Control': 'no-cache', 'Content-Type': 'application/manifest+json' },
     }));
-router.get('/prospeccion', (req, res) => {
+/**
+ * Prospección (React). BrowserRouter con basename /prospeccion: rutas como
+ * /prospeccion/map o /prospeccion/searches/:id. Sin catch-all, F5 en esas
+ * URLs caía en el 404 del front.
+ */
+router.get(/^\/prospeccion(?:\/.*)?$/, (req, res) => {
     if (req.originalUrl.split('?')[0] === '/prospeccion') {
         const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
         return res.redirect(302, `/prospeccion/${qs}`);

@@ -2,7 +2,9 @@ import { showToast } from '../toast.js';
 import { goLogout } from '../api.js';
 import { setupAccountMenu } from '../accountMenu.js';
 import { visitasDe, guardarLocal, leerMeta, guardarMeta, disponible } from './store.js';
-import { sincronizar, yo, pedirSesionDispositivo, equipo, SinSesion, SinRed } from './sync.js';
+import {
+  sincronizar, yo, pedirSesionDispositivo, equipo, prospectosCerca, buscarProspectos, prospecto, SinSesion, SinRed,
+} from './sync.js';
 
 const C = globalThis.BitacoraCampos;
 const K = globalThis.BitacoraCalculos;
@@ -15,15 +17,17 @@ const $ = (id) => document.getElementById(id);
    ------------------------------------------------------------------ */
 
 const estado = {
-  cuenta: null,          // { id, nombre, correo, tipo, sesion }
-  visitas: [],           // copia local de esta cuenta
+  cuenta: null,          // { id, nombre, correo, tipo, sesion, equipo }
+  visitas: [],           // copia local: las de todo el equipo
   config: { meta: 20, ultimoMunicipio: '', ultimaColonia: '' },
   tab: 'hoy',
   filtroTodas: 'activas',
+  deQuien: 'todos',      // Todas: 'todos' o 'mias'
   busqueda: '',
   sync: 'revisando',
   sincronizando: false,
-  hoja: null,            // { v, modo: 'rapido'|'completo', paso, esNueva }
+  hoja: null,            // { v, modo: 'rapido'|'completo'|'ver', paso, esNueva }
+  sugerencias: null,     // prospectos para la hoja abierta: { titulo, lista, cargando, error }
   periodo: 0,            // días del tablero; 0 = todo
   vendedorFiltro: '',    // admin: id de la cuenta, '' = todo el equipo
   equipo: null,          // admin: filas de /api/bitacora/resumen
@@ -37,7 +41,21 @@ const escritorio = window.matchMedia('(min-width: 900px)');
 
 /* Las que capturó esta cuenta. Las recién creadas aún no traen vendedor. */
 const mias = () => estado.visitas.filter((v) => !v.vendedor || v.vendedor === estado.cuenta.id);
+/* Las suyas y las que le compartieron: su seguimiento y su tablero. */
+const suyas = () => estado.visitas.filter((v) => K.participa(v, estado.cuenta.id));
 const vivas = (lista) => lista.filter((v) => !v.eliminada);
+
+const esDueno = (v) => !v.vendedor || v.vendedor === estado.cuenta.id;
+/* Edita el dueño, con quien se compartió y un admin; los demás sólo la ven. */
+const puedoEditar = (v) => esAdmin() || esDueno(v) || v.compartido_con === estado.cuenta.id;
+
+/* id → nombre de quien vende (de /yo); para visitas viejas, su visitador. */
+function nombreDe(id, respaldo = '') {
+  if (!id) return respaldo;
+  if (id === estado.cuenta.id) return estado.cuenta.nombre || 'Tú';
+  const p = (estado.cuenta.equipo || []).find((x) => x.id === id);
+  return (p && p.nombre) || respaldo || 'Otro vendedor';
+}
 
 /* ------------------------------------------------------------------
    DOM: se construye con textContent, nunca con innerHTML de datos.
@@ -144,6 +162,12 @@ async function recargar() {
   if (n !== ultimaCarga) return;
   estado.visitas = visitas;
   pintar();
+  // Con la hoja abierta, lo que acaba de bajar puede ser otra visita al
+  // mismo negocio (p. ej. al llegar desde Prospección antes de sincronizar).
+  if (estado.hoja) {
+    pintarRepetida();
+    pintarSugerencias();
+  }
 }
 
 /* ------------------------------------------------------------------
@@ -160,11 +184,19 @@ const CLASE_RESULTADO = {
   Perdido: 'bt-badge--error',
 };
 
+/* "Compartida con Carlos" / "Te la compartió Vero" / "" */
+function textoCompartida(v) {
+  if (!v.compartido_con) return '';
+  if (v.compartido_con === estado.cuenta.id) return `Te la compartió ${nombreDe(v.vendedor, v.visitador)}`;
+  return `Compartida con ${nombreDe(v.compartido_con)}`;
+}
+
 function item(v, { fecha = false, seguimiento = false, vendedor = false } = {}) {
   const etiqueta = v.resultado || (v.decisor && v.decisor !== 'Sí' ? 'Sin decisor' : 'Sin cerrar');
+  const ajena = !esDueno(v);
   const meta = [
     fecha && C.fechaCorta(v.fecha),
-    vendedor && v.visitador,
+    (vendedor || ajena) && nombreDe(v.vendedor, v.visitador),
     v.giro,
     v.colonia || v.municipio,
     v.interes && `interés ${v.interes}`,
@@ -175,6 +207,7 @@ function item(v, { fecha = false, seguimiento = false, vendedor = false } = {}) 
       h('span', { class: 'bt-item__nombre', text: v.negocio || 'Sin nombre' }),
       h('span', { class: `bt-badge ${CLASE_RESULTADO[v.resultado] || ''}`, text: etiqueta })),
     meta && h('span', { class: 'bt-item__meta', text: meta }),
+    v.compartido_con && h('span', { class: 'bt-item__compartida', text: textoCompartida(v) }),
     v._rechazo && h('span', { class: 'bt-item__aviso bt-item__aviso--error', text: `No se subió: ${v._rechazo}` }),
     !v._rechazo && v._pendiente && h('span', { class: 'bt-item__aviso', text: 'Por subir' }));
 }
@@ -208,11 +241,11 @@ function pintarHoy() {
     ? 'Meta cumplida.'
     : `Te faltan ${meta - deHoy.length}.`;
 
-  const r = K.resumen(propias);
+  const r = K.resumen(estado.visitas, { cuenta: estado.cuenta.id });
   const kpi = (label, num) => h('div', { class: 'ui-kpi' },
     h('span', { class: 'ui-kpi__label', text: label }), h('span', { class: 'ui-kpi__num', text: num }));
   $('kpisHoy').replaceChildren(
-    kpi('Puertas', r.puertas), kpi('Demos', r.demos), kpi('Propuestas', r.propuestas), kpi('Cerrados', r.cerrados));
+    kpi('Puertas', r.puertas), kpi('Demos', r.demos), kpi('Propuestas', r.propuestas), kpi('Cerrados', dec(r.cerrados)));
 
   $('tituloHoy').textContent = `Hoy · ${deHoy.length}`;
   // La más reciente arriba.
@@ -226,7 +259,7 @@ function pintarHoy() {
   const dias = K.porDia(propias, 14, hoy);
   $('actividadTotal').textContent = resumenDias(dias);
   $('actividadHoy').replaceChildren(barras(dias, meta));
-  const seguir = K.porSeguir(mias());
+  const seguir = K.porSeguir(suyas());
   $('tituloSeguirLado').textContent = `Por seguir · ${seguir.length}`;
   $('listaSeguirLado').replaceChildren(...(seguir.length
     ? seguir.slice(0, 5).map((v) => item(v, { seguimiento: true }))
@@ -285,7 +318,7 @@ function barras(dias, meta) {
 }
 
 function pintarSeguir() {
-  const lista = K.porSeguir(mias());
+  const lista = K.porSeguir(suyas());
   $('tituloSeguir').textContent = `Por seguir · ${lista.length}`;
   $('listaSeguir').replaceChildren(...(lista.length
     ? lista.map((v) => item(v, { fecha: true, seguimiento: true }))
@@ -301,7 +334,10 @@ function coincide(v, q) {
 }
 
 function pintarTodas() {
-  const todas = estado.visitas;
+  const todas = estado.deQuien === 'mias' ? suyas() : estado.visitas;
+  for (const btn of $('segQuien').querySelectorAll('[data-quien]')) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.quien === estado.deQuien));
+  }
   const grupos = {
     activas: todas.filter((v) => !v.eliminada && !v.archivada),
     pendientes: todas.filter((v) => v._pendiente || v._rechazo),
@@ -317,6 +353,7 @@ function pintarTodas() {
   const lista = grupos[estado.filtroTodas]
     .filter((v) => coincide(v, q))
     .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+  const conVendedor = estado.deQuien === 'todos';
   const textos = {
     activas: ['Sin visitas activas.', 'Empieza en la pestaña Hoy.'],
     pendientes: ['Todo subido.', 'Lo que captures sin señal aparece aquí hasta que suba.'],
@@ -325,15 +362,14 @@ function pintarTodas() {
   if (!lista.length) {
     $('listaTodas').replaceChildren(vacio(...textos[estado.filtroTodas]));
   } else if (escritorio.matches) {
-    $('listaTodas').replaceChildren(tablaVisitas(lista));
+    $('listaTodas').replaceChildren(tablaVisitas(lista, conVendedor));
   } else {
-    $('listaTodas').replaceChildren(...lista.map((v) => item(v, { fecha: true, vendedor: esAdmin() })));
+    $('listaTodas').replaceChildren(...lista.map((v) => item(v, { fecha: true, vendedor: conVendedor })));
   }
 }
 
 /* Escritorio: una fila por visita; clic o Enter abre la ficha. */
-function tablaVisitas(lista) {
-  const conVendedor = esAdmin();
+function tablaVisitas(lista, conVendedor) {
   const titulos = ['Fecha', 'Negocio', 'Giro', 'Zona', conVendedor && 'Vendedor', 'Interés', 'Resultado', 'Seguimiento']
     .filter(Boolean);
   const filas = lista.map((v) => {
@@ -343,10 +379,11 @@ function tablaVisitas(lista) {
       : v._pendiente && h('span', { class: 'bt-item__aviso', text: ' · por subir' });
     const celdas = [
       C.fechaCorta(v.fecha),
-      h('td', { class: 'bt-tabla__fuerte' }, v.negocio || 'Sin nombre', estadoSubida),
+      h('td', { class: 'bt-tabla__fuerte' }, v.negocio || 'Sin nombre', estadoSubida,
+        v.compartido_con && h('span', { class: 'bt-item__compartida', text: ` · ${textoCompartida(v)}` })),
       v.giro,
       [v.colonia, v.municipio].filter(Boolean).join(', '),
-      conVendedor && v.visitador,
+      conVendedor && nombreDe(v.vendedor, v.visitador),
       v.interes,
       h('td', {}, h('span', { class: `bt-badge ${CLASE_RESULTADO[v.resultado] || ''}`, text: etiqueta })),
       v.f_seguimiento ? C.fechaCorta(v.f_seguimiento) : '',
@@ -441,10 +478,13 @@ function pintarTablero() {
     b.setAttribute('aria-pressed', String(Number(b.dataset.dias) === estado.periodo));
   }
 
+  // De quién es el tablero: el vendedor (sus visitas y las que le
+  // compartieron, con la mitad del cierre) o, para el admin, todo el equipo.
+  const cuenta = esAdmin() ? estado.vendedorFiltro || null : estado.cuenta.id;
   let base = vivas(estado.visitas);
-  if (esAdmin() && estado.vendedorFiltro) base = base.filter((v) => vendedorDe(v) === estado.vendedorFiltro);
+  if (cuenta) base = base.filter((v) => K.participa(v, cuenta));
   const visitas = K.enPeriodo(base, estado.periodo, hoy);
-  const r = K.resumen(visitas);
+  const r = K.resumen(visitas, { cuenta });
 
   const quien = !esAdmin()
     ? estado.cuenta.nombre
@@ -459,19 +499,22 @@ function pintarTablero() {
     kpi('Puertas', r.puertas, '', `${dec(r.puertasPorDia)} por día con visitas`),
     kpi('Demos', r.demos, 'ui-kpi--info', `${pct(r.conv.demo)} de los decisores`),
     kpi('Propuestas', r.propuestas, 'ui-kpi--purple', `${pct(r.conv.propuesta)} de las demos`),
-    kpi('Cerrados', r.cerrados, 'ui-kpi--ok', `${pct(r.conv.total)} de las puertas`),
+    kpi('Cerrados', dec(r.cerrados), 'ui-kpi--ok', cuenta && r.compartidos
+      ? `${r.compartidos} compartido${r.compartidos === 1 ? '' : 's'}: cuenta la mitad`
+      : `${pct(r.conv.total)} de las puertas`),
     kpi('MRR cerrado', dinero(r.mrr), 'ui-kpi--ok', r.cerrados ? `${dinero(r.mrrPorCliente)} por cliente` : ''),
     kpi('En seguimiento', r.enJuego, 'ui-kpi--warning', 'demo, propuesta o reagendar'));
 
   // La gráfica siempre muestra días: con "Todo" u "Hoy", los últimos 30.
   const diasGrafica = estado.periodo === 7 ? 7 : 30;
   const metaGrafica = esAdmin() && !estado.vendedorFiltro ? 0 : Number(estado.config.meta) || 20;
-  const actividad = K.porDia(base, diasGrafica, hoy);
+  // Puertas: sólo las que tocó él.
+  const actividad = K.porDia(cuenta ? base.filter((v) => vendedorDe(v) === cuenta) : base, diasGrafica, hoy);
 
   const desglose = (titulo, clave, grupos, conMrr) => tarjeta(titulo,
     grupos.length
       ? tabla(conMrr ? [clave, 'Puertas', 'Demos', 'Cerr.', 'Cierre', 'MRR'] : [clave, 'Puertas', 'Demos', 'Cerr.', 'Cierre'],
-        grupos.map((g) => [g.clave, g.n, g.demos, g.cerrados, pct(g.tasa)].concat(conMrr ? [dinero(g.mrr)] : [])),
+        grupos.map((g) => [g.clave, g.n, g.demos, dec(g.cerrados), pct(g.tasa)].concat(conMrr ? [dinero(g.mrr)] : [])),
         conMrr ? [1, 2, 3, 4, 5] : [1, 2, 3, 4])
       : h('p', { class: 'bt-nota', text: 'Sin datos todavía.' }));
   const reparto = (titulo, clave, columna, grupos) => tarjeta(titulo,
@@ -479,7 +522,9 @@ function pintarTablero() {
       ? tabla([clave, columna, '% del total'], grupos.map((g) => [g.clave, g.n, pct(g.parte)]), [1, 2])
       : h('p', { class: 'bt-nota', text: 'Sin datos todavía.' }));
 
-  const porVendedor = r.porVendedor.length > 1 ? desglose('Por vendedor', 'Vendedor', r.porVendedor, true) : null;
+  // Todo el equipo: cierre y MRR repartidos entre quienes compartieron.
+  const filasVendedor = r.porCuenta.map((g) => ({ ...g, clave: nombres.get(g.clave) || nombreDe(g.clave) }));
+  const porVendedor = filasVendedor.length > 1 ? desglose('Por vendedor', 'Vendedor', filasVendedor, true) : null;
   if (porVendedor) porVendedor.classList.add('bt-card--ancha');
 
   $('tablero').replaceChildren(...[
@@ -572,7 +617,7 @@ function pintarEquipo() {
         h('td', { class: 'n', text: f.hoy }),
         h('td', { class: 'n', text: f.ultimos_7 }),
         h('td', { class: 'n', text: f.total }),
-        h('td', { class: 'n', text: f.cerradas }),
+        h('td', { class: 'n', text: dec(f.cerradas) }),
         h('td', { class: 'n', text: dinero(f.mrr) }),
         h('td', { class: `n${quieto ? ' abajo' : ''}`, text: f.ultima_visita ? C.fechaCorta(f.ultima_visita) : 'Nunca' }));
     }))));
@@ -581,7 +626,7 @@ function pintarEquipo() {
     h('div', { class: 'ui-kpis bt-kpis bt-kpis--tablero bt-kpis--equipo' },
       kpi('Puertas hoy', suma('hoy'), ''),
       kpi('Puertas 7 días', suma('ultimos_7'), 'ui-kpi--info'),
-      kpi('Cerradas', suma('cerradas'), 'ui-kpi--ok'),
+      kpi('Cerradas', dec(suma('cerradas')), 'ui-kpi--ok'),
       kpi('MRR cerrado', dinero(suma('mrr')), 'ui-kpi--ok')),
     h('section', { class: 'bt-card bt-card--tabla' }, tablaEquipo));
 }
@@ -621,25 +666,164 @@ function irA(tab) {
    Hoja de captura
    ------------------------------------------------------------------ */
 
-function abrirHoja(visita) {
+function abrirHoja(visita, datos = null) {
+  estado.sugerencias = null;
   if (visita) {
     const copia = { ...visita };
-    estado.hoja = { v: copia, modo: 'completo', paso: 0, esNueva: false };
+    estado.hoja = { v: copia, modo: puedoEditar(visita) ? 'completo' : 'ver', paso: 0, esNueva: false };
   } else {
     const v = C.nuevaVisita({
       visitador: estado.cuenta.nombre,
       ultimoMunicipio: estado.config.ultimoMunicipio,
       ultimaColonia: estado.config.ultimaColonia,
     });
+    if (datos) Object.assign(v, datos);
     estado.hoja = { v, modo: 'rapido', paso: 0, esNueva: true };
   }
   $('hoja').hidden = false;
   $('velo').hidden = false;
   document.body.style.overflow = 'hidden';
   pintarHoja();
+  // Puerta nueva sin negocio elegido: el GPS dice dónde está y qué
+  // prospectos de Prospección hay alrededor.
+  if (!visita && !estado.hoja.v.place_id) ubicar(estado.hoja);
+}
+
+/* ------------------------------------------------------------------
+   Ligar con Prospección: el punto de la visita y los negocios cercanos
+   ------------------------------------------------------------------ */
+
+function ubicar(hoja) {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition((pos) => {
+    if (estado.hoja !== hoja) return;
+    const { latitude: lat, longitude: lng } = pos.coords;
+    // Si ya eligió un prospecto, se queda el punto de Google.
+    if (!hoja.v.place_id) {
+      hoja.v.lat = String(Math.round(lat * 1e7) / 1e7);
+      hoja.v.lng = String(Math.round(lng * 1e7) / 1e7);
+    }
+    hoja.gps = { lat, lng };
+    if (!hoja.v.place_id && !hoja.v.negocio) cargarSugerencias(hoja, () => prospectosCerca(lat, lng), 'Cerca de ti');
+    pintarLugar();
+  }, () => {
+    if (estado.hoja === hoja) { hoja.gps = false; pintarLugar(); }
+  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+}
+
+async function cargarSugerencias(hoja, pedirlas, titulo) {
+  if (navigator.onLine === false) return;
+  const turno = (hoja.turnoSugerencias || 0) + 1;
+  hoja.turnoSugerencias = turno;
+  estado.sugerencias = { titulo, lista: (estado.sugerencias && estado.sugerencias.lista) || [], cargando: true };
+  pintarSugerencias();
+  try {
+    const data = await pedirlas();
+    if (estado.hoja !== hoja || hoja.turnoSugerencias !== turno) return;
+    estado.sugerencias = { titulo, lista: data.prospectos || [], cargando: false };
+  } catch {
+    if (estado.hoja !== hoja || hoja.turnoSugerencias !== turno) return;
+    // Sin señal o sin Prospección: la captura sigue igual.
+    estado.sugerencias = null;
+  }
+  pintarSugerencias();
+}
+
+let relojBusqueda = null;
+function buscarMientrasEscribe() {
+  const hoja = estado.hoja;
+  clearTimeout(relojBusqueda);
+  if (!hoja || !hoja.esNueva || hoja.v.place_id) return;
+  const q = String(hoja.v.negocio || '').trim();
+  relojBusqueda = setTimeout(() => {
+    if (q.length >= 3) cargarSugerencias(hoja, () => buscarProspectos(q), `En Prospección: “${q}”`);
+    else if (hoja.gps) cargarSugerencias(hoja, () => prospectosCerca(hoja.gps.lat, hoja.gps.lng), 'Cerca de ti');
+    else { estado.sugerencias = null; pintarSugerencias(); }
+  }, 450);
+}
+
+function elegirProspecto(p) {
+  Object.assign(estado.hoja.v, C.desdeProspecto(p));
+  estado.sugerencias = null;
+  pintarHoja();
+}
+
+/* Quién ya visitó ese lugar, de lo que hay en el teléfono. */
+function visitaDelLugar(placeId) {
+  return vivas(estado.visitas).filter((v) => v.place_id === placeId && v.id !== (estado.hoja && estado.hoja.v.id))
+    .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))[0];
+}
+
+function pintarSugerencias() {
+  const caja = $('sugerencias');
+  if (!caja) return;
+  const s = estado.sugerencias;
+  if (!s || (!s.cargando && !s.lista.length)) {
+    caja.hidden = true;
+    caja.replaceChildren();
+    return;
+  }
+  caja.hidden = false;
+  caja.replaceChildren(
+    h('div', { class: 'bt-sugerencias__titulo' },
+      h('span', { text: s.titulo }),
+      s.cargando && h('span', { class: 'ui-loading__spinner', 'aria-hidden': 'true' })),
+    ...s.lista.slice(0, 6).map((p) => {
+      const ya = visitaDelLugar(p.place_id);
+      const meta = [
+        p.categoria,
+        Number.isFinite(p.distancia_m) ? `${p.distancia_m} m` : (p.direccion || '').split(',')[0],
+        p.lead_score !== null && p.lead_score !== undefined && `score ${p.lead_score}`,
+      ].filter(Boolean).join(' · ');
+      return h('button', { type: 'button', class: 'bt-sugerencia', onclick: () => elegirProspecto(p) },
+        h('span', { class: 'bt-sugerencia__nombre', text: p.nombre }),
+        h('span', { class: 'bt-sugerencia__meta', text: meta }),
+        ya && h('span', { class: 'bt-sugerencia__ya',
+          text: `Ya la visitó ${nombreDe(ya.vendedor, ya.visitador)} el ${C.fechaCorta(ya.fecha)}` }));
+    }));
+}
+
+/* Debajo del nombre: si quedó ligada a Prospección o sólo con el GPS. */
+function pintarLugar() {
+  const caja = $('lugarHoja');
+  if (!caja || !estado.hoja) return;
+  const { v, gps } = estado.hoja;
+  const editable = estado.hoja.modo !== 'ver';
+  let texto;
+  if (v.place_id) texto = 'Ligada a Prospección: aparece en su punto del mapa.';
+  else if (v.lat && v.lng) texto = 'Con la ubicación del teléfono: aparece en la zona de Prospección.';
+  else if (gps === false) texto = 'Sin ubicación: activa el GPS para ligarla a su zona.';
+  else if (estado.hoja.esNueva) texto = 'Buscando tu ubicación…';
+  else texto = '';
+  caja.hidden = !texto;
+  caja.replaceChildren(
+    h('span', { text: texto }),
+    editable && v.place_id && h('button', {
+      type: 'button', class: 'bt-link',
+      onclick: () => { v.place_id = ''; if (gps) { v.lat = String(gps.lat); v.lng = String(gps.lng); } pintarLugar(); },
+      text: 'Quitar liga',
+    }));
+}
+
+/* Otra visita al mismo negocio (de quien sea): se avisa antes de duplicar. */
+function pintarRepetida() {
+  const caja = $('avisoRepetida');
+  if (!caja || !estado.hoja) return;
+  const otras = C.parecidas(estado.hoja.v, estado.visitas);
+  caja.hidden = !otras.length;
+  if (!otras.length) { caja.replaceChildren(); return; }
+  const o = otras[0];
+  const quien = esDueno(o) ? 'Tú ya la visitaste' : `Ya la visitó ${nombreDe(o.vendedor, o.visitador)}`;
+  caja.replaceChildren(
+    h('strong', { text: `${quien} el ${C.fechaCorta(o.fecha)}` }),
+    h('span', { text: ` · ${o.negocio || 'Sin nombre'}${o.resultado ? ` · ${o.resultado}` : ''}`
+      + (otras.length > 1 ? ` · y ${otras.length - 1} más` : '') }),
+    h('button', { type: 'button', class: 'bt-link', onclick: () => abrirHoja(o), text: 'Ver esa visita' }));
 }
 
 function cerrarHoja() {
+  estado.sugerencias = null;
+  clearTimeout(relojBusqueda);
   estado.hoja = null;
   $('hoja').hidden = true;
   $('velo').hidden = true;
@@ -649,6 +833,54 @@ function cerrarHoja() {
 function set(clave, valor) {
   estado.hoja.v[clave] = valor;
   if (estado.hoja.modo === 'rapido' && estado.hoja.paso === 0) pintarPie();
+  if (clave === 'negocio' || clave === 'telefono' || clave === 'municipio') pintarRepetida();
+  if (clave === 'negocio') buscarMientrasEscribe();
+}
+
+/* Debajo del nombre del negocio: aviso de repetida, prospectos y lugar. */
+function bloqueLugar() {
+  return [
+    h('div', { id: 'avisoRepetida', class: 'bt-aviso-repetida', role: 'status', hidden: true }),
+    h('div', { id: 'sugerencias', class: 'bt-sugerencias', hidden: true }),
+    h('div', { id: 'lugarHoja', class: 'bt-lugar', hidden: true }),
+  ];
+}
+
+/* Con quién reparte la comisión. Lo cambia el dueño o un admin. */
+function campoCompartir() {
+  const v = estado.hoja.v;
+  const dueno = v.vendedor || estado.cuenta.id;
+  if (!esDueno(v) && !esAdmin()) {
+    return h('div', { class: 'bt-caja-nota',
+      text: v.compartido_con
+        ? `${textoCompartida(v)}: la comisión se reparte mitad y mitad. Sólo quien la registró cambia esto.`
+        : '' });
+  }
+  const otros = (estado.cuenta.equipo || []).filter((p) => p.id !== dueno);
+  if (!otros.length) return null;
+  const select = h('select', {
+    onchange: (e) => set('compartido_con', e.target.value),
+  },
+  h('option', { value: '', text: 'Nadie: la comisión es completa' }),
+  ...otros.map((p) => h('option', { value: p.id, text: `${p.nombre} · mitad y mitad` })));
+  select.value = v.compartido_con || '';
+  return campo('Lead compartido con', 'reparten la comisión', select);
+}
+
+/* Ficha de sólo lectura para la visita de otro vendedor. */
+function cuerpoLectura() {
+  const v = estado.hoja.v;
+  const filas = C.COLUMNAS
+    .filter(([c]) => v[c] !== '' && v[c] !== null && v[c] !== undefined)
+    .map(([c, titulo]) => h('div', { class: 'bt-lectura__fila' },
+      h('dt', { text: titulo }),
+      h('dd', { text: c.startsWith('f_') || c === 'fecha' ? C.fechaCorta(v[c]) : String(v[c]) })));
+  return [
+    h('div', { class: 'bt-caja-nota',
+      text: `Es de ${nombreDe(v.vendedor, v.visitador)}. La ves para no repetir el negocio; sólo quien la registró (o con quien la compartió) la edita.` }),
+    v.compartido_con && h('div', { class: 'bt-caja-nota', text: textoCompartida(v) }),
+    h('dl', { class: 'bt-lectura' }, filas),
+  ];
 }
 
 function campo(etiqueta, ayuda, control) {
@@ -703,6 +935,7 @@ function cuerpoRapido(paso) {
   if (paso === 0) {
     return [
       texto('Nombre del negocio', 'negocio', { placeholder: 'Barbería El Corte Fino' }),
+      ...bloqueLugar(),
       chips('Giro', 'giro', O.giro),
       chips('Municipio', 'municipio', O.municipio),
       texto('Colonia o corredor', 'colonia', { placeholder: 'Chapalita', ayuda: 'se queda para la siguiente' }),
@@ -729,6 +962,7 @@ function cuerpoRapido(paso) {
     chips('Objeción principal', 'objecion', O.objecion),
     chips('¿Pidió propuesta?', 'propuesta', O.si_no),
     chips('Resultado', 'resultado', O.resultado),
+    campoCompartir(),
     texto('Mensajes de WhatsApp al día', 'mensajes', { tipo: 'number', inputmode: 'numeric', placeholder: '35', ayuda: 'pregúntalo siempre' }),
     texto('Notas', 'notas', { largo: true, placeholder: 'Qué le prendió el foco, qué lo frenó, con quién hay que hablar.' }),
     h('button', {
@@ -746,6 +980,7 @@ function cuerpoCompleto() {
     fecha('Fecha de la visita', 'fecha', v.visitador ? `registrada por ${v.visitador}` : ''),
     chips('Franja horaria', 'franja', O.franja),
     texto('Nombre del negocio', 'negocio'),
+    ...bloqueLugar(),
     chips('Giro', 'giro', O.giro),
     chips('Municipio', 'municipio', O.municipio),
     texto('Colonia / corredor', 'colonia'),
@@ -781,6 +1016,7 @@ function cuerpoCompleto() {
     texto('MRR (MXN)', 'mrr', { tipo: 'number', inputmode: 'decimal' }),
     fecha('Fecha de implementación', 'f_implementacion'),
     chips('Motivo de pérdida', 'motivo_perdida', O.motivo_perdida),
+    campoCompartir(),
     texto('Notas', 'notas', { largo: true }),
     v._rechazo && h('div', { class: 'bt-caja-nota', text: `El servidor no la aceptó: ${v._rechazo}. Corrige y guarda de nuevo.` }),
   ];
@@ -802,9 +1038,11 @@ function pintarPie() {
       boton('Atrás', 'ui-btn--ghost', () => { estado.hoja.paso = 1; pintarHoja(); }),
       boton('Guardar visita', 'ui-btn--primary', () => guardarHoja()),
     ];
+  } else if (modo === 'ver') {
+    botones = [boton('Cerrar', 'ui-btn--ghost', cerrarHoja)];
   } else {
     botones = [
-      !esNueva && boton('Eliminar', 'ui-btn--peligro', eliminarHoja),
+      !esNueva && (esDueno(v) || esAdmin()) && boton('Eliminar', 'ui-btn--peligro', eliminarHoja),
       boton('Guardar', 'ui-btn--primary', () => guardarHoja()),
     ].filter(Boolean);
   }
@@ -814,10 +1052,17 @@ function pintarPie() {
 function pintarHoja() {
   const { modo, paso, esNueva } = estado.hoja;
   const titulos = ['El negocio', '¿Estaba el dueño?', 'Cómo salió'];
-  $('hojaTitulo').textContent = modo === 'rapido' ? titulos[paso] : (esNueva ? 'Ficha completa' : 'Editar visita');
+  const v = estado.hoja.v;
+  $('hojaTitulo').textContent = modo === 'rapido' ? titulos[paso]
+    : modo === 'ver' ? `Visita de ${nombreDe(v.vendedor, v.visitador)}`
+      : (esNueva ? 'Ficha completa' : 'Editar visita');
   $('hojaPasos').textContent = modo === 'rapido' ? `PASO ${paso + 1} DE 3` : '';
-  $('hojaCuerpo').replaceChildren(...(modo === 'rapido' ? cuerpoRapido(paso) : cuerpoCompleto()).filter(Boolean));
+  const cuerpo = modo === 'rapido' ? cuerpoRapido(paso) : modo === 'ver' ? cuerpoLectura() : cuerpoCompleto();
+  $('hojaCuerpo').replaceChildren(...cuerpo.filter(Boolean));
   $('hojaCuerpo').scrollTop = 0;
+  pintarRepetida();
+  pintarSugerencias();
+  pintarLugar();
   pintarPie();
   // Puerta nueva: directo a escribir el nombre del negocio.
   if (modo === 'rapido' && paso === 0 && !estado.hoja.v.negocio) {
@@ -879,10 +1124,12 @@ function nombreArchivo() {
 }
 
 function armarExcel() {
-  const visitas = vivas(estado.visitas).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+  // El vendedor exporta lo suyo y lo que le compartieron; el admin, todo.
+  const cuenta = esAdmin() ? null : estado.cuenta.id;
+  const visitas = vivas(cuenta ? suyas() : estado.visitas).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
   const bytes = X.libroBitacora({
     visitas,
-    resumen: K.resumen(visitas),
+    resumen: K.resumen(visitas, { cuenta }),
     alcance: esAdmin() ? 'Todo el equipo' : estado.cuenta.nombre,
     generado: C.fechaCorta(C.hoy()),
     columnas: C.COLUMNAS,
@@ -1066,6 +1313,26 @@ async function arrancar() {
   irA(window.location.pathname.startsWith('/bitacora/tablero') ? 'tablero' : 'hoy');
   await recargar();
   if (!r.sinSesion) sincronizarAhora();
+  abrirDesdeProspeccion();
+}
+
+/* Prospección abre /bitacora/?prospecto=<id>: la visita nueva ya trae el
+   negocio, su lugar y sus datos. Si alguien ya lo visitó, la hoja lo avisa. */
+async function abrirDesdeProspeccion() {
+  const url = new URL(window.location.href);
+  const id = url.searchParams.get('prospecto');
+  if (!id) return;
+  url.searchParams.delete('prospecto');
+  window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+  try {
+    const data = await prospecto(id);
+    irA('hoy');
+    abrirHoja(null, C.desdeProspecto(data.prospecto));
+  } catch (err) {
+    showToast(err instanceof SinRed
+      ? 'Sin señal: no se pudo traer el negocio de Prospección.'
+      : 'No se encontró ese negocio en Prospección.', 'error', 5000);
+  }
 }
 
 /* Eventos */
@@ -1108,6 +1375,12 @@ $('segTodas').addEventListener('click', (e) => {
   const b = e.target.closest('[data-filtro]');
   if (!b) return;
   estado.filtroTodas = b.dataset.filtro;
+  pintarTodas();
+});
+$('segQuien').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-quien]');
+  if (!b) return;
+  estado.deQuien = b.dataset.quien;
   pintarTodas();
 });
 $('buscar').addEventListener('input', (e) => {

@@ -92,12 +92,12 @@ export function Shell() {
             <kbd>Ctrl K</kbd>
           </button>
           <div className="top-actions">
+            <ActiveChip id={id} />
             <button type="button" className="primary" onClick={() => navigate('/map', { state: { reset: Date.now() } })}>
-              + Nuevo análisis
+              + Nueva zona
             </button>
           </div>
         </header>
-        <ContextBar id={id} />
         <main id="contenido" className="content">
           <Outlet />
         </main>
@@ -111,16 +111,18 @@ export function Shell() {
   );
 }
 
-function ContextBar({ id }: { id: string | null }) {
+/* La zona con la que se está trabajando, a un clic de su lista. */
+function ActiveChip({ id }: { id: string | null }) {
   const { search, fallback } = useSearchJob(id ?? undefined);
   const shown = fallback ? undefined : search;
-  const bits = [shown?.city, shown?.zone || (!shown?.city ? shown?.label : null)].filter((bit): bit is string => Boolean(bit));
+  if (!id || !shown) return null;
+  const name = shown.zone || shown.label || shown.city || 'Zona';
   return (
-    <p className="context">
-      Prospección
-      {bits.map((bit, index) => <span key={`${bit}-${index}`}> / {bit}</span>)}
-      {shown?.businesses_found != null ? <span className="muted"> · {shown.businesses_found.toLocaleString('es-MX')} prospectos</span> : null}
-    </p>
+    <NavLink to={`/searches/${id}`} end className="active-chip" title="Zona activa">
+      <span className="active-chip-dot" aria-hidden="true" />
+      <span className="active-chip-name">{name}</span>
+      {shown.businesses_found != null ? <span className="muted">{shown.businesses_found.toLocaleString('es-MX')}</span> : null}
+    </NavLink>
   );
 }
 

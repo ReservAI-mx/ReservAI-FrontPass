@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { createSearch, errorMessage, geocode, getCategories, getUsage } from '../api';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { createSearch, errorMessage, geocode, getCategories, getProspect, getUsage } from '../api';
 import { assessDraft } from '../geo';
-import { colorFor, fmtKm, fmtNum, fmtPct } from '../format';
-import { useKpiSet, useProspects, useSearchJob } from '../hooks';
+import { fmtKm, fmtNum, visitText, visitTone } from '../format';
+import { useProspects, useSearchJob, useZoneVisits } from '../hooks';
 import { MOCK_CATEGORIES } from '../mock';
 import { loadDraft, saveDraft, setActiveSearch, useActiveSearch } from '../store';
 import { EMPTY_DRAFT, type Draft, type FlyTo } from '../types';
-import { MapView } from '../components/MapView';
-import { FallbackBanner, KpiRow, Loading } from '../components/ui';
+import { MapLegend, MapView, type MarkerPoint } from '../components/MapView';
+import { DetailDrawer } from '../components/DetailDrawer';
+import { FallbackBanner, Loading, StatusBadge, VisitedBar } from '../components/ui';
 
 function freshDraft(): Draft {
   return { ...EMPTY_DRAFT, polygon: [], categoryIds: [] };
@@ -26,6 +27,7 @@ export function MapPage() {
   const [fly, setFly] = useState<FlyTo | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const categoriesQ = useQuery({
     queryKey: ['categories', 'active'],
@@ -41,10 +43,16 @@ export function MapPage() {
     staleTime: 30_000,
   });
   const job = useSearchJob(active?.id);
-  const polling = !job.fallback && (job.search?.status === 'pending' || job.search?.status === 'processing');
+  const search = job.fallback ? undefined : job.search;
+  const polling = !job.fallback && (search?.status === 'pending' || search?.status === 'processing');
   const prospects = useProspects(active?.id, polling);
-  const realRows = prospects.query.isSuccess ? prospects.rows : undefined;
-  const { kpis } = useKpiSet(active?.id, realRows, polling);
+  const zoneVisits = useZoneVisits(search ? active?.id : undefined);
+  const detailQ = useQuery({
+    queryKey: ['prospect', selectedId],
+    enabled: Boolean(selectedId),
+    retry: false,
+    queryFn: () => getProspect(selectedId!),
+  });
   const check = assessDraft(draft, {
     categoryCount: draft.categoryIds.length,
     categoriesFallback: categoriesQ.isError,
@@ -108,42 +116,44 @@ export function MapPage() {
     }
   }
 
-  const markers = (prospects.query.data?.items ?? []).flatMap((item) => (
+  const rows = useMemo(() => prospects.query.data?.items ?? [], [prospects.query.data]);
+  const markers = useMemo<MarkerPoint[]>(() => rows.flatMap((item) => (
     item.lng == null || item.lat == null ? [] : [{
       id: item.id,
       lng: item.lng,
       lat: item.lat,
       name: item.name,
       category: item.category_name ?? '',
-      color: colorFor(item.category_name || item.id),
+      score: item.lead_score,
+      rating: item.rating,
+      tone: visitTone(item.visit),
+      visitText: visitText(item.visit),
     }]
-  ));
-
-  const kpiItems = kpis ? [
-    { label: 'Prospectos encontrados', value: fmtNum(kpis.prospects_total) },
-    { label: 'Con WhatsApp', value: fmtPct(kpis.with_whatsapp.count, kpis.with_whatsapp.pct) },
-    { label: 'Con correo', value: fmtPct(kpis.with_email.count, kpis.with_email.pct) },
-    { label: 'Rating promedio', value: fmtNum(kpis.avg_rating, 1), hint: 'De la búsqueda activa' },
-  ] : [
-    { label: 'Prospectos encontrados', value: '—' },
-    { label: 'Con WhatsApp', value: '—' },
-    { label: 'Con correo', value: '—' },
-    { label: 'Rating promedio', value: '—' },
-  ];
+  )), [rows]);
+  // Las que ya pintan un prospecto no se repiten como visita suelta.
+  const linkedPlaces = useMemo(() => new Set(rows.map((row) => row.place_id).filter(Boolean)), [rows]);
+  const gpsVisits = useMemo(
+    () => (zoneVisits.data?.items ?? []).filter((visit) => !visit.place_id || !linkedPlaces.has(visit.place_id)),
+    [zoneVisits.data, linkedPlaces],
+  );
+  const visitedCount = rows.filter((row) => row.visit).length;
+  const detail = detailQ.data ?? rows.find((row) => row.id === selectedId) ?? null;
+  const set = (patch: Partial<Draft>) => setDraft((current) => ({ ...current, ...patch }));
+  const extraFilters = [
+    draft.minimumRating && `★ ${draft.minimumRating}+`,
+    draft.minimumReviews && `${draft.minimumReviews}+ reseñas`,
+    draft.requirePhone && 'teléfono',
+    draft.requireWebsite && 'sitio web',
+    draft.requireEmail && 'correo',
+    draft.includeClosed && 'con cerrados',
+  ].filter(Boolean);
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <h1>Prospección por zona</h1>
-          <p className="lede">Dibuja un polígono o elige un radio. La búsqueda y el correo se resuelven en el servidor.</p>
-        </div>
-      </header>
+    <div className="page page-map">
       {usageQ.data?.places_mode === 'mock' ? (
-        <p className="banner warn">
-          Esta instalación no consulta Google Maps. Falta <code>GOOGLE_PLACES_API_KEY</code> en <code>Prospeccion/api/.env</code>.
-          Hasta que la pongas y reinicies la API, las búsquedas usan negocios de prueba.
-        </p>
+        <div className="banner warn compact">
+          <p>Modo de prueba: esta instalación no consulta Google Maps (falta <code>GOOGLE_PLACES_API_KEY</code>) y las búsquedas traen negocios de ejemplo.</p>
+        </div>
       ) : null}
       {categoriesQ.isError ? (
         <FallbackBanner
@@ -152,9 +162,8 @@ export function MapPage() {
           retrying={categoriesQ.isFetching}
         />
       ) : null}
-      <KpiRow items={kpiItems} />
-      {formError ? <p className="banner err">{formError}</p> : null}
-      <div className="workspace">
+      {formError ? <p className="banner err compact">{formError}</p> : null}
+      <div className="map-layout">
         <div className="map-stage">
           <MapView
             mode={draft.mode}
@@ -162,6 +171,9 @@ export function MapPage() {
             center={draft.center}
             radiusM={draft.radiusM}
             markers={markers}
+            searchArea={search?.area ?? null}
+            visits={gpsVisits}
+            fitKey={search?.area ? search.id : null}
             flyTo={fly}
             onAddVertex={(lng, lat) => setDraft((current) => ({ ...current, polygon: [...current.polygon, [lng, lat]] }))}
             onMoveVertex={(index, lng, lat) => setDraft((current) => ({
@@ -169,35 +181,70 @@ export function MapPage() {
               polygon: current.polygon.map((point, pointIndex) => pointIndex === index ? [lng, lat] : point),
             }))}
             onSetCenter={(lng, lat) => setDraft((current) => ({ ...current, center: { lng, lat } }))}
+            onSelectProspect={setSelectedId}
           />
           <div className="map-overlay">
             <p>
               {draft.mode === 'polygon'
-                ? `${draft.polygon.length} vértices`
-                : draft.center ? 'Centro fijado' : 'Sin centro'}
-              {check.areaKm2 != null ? ` · ${fmtKm(check.areaKm2)} km² · ${fmtKm(check.perimeterKm)} km` : ''}
+                ? draft.polygon.length ? `${draft.polygon.length} vértices` : 'Toca el mapa para marcar la zona'
+                : draft.center ? 'Centro fijado' : 'Toca el mapa para fijar el centro'}
+              {check.areaKm2 != null ? ` · ${fmtKm(check.areaKm2)} km²` : ''}
             </p>
             <div className="row">
-              <button type="button" className="ghost" disabled={draft.mode !== 'polygon' || draft.polygon.length === 0} onClick={() => setDraft((current) => ({ ...current, polygon: current.polygon.slice(0, -1) }))}>
-                Quitar último
+              <button type="button" className="ghost sm" disabled={draft.mode !== 'polygon' || draft.polygon.length === 0} onClick={() => setDraft((current) => ({ ...current, polygon: current.polygon.slice(0, -1) }))}>
+                Deshacer
               </button>
-              <button type="button" className="ghost" onClick={() => setDraft((current) => ({ ...current, polygon: [], center: null }))}>
-                Limpiar zona
+              <button type="button" className="ghost sm" disabled={!draft.polygon.length && !draft.center} onClick={() => set({ polygon: [], center: null })}>
+                Limpiar
               </button>
             </div>
           </div>
+          {markers.length || gpsVisits.length ? <MapLegend withVisits={gpsVisits.length > 0} /> : null}
         </div>
-        <aside className="panel">
-          <div className="segment" role="group" aria-label="Modo de zona">
-            <button type="button" className={draft.mode === 'polygon' ? 'on' : ''} onClick={() => setDraft((current) => ({ ...current, mode: 'polygon' }))}>Polígono</button>
-            <button type="button" className={draft.mode === 'radius' ? 'on' : ''} onClick={() => setDraft((current) => ({ ...current, mode: 'radius' }))}>Radio</button>
+        <aside className="panel map-panel">
+          {active ? (
+            <section className="active-card">
+              <div className="active-card-head">
+                <div>
+                  <p className="eyebrow">Búsqueda activa</p>
+                  <strong>{active.label}</strong>
+                </div>
+                {search ? <StatusBadge status={search.status} /> : null}
+              </div>
+              {job.query.isPending ? <Loading label="Cargando…" /> : null}
+              {search ? (
+                <>
+                  <div className="active-card-nums">
+                    <span><strong>{fmtNum(prospects.total || search.businesses_found)}</strong> negocios</span>
+                    <span><strong>{fmtNum(zoneVisits.data?.summary.total ?? 0)}</strong> visitas en la zona</span>
+                  </div>
+                  <VisitedBar visited={visitedCount} total={rows.length} />
+                </>
+              ) : null}
+              {job.fallback ? <p className="hint">No se pudo cargar la búsqueda activa.</p> : null}
+              <div className="row">
+                <Link className="primary sm" to={`/searches/${active.id}`}>Ver lista</Link>
+                <button type="button" className="ghost sm" onClick={() => setActiveSearch(null)}>Quitar del mapa</button>
+              </div>
+            </section>
+          ) : null}
+
+          <div className="panel-title">
+            <h2>Nueva zona</h2>
+            <p className="hint">Marca la zona en el mapa, elige giros y busca.</p>
           </div>
-          <label className="field">Ciudad
-            <input value={draft.city} onChange={(event) => setDraft((current) => ({ ...current, city: event.target.value }))} />
-          </label>
-          <label className="field">Zona o colonia
-            <input value={draft.zone} onChange={(event) => setDraft((current) => ({ ...current, zone: event.target.value }))} />
-          </label>
+          <div className="segment" role="group" aria-label="Modo de zona">
+            <button type="button" className={draft.mode === 'polygon' ? 'on' : ''} onClick={() => set({ mode: 'polygon' })}>Polígono</button>
+            <button type="button" className={draft.mode === 'radius' ? 'on' : ''} onClick={() => set({ mode: 'radius' })}>Radio</button>
+          </div>
+          <div className="two">
+            <label className="field">Ciudad
+              <input value={draft.city} placeholder="Guadalajara" onChange={(event) => set({ city: event.target.value })} />
+            </label>
+            <label className="field">Zona o colonia
+              <input value={draft.zone} placeholder="Chapalita" onChange={(event) => set({ zone: event.target.value })} />
+            </label>
+          </div>
           <button type="button" className="ghost" disabled={locating || (!draft.city.trim() && !draft.zone.trim())} onClick={() => void locate()}>
             {locating ? 'Ubicando…' : 'Ubicar en el mapa'}
           </button>
@@ -209,12 +256,23 @@ export function MapPage() {
                 max={10000}
                 step={100}
                 value={draft.radiusM}
-                onChange={(event) => setDraft((current) => ({ ...current, radiusM: Number(event.target.value) }))}
+                onChange={(event) => set({ radiusM: Number(event.target.value) })}
               />
             </label>
           ) : null}
           <div>
-            <p className="section-label">Giros</p>
+            <div className="label-row">
+              <p className="section-label">Giros</p>
+              {categories.length > 1 ? (
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() => set({ categoryIds: draft.categoryIds.length === categories.length ? [] : categories.map((c) => c.id) })}
+                >
+                  {draft.categoryIds.length === categories.length ? 'Ninguno' : 'Todos'}
+                </button>
+              ) : null}
+            </div>
             {categoriesQ.isPending ? <Loading label="Cargando giros…" /> : null}
             {!categoriesQ.isPending && categories.length === 0 ? <p className="hint">No hay giros activos. Créalos en Configuración.</p> : null}
             <div className="chips">
@@ -237,30 +295,47 @@ export function MapPage() {
               })}
             </div>
           </div>
-          <label className="field">Calificación mínima
-            <input type="number" min={0} max={5} step={0.1} value={draft.minimumRating} onChange={(event) => setDraft((current) => ({ ...current, minimumRating: event.target.value }))} />
-          </label>
-          <label className="field">Mínimo de reseñas
-            <input type="number" min={0} step={1} value={draft.minimumReviews} onChange={(event) => setDraft((current) => ({ ...current, minimumReviews: event.target.value }))} />
-          </label>
-          <label className="switch"><input type="checkbox" checked={draft.requirePhone} onChange={(event) => setDraft((current) => ({ ...current, requirePhone: event.target.checked }))} /> Con teléfono</label>
-          <label className="switch"><input type="checkbox" checked={draft.requireWebsite} onChange={(event) => setDraft((current) => ({ ...current, requireWebsite: event.target.checked }))} /> Con sitio web</label>
-          <label className="switch"><input type="checkbox" checked={draft.requireEmail} onChange={(event) => setDraft((current) => ({ ...current, requireEmail: event.target.checked }))} /> Con correo</label>
-          <label className="switch"><input type="checkbox" checked={draft.includeClosed} onChange={(event) => setDraft((current) => ({ ...current, includeClosed: event.target.checked }))} /> Incluir cerrados</label>
-          <p className="hint">{check.reason ?? 'Listo para buscar en esta zona.'}</p>
-          <button
-            type="button"
-            className="primary"
-            disabled={!check.ok || mutation.isPending}
-            onClick={() => {
-              setFormError(null);
-              mutation.mutate(undefined, { onError: (err) => setFormError(errorMessage(err)) });
-            }}
-          >
-            {mutation.isPending ? 'Creando búsqueda…' : 'Buscar prospectos en esta zona'}
-          </button>
+          <details className="more">
+            <summary>
+              Más filtros
+              {extraFilters.length ? <span className="muted"> · {extraFilters.join(', ')}</span> : null}
+            </summary>
+            <div className="two">
+              <label className="field">Calificación mínima
+                <input type="number" min={0} max={5} step={0.1} value={draft.minimumRating} placeholder="4.0" onChange={(event) => set({ minimumRating: event.target.value })} />
+              </label>
+              <label className="field">Mínimo de reseñas
+                <input type="number" min={0} step={1} value={draft.minimumReviews} placeholder="20" onChange={(event) => set({ minimumReviews: event.target.value })} />
+              </label>
+            </div>
+            <label className="switch"><input type="checkbox" checked={draft.requirePhone} onChange={(event) => set({ requirePhone: event.target.checked })} /> Con teléfono</label>
+            <label className="switch"><input type="checkbox" checked={draft.requireWebsite} onChange={(event) => set({ requireWebsite: event.target.checked })} /> Con sitio web</label>
+            <label className="switch"><input type="checkbox" checked={draft.requireEmail} onChange={(event) => set({ requireEmail: event.target.checked })} /> Con correo</label>
+            <label className="switch"><input type="checkbox" checked={draft.includeClosed} onChange={(event) => set({ includeClosed: event.target.checked })} /> Incluir cerrados</label>
+          </details>
+          <div className="submit-box">
+            <p className={check.ok ? 'hint ok-text' : 'hint'}>{check.reason ?? 'Listo para buscar en esta zona.'}</p>
+            <button
+              type="button"
+              className="primary block"
+              disabled={!check.ok || mutation.isPending}
+              onClick={() => {
+                setFormError(null);
+                mutation.mutate(undefined, { onError: (err) => setFormError(errorMessage(err)) });
+              }}
+            >
+              {mutation.isPending ? 'Creando búsqueda…' : 'Buscar negocios en esta zona'}
+            </button>
+          </div>
         </aside>
       </div>
+      <DetailDrawer
+        prospect={selectedId ? detail : null}
+        refreshing={detailQ.isFetching && !detailQ.data}
+        partial={detailQ.isError}
+        blocked={job.fallback || prospects.fallback}
+        onClose={() => setSelectedId(null)}
+      />
     </div>
   );
 }

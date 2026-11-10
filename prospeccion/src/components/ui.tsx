@@ -1,6 +1,65 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import type { Prospect, SearchJob } from '../types';
-import { fitLabel, fitTone, fmtNum, stageLabel } from '../format';
+import type { Prospect, ProspectVisit, SearchJob, SearchStatus, ZoneVisits } from '../types';
+import { fitLabel, fitTone, fmtDay, fmtNum, stageLabel, statusLabel, TONE_LABEL, visitText, visitTone } from '../format';
+
+/** Cómo va el negocio en la Bitácora: sin visitar, en seguimiento, cerrado… */
+export function VisitBadge({ visit, full = false }: { visit: ProspectVisit | null; full?: boolean }) {
+  const tone = visitTone(visit);
+  return (
+    <span className={`visit-badge tone-${tone}`} title={visitText(visit)}>
+      <i aria-hidden="true" />
+      {full ? visitText(visit) : visit ? (visit.seller_name?.split(' ')[0] || TONE_LABEL[tone]) : TONE_LABEL.none}
+      {!full && visit?.date ? <span className="muted"> · {fmtDay(visit.date)}</span> : null}
+    </span>
+  );
+}
+
+export function StatusBadge({ status }: { status: SearchStatus }) {
+  return <span className={`status-badge st-${status}`}>{statusLabel(status)}</span>;
+}
+
+/** Barra "visitados / encontrados". */
+export function VisitedBar({ visited, total }: { visited: number; total: number }) {
+  const pct = total ? Math.round((100 * visited) / total) : 0;
+  return (
+    <span className="visited-bar" title={`${visited} de ${total} visitados`}>
+      <span className="bar"><span style={{ width: `${pct}%` }} /></span>
+      <span className="muted">{fmtNum(visited)} / {fmtNum(total)}</span>
+    </span>
+  );
+}
+
+/** Trabajo de campo en la zona: lo que el equipo ya registró en la Bitácora. */
+export function ZoneWork({ data, loading, error }: { data?: ZoneVisits; loading: boolean; error: boolean }) {
+  return (
+    <section className="zone-work">
+      <h2>En la Bitácora</h2>
+      {loading ? <Loading label="Buscando visitas en la zona…" /> : null}
+      {error ? <p className="hint">No se pudieron leer las visitas de la zona.</p> : null}
+      {data && data.summary.total === 0 ? (
+        <p className="hint">Nadie del equipo ha registrado visitas en esta zona todavía.</p>
+      ) : null}
+      {data && data.summary.total > 0 ? (
+        <>
+          <div className="zone-work-nums">
+            <div><strong>{fmtNum(data.summary.total)}</strong><span>visitas</span></div>
+            <div><strong className="tone-open">{fmtNum(data.summary.in_progress)}</strong><span>en seguimiento</span></div>
+            <div><strong className="tone-won">{fmtNum(data.summary.closed)}</strong><span>cerradas</span></div>
+          </div>
+          <ul className="zone-work-sellers">
+            {data.summary.by_seller.map((seller) => (
+              <li key={seller.seller_id ?? seller.name ?? ''}>
+                <span>{seller.name || 'Sin nombre'}</span>
+                <span className="muted">{fmtNum(seller.count)}</span>
+              </li>
+            ))}
+          </ul>
+          {data.summary.last_date ? <p className="hint">Última visita: {fmtDay(data.summary.last_date)}</p> : null}
+        </>
+      ) : null}
+    </section>
+  );
+}
 
 export function useDialog(open: boolean) {
   const ref = useRef<HTMLDialogElement>(null);

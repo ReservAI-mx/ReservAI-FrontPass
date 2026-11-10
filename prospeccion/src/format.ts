@@ -1,4 +1,4 @@
-import type { Prospect, ResultFilters } from './types';
+import type { Prospect, ProspectVisit, ResultFilters, SearchStatus } from './types';
 
 export const PAGE_SIZE = 20;
 
@@ -19,7 +19,7 @@ export const EXPORT_COLUMNS = [
 
 export type ExportColumnId = (typeof EXPORT_COLUMNS)[number]['id'];
 
-const PALETTE = ['#1d4e89', '#0f6e56', '#8a5a12', '#6b3f69', '#3d5a40', '#1f4b6e', '#7a3b2e'];
+const PALETTE = ['#0983d6', '#4ade80', '#fbbf24', '#a78bfa', '#7cc4f5', '#008bbd', '#ff8484'];
 
 const FIT: Record<string, string> = {
   high: 'Alto potencial',
@@ -149,7 +149,8 @@ export function filtersActive(filters: ResultFilters) {
     || filters.hasWhatsapp
     || filters.hasEmail
     || filters.multiBranch
-    || filters.noBooking,
+    || filters.noBooking
+    || filters.visit !== 'all',
   );
 }
 
@@ -170,6 +171,8 @@ export function filterProspects(rows: Prospect[], filters: ResultFilters) {
     if (filters.hasEmail && !prospect.email) return false;
     if (filters.multiBranch && (prospect.branch_count == null || prospect.branch_count < 1)) return false;
     if (filters.noBooking && prospect.booking_system_detected !== false) return false;
+    if (filters.visit === 'pending' && prospect.visit) return false;
+    if (filters.visit === 'visited' && !prospect.visit) return false;
     return true;
   });
 }
@@ -210,4 +213,92 @@ export function zoneText(search: { city: string | null; zone: string | null; lab
   if (!search) return '';
   if (search.city && search.zone) return `${search.city} / ${search.zone}`;
   return search.label || search.zone || search.city || '';
+}
+
+/* ------------------------------------------------------------------
+   Bitácora: quién ya visitó cada negocio
+   ------------------------------------------------------------------ */
+
+const EN_JUEGO = new Set([
+  'Interés bajo (recontactar)', 'Demo hecha', 'Propuesta enviada', 'En negociación', 'Reagendar visita',
+]);
+
+export type VisitTone = 'none' | 'open' | 'won' | 'lost' | 'done';
+
+/** Color del punto en el mapa y del badge según cómo va la visita. */
+export const TONE_COLOR: Record<VisitTone, string> = {
+  none: '#0983d6',
+  open: '#fbbf24',
+  won: '#4ade80',
+  lost: '#ff8484',
+  done: '#a0a0a0',
+};
+
+export const TONE_LABEL: Record<VisitTone, string> = {
+  none: 'Sin visitar',
+  open: 'En seguimiento',
+  won: 'Cerrado',
+  lost: 'Perdido o no interesado',
+  done: 'Visitado',
+};
+
+export function resultTone(result: string | null | undefined, visited = true): VisitTone {
+  if (!visited) return 'none';
+  if (result === 'Cerrado') return 'won';
+  if (result === 'Perdido' || result === 'No interesado') return 'lost';
+  if (result && EN_JUEGO.has(result)) return 'open';
+  return 'done';
+}
+
+export function visitTone(visit: ProspectVisit | null) {
+  return resultTone(visit?.result, Boolean(visit));
+}
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/** '2026-11-03' → '3 nov' (con el año si no es este). */
+export function fmtDay(iso: string | null | undefined) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return '';
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  const year = y === new Date().getFullYear() ? '' : ` ${y}`;
+  return `${d} ${MESES[m - 1]}${year}`;
+}
+
+/** "Vero · 3 nov · Demo hecha" */
+export function visitText(visit: ProspectVisit | null) {
+  if (!visit) return 'Sin visitar';
+  const extra = visit.count > 1 ? ` · ${visit.count} visitas` : '';
+  return [visit.seller_name || 'Alguien del equipo', fmtDay(visit.date), visit.result].filter(Boolean).join(' · ') + extra;
+}
+
+/** La Bitácora abre la visita nueva con los datos del negocio ya puestos. */
+export function bitacoraHref(prospectId: string) {
+  return `/bitacora/?prospecto=${encodeURIComponent(prospectId)}`;
+}
+
+/** WhatsApp de un número de México (los últimos 10 dígitos). */
+export function waHref(phone: string | null) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (digits.length < 10) return null;
+  return `https://wa.me/52${digits.slice(-10)}`;
+}
+
+/** Cómo llegar: Google Maps con el punto del negocio. */
+export function directionsHref(prospect: Pick<Prospect, 'lat' | 'lng' | 'maps_url'>) {
+  if (prospect.lat != null && prospect.lng != null) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${prospect.lat},${prospect.lng}`;
+  }
+  return safeHttp(prospect.maps_url);
+}
+
+const STATUS: Record<SearchStatus, string> = {
+  pending: 'En cola',
+  processing: 'Buscando',
+  completed: 'Lista',
+  failed: 'Falló',
+  cancelled: 'Cancelada',
+};
+
+export function statusLabel(status: SearchStatus) {
+  return STATUS[status] ?? status;
 }

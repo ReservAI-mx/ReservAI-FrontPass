@@ -89,6 +89,11 @@ const COLUMNAS = [
   ['notas', 'Notas'],
 ];
 
+/* Fuera del Excel: con quién se comparte la comisión y el lugar de la visita
+   (para ligarla con Prospección). */
+const EXTRAS = ['compartido_con', 'place_id', 'lat', 'lng'];
+const COORDENADAS = new Set(['lat', 'lng']);
+
 const NUMERICOS = new Set([
   'sucursales', 'estaciones', 'mensajes', 'ticket', 'minutos', 'interes', 'n_seguimientos', 'mrr',
 ]);
@@ -96,7 +101,7 @@ const NUMERICOS = new Set([
 /* Lo que manda el teléfono. vendedor, visitador y fechas de servidor los
    pone /api/bitacora. */
 const EDITABLES = COLUMNAS.map(([c]) => c).filter((c) => c !== 'visitador')
-  .concat(['archivada', 'f_exportado', 'eliminada']);
+  .concat(['archivada', 'f_exportado', 'eliminada'], EXTRAS);
 
 const CERRADO = 'Cerrado';
 /* Se archivan al exportar: ya no hay nada que seguir. */
@@ -144,6 +149,7 @@ function nuevoId() {
 function nuevaVisita({ visitador = '', ultimoMunicipio = '', ultimaColonia = '' } = {}, ahora = new Date()) {
   const v = { id: nuevoId() };
   for (const [c] of COLUMNAS) v[c] = '';
+  for (const c of EXTRAS) v[c] = '';
   v.fecha = hoy(ahora);
   v.franja = franjaActual(ahora);
   v.visitador = visitador;
@@ -172,7 +178,7 @@ function paraSubir(v) {
       out[c] = null;
       continue;
     }
-    if (NUMERICOS.has(c)) {
+    if (NUMERICOS.has(c) || COORDENADAS.has(c)) {
       const n = Number(valor);
       out[c] = Number.isFinite(n) ? n : null;
       continue;
@@ -191,10 +197,126 @@ function desdeServidor(row) {
   for (const [c] of COLUMNAS) {
     v[c] = row[c] === null || row[c] === undefined ? '' : String(row[c]);
   }
+  for (const c of EXTRAS) {
+    v[c] = row[c] === null || row[c] === undefined ? '' : String(row[c]);
+  }
   v.archivada = Boolean(row.archivada);
   v.eliminada = Boolean(row.eliminada);
   v.f_exportado = row.f_exportado || '';
   return v;
+}
+
+/* ------------------------------------------------------------------
+   Para no repetir negocios: el equipo ve las visitas de todos.
+   ------------------------------------------------------------------ */
+
+/* "Barbería El Güero, S.A." → "barberia el guero sa" */
+function normalizar(texto) {
+  return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+/* Los últimos 10 dígitos: así 33 1234 5678 y +52 1 33 1234 5678 son el mismo. */
+function digitos(tel) {
+  const d = String(tel || '').replace(/\D/g, '');
+  return d.length >= 8 ? d.slice(-10) : '';
+}
+
+/**
+ * Otras visitas (no eliminadas) al mismo negocio: mismo lugar de Google,
+ * mismo teléfono o el mismo nombre. Con nombres, uno puede contener al otro
+ * ("Barbería El Güero" y "El Güero") si el más corto trae dos palabras o
+ * más (así "Barbería" sola no choca con todas) y, cuando las dos lo dicen,
+ * están en el mismo municipio. La más reciente primero.
+ */
+function parecidas(v, todas) {
+  const nombre = normalizar(v.negocio);
+  const tel = digitos(v.telefono);
+  if (!v.place_id && !tel && nombre.length < 3) return [];
+  return todas.filter((o) => {
+    if (o.id === v.id || o.eliminada) return false;
+    if (v.place_id && o.place_id === v.place_id) return true;
+    if (tel && digitos(o.telefono) === tel) return true;
+    const otro = normalizar(o.negocio);
+    if (!nombre || !otro) return false;
+    if (v.municipio && o.municipio && v.municipio !== o.municipio) return false;
+    if (otro === nombre) return true;
+    const [corto, largo] = otro.length < nombre.length ? [otro, nombre] : [nombre, otro];
+    return corto.length >= 6 && corto.includes(' ') && ` ${largo} `.includes(` ${corto} `);
+  }).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+}
+
+/* ------------------------------------------------------------------
+   De un prospecto (Prospección, datos de Google) a una visita.
+   ------------------------------------------------------------------ */
+
+/* Categoría de Prospección → giro de la bitácora. Lo que no está, "Otro". */
+const GIRO_DE_CATEGORIA = {
+  barberias: 'Barbería',
+  esteticas: 'Salón / Estética',
+  unas: 'Salón / Estética',
+  'cortes de pelo': 'Salón / Estética',
+  'clinicas esteticas': 'Spa',
+  spa: 'Spa',
+  spas: 'Spa',
+  'clinicas dentales': 'Clínica dental',
+  doctores: 'Consultorio médico',
+  fisioterapia: 'Consultorio (otro)',
+  nutriologos: 'Consultorio (otro)',
+  veterinarias: 'Veterinaria',
+  gimnasios: 'Gimnasio / Estudio',
+  restaurantes: 'Restaurante',
+};
+
+function giroDeCategoria(categoria) {
+  const clave = normalizar(categoria);
+  return clave ? GIRO_DE_CATEGORIA[clave] || 'Otro' : '';
+}
+
+/* "San Pedro Tlaquepaque" → "Tlaquepaque"; lo que no es de la lista, "Otro". */
+function municipioDe(texto) {
+  const t = normalizar(texto);
+  if (!t) return '';
+  const op = OPCIONES.municipio.find((m) => m !== 'Otro' && t.includes(normalizar(m)));
+  return op || 'Otro';
+}
+
+/**
+ * La dirección de Google ("Av. Guadalupe 1234, Chapalita, 45040 Zapopan,
+ * Jal., México") en calle, colonia y municipio. Si no trae código postal, se
+ * queda la calle y se busca el municipio en el texto.
+ */
+function partesDireccion(direccion) {
+  const partes = String(direccion || '').split(',').map((p) => p.trim()).filter(Boolean);
+  const iCp = partes.findIndex((p) => /^\d{5}\s+\S/.test(p));
+  if (iCp === -1) {
+    return { calle: partes[0] || '', colonia: '', municipio: municipioDe(direccion) };
+  }
+  return {
+    calle: iCp > 1 ? partes.slice(0, iCp - 1).join(', ') : partes[0] || '',
+    colonia: iCp > 1 ? partes[iCp - 1] : '',
+    municipio: municipioDe(partes[iCp].replace(/^\d{5}\s+/, '')),
+  };
+}
+
+/* Lo que se llena en la visita al elegir un prospecto. */
+function desdeProspecto(p) {
+  const dir = partesDireccion(p.direccion);
+  const datos = {
+    negocio: p.nombre || '',
+    giro: giroDeCategoria(p.categoria),
+    direccion: dir.calle,
+    telefono: p.telefono || '',
+    instagram: p.website || '',
+    place_id: p.place_id || '',
+  };
+  if (dir.municipio) datos.municipio = dir.municipio;
+  if (dir.colonia) datos.colonia = dir.colonia;
+  if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+    datos.lat = String(p.lat);
+    datos.lng = String(p.lng);
+  }
+  return datos;
 }
 
 /* Ficha mínima para guardar: lo que permite contarla en el tablero. */
@@ -203,8 +325,9 @@ function lista(v) {
 }
 
 const api = {
-  OPCIONES, COLUMNAS, NUMERICOS, EDITABLES, CERRADO, TERMINALES, EN_JUEGO, METAS,
+  OPCIONES, COLUMNAS, EXTRAS, NUMERICOS, EDITABLES, CERRADO, TERMINALES, EN_JUEGO, METAS,
   hoy, fechaCorta, franjaActual, nuevoId, nuevaVisita, paraSubir, desdeServidor, lista,
+  normalizar, digitos, parecidas, giroDeCategoria, municipioDe, partesDireccion, desdeProspecto,
 };
 
 if (typeof module !== 'undefined' && module.exports) {

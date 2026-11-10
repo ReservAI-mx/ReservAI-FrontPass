@@ -65,10 +65,55 @@ export type SearchJob = {
   city: string | null;
   zone: string | null;
   created_at: string | null;
+  area: SearchArea | null;
+  visited_count: number | null;
+};
+
+export type SearchArea =
+  | { type: 'polygon'; coordinates: LngLat[] }
+  | { type: 'radius'; center: { lng: number; lat: number }; radius_m: number };
+
+/** La visita más reciente de la Bitácora al mismo lugar de Google. */
+export type ProspectVisit = {
+  id: string;
+  seller_id: string | null;
+  seller_name: string | null;
+  date: string | null;
+  result: string | null;
+  shared_with: string | null;
+  count: number;
+};
+
+/** Visita de la Bitácora dentro de la zona de una búsqueda. */
+export type AreaVisit = {
+  id: string;
+  business: string | null;
+  category: string | null;
+  date: string | null;
+  result: string | null;
+  seller_id: string | null;
+  seller_name: string | null;
+  place_id: string | null;
+  interest: number | null;
+  lng: number;
+  lat: number;
+};
+
+export type ZoneVisits = {
+  items: AreaVisit[];
+  summary: {
+    total: number;
+    closed: number;
+    in_progress: number;
+    linked: number;
+    last_date: string | null;
+    by_seller: { seller_id: string | null; name: string | null; count: number }[];
+  };
 };
 
 export type Prospect = {
   id: string;
+  place_id: string | null;
   name: string;
   address: string | null;
   category_id: string | null;
@@ -95,6 +140,7 @@ export type Prospect = {
   analyzed_at: string | null;
   lng: number | null;
   lat: number | null;
+  visit: ProspectVisit | null;
 };
 
 export type Kpis = {
@@ -104,6 +150,7 @@ export type Kpis = {
   without_booking_system: { count: number; pct: number };
   avg_rating: number | null;
   avg_lead_score: number | null;
+  visited: { count: number; pct: number };
 };
 
 export type ProspectPage = {
@@ -120,6 +167,7 @@ export type ResultFilters = {
   hasEmail: boolean;
   multiBranch: boolean;
   noBooking: boolean;
+  visit: 'all' | 'pending' | 'visited';
   sort: 'lead_score' | 'review_count' | 'rating' | 'name';
   order: 'asc' | 'desc';
 };
@@ -133,6 +181,7 @@ export const DEFAULT_FILTERS: ResultFilters = {
   hasEmail: false,
   multiBranch: false,
   noBooking: false,
+  visit: 'all',
   sort: 'lead_score',
   order: 'desc',
 };
