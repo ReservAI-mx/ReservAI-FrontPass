@@ -8,7 +8,7 @@ import {
   puedeEditar, administra, escuchar, tickets as api, puedoEscribir, enEspera,
 } from "../datos.js";
 import { verTicket, ir, cambiarParam } from "../rutas.js";
-import { crearConIA, buscarParecidos } from "../ia.js";
+import { crearConIA, buscarParecidos, clasificarSolicitud } from "../ia.js";
 import { icono } from "../iconos.js";
 import { nuevoEstado, NUEVO, opcionNuevo } from "../estados.js";
 
@@ -174,28 +174,46 @@ export function nuevoTicket(a, alCrear, valores = {}) {
       miembrosDe(a.id).map((p) => h("option", { value: p.id, selected: p.id === responsable }, p.nombre)));
   };
   llenarArea(valores.estado_id, valores.responsable);
-  // Con más de un área donde puedo crear, se elige aquí (el "+" del teléfono
-  // abre en la que estás viendo, pero no te deja amarrado a ella).
-  const posibles = datos.areas.filter((x) => !x.archivada && puedeEditar(x.id));
+  // Se puede crear en cualquier área (el "+" abre en la que estás viendo).
+  // En una donde no eres miembro el ticket se manda como solicitud: el área
+  // decide estado y responsable, y tú lo sigues en Solicitudes.
+  const posibles = datos.areas.filter((x) => !x.archivada);
+  const esSolicitud = () => !puedeEditar(a.id);
   let etiquetas = valores.etiquetas || [];
+  const filaEstado = h("label.campo", h("span", "Estado"), estadoSel);
+  const filaResp = h("label.campo", h("span", "Responsable"), resp);
+  const aviso = h("div.aviso-solicitud");
+  const botonCrear = h("button.btn.primario");
+  const tituloModal = () => (esSolicitud() ? "Pedir ticket a " : "Nuevo ticket en ") + a.nombre;
+  const pintarModo = () => {
+    const pedir = esSolicitud();
+    filaEstado.hidden = filaResp.hidden = pedir;
+    aviso.hidden = !pedir;
+    aviso.textContent = pedir
+      ? `No eres de ${a.nombre}: se manda como solicitud. Ellos le ponen estado y responsable, y tú lo sigues en Solicitudes.`
+      : "";
+    botonCrear.textContent = pedir ? "Enviar solicitud" : "Crear";
+    const cab = botonCrear.closest(".caja")?.querySelector(".cab h2");
+    if (cab) cab.textContent = tituloModal();
+  };
   const areaSel = posibles.length > 1 && !valores.origen && h("select", {
     onchange: () => {
       a = posibles.find((x) => x.id === areaSel.value) || a;
       // Las etiquetas que propuso la IA son del área anterior.
       etiquetas = [];
       llenarArea(null, resp.value);
-      const cab = areaSel.closest(".caja")?.querySelector(".cab h2");
-      if (cab) cab.textContent = "Nuevo ticket en " + a.nombre;
+      pintarModo();
       buscarParecidos(a.id, titulo.value, parecidos);
     },
-  }, posibles.map((x) => h("option", { value: x.id, selected: x.id === a.id }, x.nombre)));
+  }, posibles.map((x) => h("option", { value: x.id, selected: x.id === a.id }, x.nombre + (puedeEditar(x.id) ? "" : " (solicitud)"))));
   const parecidos = h("div");
   titulo.addEventListener("blur", () => buscarParecidos(a.id, titulo.value, parecidos));
   if (valores.titulo) buscarParecidos(a.id, valores.titulo, parecidos);
   const checklist = valores.checklist || [];
-  modal("Nuevo ticket en " + a.nombre, (cerrar) => {
+  modal(tituloModal(), (cerrar) => {
     const crear = async (abrir) => {
       if (!titulo.value.trim()) return toast("Ponle un título.");
+      const pedir = esSolicitud();
       try {
         // Todo en una sola petición: responsable, checklist y etiquetas.
         const t = await api.crear({
@@ -206,8 +224,10 @@ export function nuevoTicket(a, alCrear, valores = {}) {
         });
         cerrar();
         alCrear && alCrear();
+        // Como en Solicitudes: la IA le sugiere prioridad, etiquetas y responsable.
+        if (pedir) clasificarSolicitud(t.id);
         if (abrir) verTicket(t.numero);
-        else toast(`T-${t.numero} creado`);
+        else toast(pedir ? `Solicitud T-${t.numero} enviada a ${a.nombre}` : `T-${t.numero} creado`);
       } catch (e) {
         error(e, "No se creó");
       }
@@ -216,13 +236,14 @@ export function nuevoTicket(a, alCrear, valores = {}) {
     return [
       h("div.cuerpo",
         areaSel && h("label.campo", h("span", "Área"), areaSel),
+        aviso,
         h("label.campo", h("span", "Título"), titulo),
         parecidos,
         h("label.campo", h("span", "Descripción"), desc),
         h("div.rejilla-2",
-          h("label.campo", h("span", "Estado"), estadoSel),
+          filaEstado,
           h("label.campo", h("span", "Prioridad"), prio),
-          h("label.campo", h("span", "Responsable"), resp),
+          filaResp,
           h("label.campo", h("span", "Vence"), fechaConTexto(vence))),
         checklist.length > 0 && h("div.caja-ia",
           h("div.cab-ia", "✦ Checklist sugerido"),
@@ -230,9 +251,10 @@ export function nuevoTicket(a, alCrear, valores = {}) {
       h("div.pie",
         h("button.btn", { onclick: () => cerrar() }, "Cancelar"),
         h("button.btn", { onclick: () => crear(true) }, "Crear y abrir"),
-        h("button.btn.primario", { onclick: () => crear(false) }, "Crear")),
+        Object.assign(botonCrear, { onclick: () => crear(false) })),
     ];
   }, { enfocar: !valores.titulo, clase: "nuevo-ticket" });
+  pintarModo();
 }
 
 // ---------- Piezas comunes ----------
