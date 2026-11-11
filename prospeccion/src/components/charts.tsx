@@ -3,6 +3,15 @@ import { fmtNum } from '../format';
 
 /* Piezas visuales chicas: todas son HTML/CSS, sin librería de gráficas. */
 
+/** Palomita dibujada (el carácter ✓ cambia de forma según la fuente). */
+export function Check({ className = '' }: { className?: string }) {
+  return (
+    <svg className={`check-icon ${className}`} viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** Un dato con su porcentaje en barra y una línea que explica qué significa. */
 export function Meter({
   label, count, total, hint, tone = 'blue',
@@ -89,7 +98,7 @@ export function Steps({ steps }: { steps: { title: string; text: string; done: b
     <ol className="steps">
       {steps.map((step, index) => (
         <li key={step.title} className={step.done ? 'done' : index === current ? 'current' : ''}>
-          <span className="steps-dot" aria-hidden="true">{step.done ? '✓' : index + 1}</span>
+          <span className="steps-dot" aria-hidden="true">{step.done ? <Check /> : index + 1}</span>
           <span>
             <strong>{step.title}</strong>
             <span className="muted">{step.text}</span>

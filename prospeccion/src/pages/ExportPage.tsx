@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { errorMessage, exportFile, getLastExportAt, saveBlob } from '../api';
+import { Check } from '../components/charts';
 import { EmptyState, FallbackBanner, Loading, StatusBadge } from '../components/ui';
 import { EXPORT_COLUMNS, exportCell, fmtDate, fmtNum, zoneText } from '../format';
 import { useProspects, useSearchJob } from '../hooks';
@@ -184,8 +185,9 @@ export function ExportPage() {
               {EXPORT_COLUMNS.map((column) => {
                 const on = columns.includes(column.id);
                 return (
-                  <button key={column.id} type="button" className={on ? 'chip on' : 'chip'} aria-pressed={on} onClick={() => toggleColumn(column.id)}>
-                    {on ? '✓ ' : ''}{column.label}
+                  <button key={column.id} type="button" className={on ? 'chip check-chip on' : 'chip check-chip'} aria-pressed={on} onClick={() => toggleColumn(column.id)}>
+                    <span className="check-box" aria-hidden="true">{on ? <Check /> : null}</span>
+                    {column.label}
                   </button>
                 );
               })}
