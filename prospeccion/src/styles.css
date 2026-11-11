@@ -993,3 +993,35 @@ table.preview td { max-width: 220px; overflow: hidden; text-overflow: ellipsis; 
 .check-chip:hover .check-box { border-color: var(--primary); }
 .check-chip:not(.on) { color: var(--text-gray); }
 .steps-dot .check-icon { width: 13px; height: 13px; }
+
+/* Las casillas de la tabla y de los filtros, iguales a las de Exportar (las
+   del navegador salían blancas y genéricas). Los interruptores (.toggle)
+   tienen su propio estilo. */
+.switch input[type="checkbox"],
+table input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border-radius: 5px;
+  border: 1.5px solid #5a5a5a;
+  background: transparent center / 14px no-repeat;
+  cursor: pointer;
+  flex-shrink: 0;
+  vertical-align: middle;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.switch input[type="checkbox"]:hover,
+table input[type="checkbox"]:hover { border-color: var(--primary); }
+.switch input[type="checkbox"]:checked,
+table input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5 6.5 11.5 12.5 4.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.switch input[type="checkbox"]:focus-visible,
+table input[type="checkbox"]:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+/* Opciones de filtro: renglones que se notan al pasar y al marcar. */
+.switch { padding: 6px 8px; margin: 0 -8px; border-radius: 8px; cursor: pointer; }
+.switch:hover { background: rgba(255, 255, 255, 0.04); }
+.switch:has(input:checked) { color: #fff; background: rgba(9, 131, 214, 0.1); }
