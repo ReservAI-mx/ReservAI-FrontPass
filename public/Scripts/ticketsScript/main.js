@@ -195,13 +195,15 @@ function pintarGlobo(sinLeer) {
 
 /**
  * Botón "+" del teléfono: ticket nuevo en el área que estás viendo (o en la
- * primera donde puedes editar). Si no editas en ninguna, pedir uno.
+ * primera donde puedes editar). En el formulario se elige cualquier área.
  */
 async function crearRapido() {
   const { partes } = leerRuta();
-  const actual = partes[0] === "area" ? misAreas().find((a) => a.clave === partes[1]) : null;
-  const destino = actual && puedeEditar(actual.id) ? actual : misAreas().find((a) => puedeEditar(a.id));
-  if (!destino) return ir("#/solicitudes?pedir=" + (actual ? actual.clave : ""));
+  const abiertas = datos.areas.filter((a) => !a.archivada);
+  const actual = partes[0] === "area" ? abiertas.find((a) => a.clave === partes[1]) : null;
+  // En cualquier área se puede crear: si no eres de ella, se manda como solicitud.
+  const destino = actual || misAreas().find((a) => puedeEditar(a.id)) || abiertas[0];
+  if (!destino) return toast("Todavía no hay áreas.");
   const { nuevoTicket } = await import("./vistas/area.js");
   // La vista de abajo se entera sola en cuanto el servicio cuenta el cambio.
   nuevoTicket(destino, refrescarPronto);
