@@ -975,3 +975,8 @@ body.instalada .barra { background: rgba(13, 13, 13, .97); }
   .muestra { width: 36px; height: 36px; }
   .nuevo-estado { min-height: 48px; font-size: 15px; }
 }
+
+/* Nuevo ticket en un área donde no eres miembro: va como solicitud. */
+.aviso-solicitud { padding: .7rem .9rem; border-radius: 10px; border: 1px solid rgba(9, 131, 214, .35); background: var(--blue-soft); color: var(--ink-2); font-size: .85rem; line-height: 1.45; }
+.aviso-solicitud[hidden] { display: none; }
+label.campo[hidden] { display: none; }

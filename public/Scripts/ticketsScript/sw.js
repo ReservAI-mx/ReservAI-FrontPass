@@ -19,7 +19,7 @@
    tests/tickets.test.js lo revisa) y sube VERSION.
    ------------------------------------------------------------------ */
 
-const VERSION = 'tickets-pass-v4';
+const VERSION = 'tickets-pass-v5';
 
 const PAGINA = '/tickets/';
 const S = '/static/Scripts/ticketsScript/';
