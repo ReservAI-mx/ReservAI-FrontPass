@@ -118,6 +118,10 @@ async function asError(res: Response) {
 }
 
 export async function api<T>(path: string, init?: RequestInit, timeoutMs = 20000): Promise<T> {
+  // El servicio rechaza con 415 cualquier POST/PATCH/DELETE que no sea JSON
+  // (defensa CSRF), aunque no lleve datos: se manda "{}".
+  const method = (init?.method || 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD' && init?.body == null) init = { ...init, body: '{}' };
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (!headers.has('Accept')) headers.set('Accept', 'application/json');

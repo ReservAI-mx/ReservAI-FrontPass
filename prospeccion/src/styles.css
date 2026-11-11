@@ -148,15 +148,15 @@ kbd {
 }
 .content { flex: 1; min-height: 0; overflow: auto; padding: 18px 20px 32px; }
 .page { display: flex; flex-direction: column; gap: 16px; }
-.page-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; }
-.page-head h1, .panel h2, .empty h2, .modal h2, .drawer-head h2 {
+.page-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; margin-bottom: 0; }
+.page-head h1, .panel h2, .empty h2, .ps-modal h2, .drawer-head h2 {
   margin: 0;
   font-size: 1.35rem;
   font-weight: 650;
   letter-spacing: -0.02em;
   color: var(--text-light);
 }
-.panel h2, .modal h2 { font-size: 1.05rem; }
+.panel h2, .ps-modal h2 { font-size: 1.05rem; }
 .lede, .hint, .muted { color: var(--text-gray); }
 .lede { margin: 4px 0 0; }
 .section-label { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-gray); }
@@ -277,15 +277,21 @@ tbody tr:hover td { background: rgba(9, 131, 214, 0.08); }
 
 dialog { border: 0; padding: 0; color: inherit; background: transparent; }
 dialog::backdrop { background: rgba(0, 0, 0, 0.65); }
-.modal {
+/* "ps-": StylesInicio.css del pass ya tiene un .modal con display: none.
+   Y su "* { margin: 0 }" quita el centrado del <dialog>: se devuelve aquí. */
+.ps-modal {
+  margin: auto;
   width: min(440px, calc(100vw - 32px));
   border-radius: 12px;
-  padding: 20px;
+  padding: 22px;
   background: var(--bg-card);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text-light);
+  box-shadow: var(--shadow);
 }
-.modal p { color: var(--text-gray); }
+.ps-modal p { margin: 8px 0 18px; color: var(--text-gray); line-height: 1.45; }
+.ps-modal .dialog-actions { justify-content: flex-end; }
+.palette { margin: 12vh auto auto; }
 .drawer { margin: 0 0 0 auto; height: 100vh; max-height: 100vh; width: min(440px, 100vw); background: var(--bg-card); color: var(--text-light); }
 .drawer-body { height: 100%; overflow: auto; padding: 20px 22px 32px; display: flex; flex-direction: column; gap: 14px; }
 .drawer-head, .detail-scores { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
