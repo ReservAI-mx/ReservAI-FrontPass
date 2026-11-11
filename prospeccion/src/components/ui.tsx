@@ -173,7 +173,7 @@ export function ConfirmDialog({
 }) {
   const ref = useDialog(open);
   return (
-    <dialog ref={ref} className="modal" onClose={onClose}>
+    <dialog ref={ref} className="ps-modal" onClose={onClose}>
       <h2>{title}</h2>
       <p>{body}</p>
       <div className="dialog-actions">
