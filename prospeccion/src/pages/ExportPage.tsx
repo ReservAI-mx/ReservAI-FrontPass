@@ -12,7 +12,7 @@ import type { ExportFormat, ExportType, Prospect } from '../types';
 type Scope = 'all' | 'selected' | 'qualified';
 
 /* Las que bastan para llamar o visitar. */
-const BASIC = ['name', 'category', 'phone', 'address', 'lead_score'];
+const BASIC = ['name', 'category', 'phone', 'lead_score', 'address'];
 
 function Choice({
   checked, onSelect, title, text, disabled, badge,
@@ -71,9 +71,13 @@ export function ExportPage() {
   const usingExample = job.fallback || prospects.fallback;
   const type: ExportType = scope === 'qualified' ? 'qualified_only' : format === 'pdf' && summaryOnly ? 'executive_summary' : 'full_table';
   const qualifiedCount = rows.filter((row) => (row.lead_score ?? -1) >= minScore).length;
-  const toggleColumn = (id: string) => setColumns((current) => (
-    current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
-  ));
+  // Siempre en el orden de EXPORT_COLUMNS: al volver a prender una columna
+  // regresa a su lugar (antes se iba al final y desaparecía de la vista).
+  const toggleColumn = (id: string) => setColumns((current) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return EXPORT_COLUMNS.map((column) => column.id).filter((item) => next.has(item));
+  });
 
   async function run() {
     setError(null);
@@ -106,7 +110,8 @@ export function ExportPage() {
     }
   }
 
-  const previewCols = columns.slice(0, 6);
+  // Todas las columnas elegidas; la tabla se desplaza de lado si no caben.
+  const previewCols = columns;
 
   return (
     <div className="page">
@@ -198,7 +203,7 @@ export function ExportPage() {
             <header className="card-head">
               <div>
                 <h2>Así se verá</h2>
-                <p className="hint">Las primeras filas{columns.length > previewCols.length ? ` y ${previewCols.length} de ${columns.length} columnas` : ''}.</p>
+                <p className="hint">Las primeras 6 filas con las {columns.length} columnas que elegiste, en el orden del archivo.</p>
               </div>
             </header>
             {chosen.length && previewCols.length ? (
