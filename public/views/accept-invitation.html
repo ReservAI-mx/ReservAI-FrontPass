@@ -67,6 +67,17 @@
         </div>
         <p class="match-hint" id="matchHint" aria-live="polite"></p>
 
+        <!-- Sólo para cuentas de cliente: el equipo interno (admin, vendedor) no
+             acepta los términos del servicio. acceptInvitation.js la oculta
+             si la invitación es de otro tipo. -->
+        <label class="legal-check" id="legalBloque">
+          <input type="checkbox" id="aceptaLegales">
+          <span>Leí y acepto los
+            <a href="https://reservai.com.mx/terms" target="_blank" rel="noopener noreferrer">términos y condiciones</a>
+            y el
+            <a href="https://reservai.com.mx/privacy" target="_blank" rel="noopener noreferrer">aviso de privacidad</a>.</span>
+        </label>
+
         <p class="field-error" id="formError" role="alert"></p>
         <button type="submit" class="loginbtn" id="crearBtn" disabled>Crear cuenta</button>
       </form>

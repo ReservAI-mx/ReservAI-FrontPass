@@ -5,6 +5,7 @@ import { setupPasswordList } from './controllers/passwordListController.js';
 import { setupModals } from './controllers/modalController.js';
 import { setupChangePassword } from '../changePassword.js';
 import { bindSearchShortcut } from '../uiShell.js';
+import { exigirLegales } from '../legal.js';
 
 const session = requireUiSession();
 
@@ -13,6 +14,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (session.account_type === 'seller') {
         window.location.href = '/invitations';
         return;
+    }
+    // Sesiones abiertas antes de que cambiaran los términos: también los aceptan.
+    if (session.account_type === 'client') {
+        try {
+            if (await exigirLegales()) return;
+        } catch {
+            return; // sesión vencida: apiFetch ya mandó al login
+        }
     }
 
     setupAccountMenu(session || SessionStorageManager.getSession());

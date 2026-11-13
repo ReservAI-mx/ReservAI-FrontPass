@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>ReservAI - Términos actualizados</title>
+  <link rel="icon" type="image/x-icon" href="/static/Images/ReservAiLogo.png" />
+  <link rel="stylesheet" href="/static/estilos/Styles.css">
+  <link rel="stylesheet" href="/static/estilos/buttonLoading.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box login-box--narrow">
+      <div class="logo">
+        <img src="/static/Images/ReservAiLogo.png" alt="ReservAI Logo">
+        <h1>ReservAI</h1>
+      </div>
+      <h2 id="legalTitulo">Actualizamos nuestros términos</h2>
+      <p class="form-intro" id="legalIntro">Revisando…</p>
+
+      <!-- Lo llena terminosActualizados.js con lo que manda /api/legal/pendientes.
+           El texto completo vive en la landing y se abre en otra pestaña. -->
+      <ul class="legal-lista" id="legalLista" hidden></ul>
+
+      <form id="legalForm" hidden novalidate>
+        <label class="legal-check">
+          <input type="checkbox" id="legalAcepto">
+          <span>He leído y acepto los documentos de arriba.</span>
+        </label>
+        <p class="field-error" id="legalError" role="alert"></p>
+        <button type="submit" class="loginbtn" id="legalBtn" disabled>Aceptar y continuar</button>
+      </form>
+
+      <p class="terms"><a href="/api/logout" id="legalSalir">Cerrar sesión</a></p>
+    </div>
+  </div>
+  <script type="module" src="/static/Scripts/terminosActualizados.js"></script>
+</body>
+</html>

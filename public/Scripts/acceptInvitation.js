@@ -48,6 +48,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const pistaSimbolos = document.querySelector('.password-hint');
 
+  // Términos y Aviso de Privacidad: sólo cuando la cuenta puede ser de cliente
+  // (rol client o sin rol en la URL, que prueba client primero).
+  const legalBloque = document.getElementById('legalBloque');
+  const legalInput = document.getElementById('aceptaLegales');
+  const pideLegales = !['admin', 'seller'].includes(roleFromQuery());
+  legalBloque.hidden = !pideLegales;
+  legalInput.addEventListener('change', () => {
+    formError.textContent = '';
+    refrescar();
+  });
+
   renderReglas(listaEl);
   document.getElementById('simbolosPermitidos').textContent = SIMBOLOS_PERMITIDOS;
 
@@ -89,7 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     pintarCoincidencia();
     const nombreOk = nameInput.value.trim().length >= 2;
-    submitBtn.disabled = !(nombreOk && valida && coinciden() && confirmInput.value !== '');
+    const legalOk = !pideLegales || legalInput.checked;
+    submitBtn.disabled = !(nombreOk && valida && coinciden() && confirmInput.value !== '' && legalOk);
     return valida;
   }
 
@@ -149,6 +161,12 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmInput.focus();
       return;
     }
+    if (pideLegales && !legalInput.checked) {
+      formError.textContent = 'Para crear la cuenta acepta los términos y el aviso de privacidad.';
+      shakeElement(form);
+      legalInput.focus();
+      return;
+    }
 
     // El rol viene en la query; sin él se prueban los dos, como antes.
     const preferido = roleFromQuery();
@@ -160,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const role of intentos) {
         const { ok, status, data } = await apiJson(`/invitations/${role}`, {
           method: 'POST',
-          body: { name, password, confirm_password },
+          body: { name, password, confirm_password, acepta_legales: pideLegales && legalInput.checked },
         });
 
         if (ok) {
