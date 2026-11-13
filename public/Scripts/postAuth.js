@@ -1,6 +1,7 @@
 import SessionStorageManager from './AppStorage.js';
 import { apiFetch, goLogin } from './api.js';
 import { consumeReturnTo } from './oauthReturnTo.js';
+import { legalesPendientes, rutaAceptarLegales } from './legal.js';
 
 function routing() {
   return globalThis.PassAuthRouting;
@@ -29,44 +30,48 @@ export async function redirectAfterAuthentication({ allowReturnTo = true } = {})
     return;
   }
 
-  if (allowReturnTo) {
-    const returnTo = consumeReturnTo();
-    if (returnTo) {
-      window.location.href = returnTo;
-      return;
-    }
-  }
-
-  const direct = routing().destinationForAccountType(type);
+  const returnTo = allowReturnTo ? consumeReturnTo() : null;
+  let destination = returnTo || routing().destinationForAccountType(type);
   if (type !== 'client') {
-    window.location.href = direct;
+    window.location.href = destination;
     return;
   }
 
-  let destination = direct;
   try {
-    const onboard = globalThis.PassOnboard;
-    const res = await apiFetch('/billing/setup?page=1', {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-    });
-    let setups = [];
-    if (res.status === 200) {
-      const body = await res.json().catch(() => ({}));
-      setups = body.data || body.provisions || [];
-    }
-    if (onboard && onboard.shouldRedirectToBilling({
-      role: type,
-      dismissed: onboard.isDismissed(),
-      status: res.status,
-      setups,
-    })) {
-      destination = '/billing';
-    }
+    if (!returnTo) destination = await clientDestination(destination);
+  } catch (error) {
+    if (error && error.message === 'Session expired') return;
+  }
+  try {
+    // Términos / Aviso de Privacidad nuevos: se aceptan antes de seguir.
+    const pendientes = await legalesPendientes();
+    if (pendientes.length) destination = rutaAceptarLegales(destination);
   } catch (error) {
     if (error && error.message === 'Session expired') return;
   }
   window.location.href = destination;
+}
+
+async function clientDestination(direct) {
+  const onboard = globalThis.PassOnboard;
+  const res = await apiFetch('/billing/setup?page=1', {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+  });
+  let setups = [];
+  if (res.status === 200) {
+    const body = await res.json().catch(() => ({}));
+    setups = body.data || body.provisions || [];
+  }
+  if (onboard && onboard.shouldRedirectToBilling({
+    role: 'client',
+    dismissed: onboard.isDismissed(),
+    status: res.status,
+    setups,
+  })) {
+    return '/billing';
+  }
+  return direct;
 }

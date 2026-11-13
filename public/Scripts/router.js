@@ -116,6 +116,8 @@ router.get('/billing', (req, res) => res.sendFile(path.resolve(__dirname + "/.
 router.get('/fiscal', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/fiscal.html")));
 router.get('/payments', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/payments.html")));
 router.get('/accept-invitation', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/accept-invitation.html")));
+// Aceptar Términos / Aviso de Privacidad nuevos (la versión la dice /api/legal/pendientes).
+router.get('/terminos-actualizados', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/terminos-actualizados.html"), { headers: { 'Cache-Control': 'no-cache' } }));
 router.get('/forgot-password', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/forgot-password.html")));
 router.get('/reset-password', (req, res) => res.sendFile(path.resolve(__dirname + "/../views/reset-password.html")));
 module.exports = router;
