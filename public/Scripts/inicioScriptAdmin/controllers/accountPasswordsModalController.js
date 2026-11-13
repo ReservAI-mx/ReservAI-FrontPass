@@ -245,6 +245,50 @@ async function openAccountPaymentsModal(accountId) {
     }
 }
 
+const DOCUMENTOS_LEGALES = [
+    ['terminos', 'Términos y Condiciones'],
+    ['privacidad', 'Aviso de Privacidad'],
+];
+const ORIGEN_LEGAL = { invitacion: 'al crear la cuenta', reaceptacion: 'al entrar' };
+
+/**
+ * Qué versión de los Términos / Aviso de Privacidad aceptó la cuenta y si le
+ * falta una nueva (GET /api/legal/cuentas/:id). Si falla, no se muestra nada:
+ * es un dato extra del modal fiscal.
+ */
+async function filasLegales(accountId) {
+    try {
+        const res = await apiFetch(`/legal/cuentas/${encodeURIComponent(accountId)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!res.ok) return [];
+        const data = await res.json().catch(() => ({}));
+        const aceptaciones = Array.isArray(data.aceptaciones) ? data.aceptaciones : [];
+        const pendientes = Array.isArray(data.pendientes) ? data.pendientes : [];
+        return DOCUMENTOS_LEGALES.map(([doc, titulo]) => {
+            // Vienen de la más nueva a la más vieja.
+            const ultima = aceptaciones.find((a) => a.documento === doc);
+            const pendiente = pendientes.find((p) => p.documento === doc);
+            let texto = ultima
+                ? `v${ultima.version} · ${formatAdminDate(ultima.aceptado_at)} (${ORIGEN_LEGAL[ultima.origen] || ultima.origen})`
+                : 'Sin aceptar';
+            if (pendiente) texto += ` · pendiente v${pendiente.version}`;
+            return [titulo, texto];
+        });
+    } catch {
+        return [];
+    }
+}
+
+function pintarFilasAdmin(rows) {
+    return rows.map(([k, v]) => `
+          <div class="fiscal-admin-row">
+            <dt>${escapeHtml(k)}</dt>
+            <dd>${typeof v === 'string' && v.includes('fiscal-admin-badge') ? v : escapeHtml(v)}</dd>
+          </div>
+        `).join('');
+}
+
 async function openFiscalSituationModal(accountId) {
     const modal = document.getElementById('fiscalSituationModal');
     const emptyEl = document.getElementById('fiscalSituationEmpty');
@@ -274,6 +318,7 @@ async function openFiscalSituationModal(accountId) {
         };
     }
 
+    const legalPromise = filasLegales(accountId);
     try {
         const res = await apiFetch(`/billing/fiscal/${encodeURIComponent(accountId)}`, {
             headers: BILLING_HEADERS,
@@ -284,8 +329,9 @@ async function openFiscalSituationModal(accountId) {
         }
         const fiscal = data.data;
         if (!fiscal) {
-            bodyEl.hidden = true;
-            bodyEl.innerHTML = '';
+            const legales = await legalPromise;
+            bodyEl.innerHTML = pintarFilasAdmin(legales);
+            bodyEl.hidden = legales.length === 0;
             emptyEl.hidden = false;
             return;
         }
@@ -306,13 +352,9 @@ async function openFiscalSituationModal(accountId) {
             ['Versión términos', fiscal.authorization_terms_version || '—'],
             ['Estado SAT', satStatusBadge(fiscal.sat_validation_status || 'pending')],
             ['SAT validado el', formatAdminDate(fiscal.sat_validated_at)],
+            ...(await legalPromise),
         ];
-        bodyEl.innerHTML = rows.map(([k, v]) => `
-          <div class="fiscal-admin-row">
-            <dt>${escapeHtml(k)}</dt>
-            <dd>${typeof v === 'string' && v.includes('fiscal-admin-badge') ? v : escapeHtml(v)}</dd>
-          </div>
-        `).join('');
+        bodyEl.innerHTML = pintarFilasAdmin(rows);
 
         if (satNoteEl && satDetailMsg) {
             satNoteEl.hidden = false;

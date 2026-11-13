@@ -843,3 +843,66 @@ input:-webkit-autofill:active {
   .login-box form .terms { margin-top: 1rem; }
   .terms { font-size: 0.85rem; line-height: 1.5; }
 }
+
+/* ============================================================
+   Términos y Aviso de Privacidad (accept-invitation y
+   /terminos-actualizados). El texto vive en la landing.
+   ============================================================ */
+
+.legal-lista {
+  list-style: none;
+  text-align: left;
+  margin: 0 0 1.25rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.legal-lista li {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.legal-lista a {
+  color: var(--text-light);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-lista a:hover { color: var(--primary); }
+
+.legal-lista__meta {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--text-gray);
+}
+
+.legal-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-gray);
+  margin: 0.25rem 0 1rem;
+  cursor: pointer;
+}
+
+.legal-check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 0.1rem;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.legal-check a { color: var(--primary); }
+
+/* display: flex/grid le gana al atributo hidden si no se dice. */
+.legal-lista[hidden],
+.legal-check[hidden] { display: none; }
