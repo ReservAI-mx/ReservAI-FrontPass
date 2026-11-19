@@ -1,7 +1,7 @@
 // "Mis tickets" (lo asignado a mí, en tablero por fecha o en lista) y la búsqueda general (#/buscar?q=).
 import {
   h, vaciar, error, avatares, chipEstado, chipEtiqueta, chipFecha, nombrePrioridad, fechaLocal, hoyIso,
-  debounce, esqueletos, COLOR_PRIO, esTelefono,
+  debounce, esqueletos, COLOR_PRIO, esTelefono, altoTablero,
 } from "../ui.js";
 import { area, estado, etiqueta, persona, escuchar, tickets as api, enEspera } from "../datos.js";
 import { verTicket } from "../rutas.js";
@@ -89,11 +89,11 @@ export async function render(cont, _partes, params) {
         busqueda === null && "Cuando te asignen uno aparecerá aquí."));
     }
     if (modo === "tablero") {
-      return vaciar(zona, h("div.tablero.ajustado.escalonado", grupos().map((g) => h("div.columna", { class: g.tickets.length ? "" : "vacia" },
+      return vaciar(zona, altoTablero(h("div.tablero.ajustado.escalonado", grupos().map((g) => h("div.columna", { class: g.tickets.length ? "" : "vacia" },
         h("div.columna-cab", { style: { "--c": g.color } },
           h("span.estado-pill", { style: { "--c": g.color } }, g.nombre), h("span.cuenta", g.tickets.length)),
         h("div.columna-cuerpo",
-          g.tickets.length ? g.tickets.map(carta) : h("div.vacio.dim", "Sin tickets"))))));
+          g.tickets.length ? g.tickets.map(carta) : h("div.vacio.dim", "Sin tickets")))))));
     }
     if (busqueda !== null) return vaciar(zona, tabla(tickets));
     vaciar(zona, h("div.escalonado", grupos().filter((g) => g.tickets.length).map((g) => h("div.grupo-simple",

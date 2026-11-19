@@ -2,6 +2,7 @@
 import {
   h, vaciar, error, avatar, avatares, chipEstado, chipEtiqueta, chipFecha, nombrePrioridad, COLOR_PRIO, esqueletos,
   PRIORIDADES, MESES_LARGOS, DIAS, isoDia, hoyIso, debounce, modal, toast, esTelefono, fechaLarga, fechaConTexto,
+  altoTablero,
 } from "../ui.js";
 import {
   datos, areaPorClave, estadosDe, estado, etiquetasDe, etiqueta, persona, miembrosDe,
@@ -356,7 +357,7 @@ function tablero(a, tickets, editable, recargar) {
     recargar();
   };
 
-  return h("div.tablero.escalonado", estados.map((e) => {
+  return altoTablero(h("div.tablero.escalonado", estados.map((e) => {
     const columna = tickets.filter((t) => t.estado_id === e.id).sort((x, y) => x.orden - y.orden);
     const col = h("div.columna", {
       ondragover: (ev) => { if (editable && arrastrado) { ev.preventDefault(); col.classList.add("encima"); } },
@@ -398,7 +399,7 @@ function tablero(a, tickets, editable, recargar) {
     return col;
   }), administra(a.id) && h("button.nuevo-estado.columna-nueva", {
     onclick: async () => { if (await nuevoEstado(a.id)) recargar(); },
-  }, icono("mas", { tam: 16 }), "Nuevo estado"));
+  }, icono("mas", { tam: 16 }), "Nuevo estado")));
 }
 
 // ---------- Calendario ----------

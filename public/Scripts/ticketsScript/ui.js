@@ -262,6 +262,20 @@ export function avatares(ids, buscar) {
     ids.length > 4 && h("span.avatar", { style: { background: "var(--hover)", color: "var(--ink)" } }, "+" + (ids.length - 4)));
 }
 
+// Alto de un tablero: llega hasta abajo de la ventana (las columnas se
+// desplazan por dentro), así la barra para deslizar de lado siempre se ve.
+export function altoTablero(t) {
+  const medir = () => {
+    if (!t.isConnected) return window.removeEventListener("resize", medir);
+    const arriba = t.getBoundingClientRect().top + window.scrollY;
+    t.style.setProperty("--alto-tablero", Math.max(320, window.innerHeight - arriba - 34) + "px");
+  };
+  // Se mide en cuanto la vista lo pone en la página.
+  setTimeout(medir, 0);
+  window.addEventListener("resize", medir);
+  return t;
+}
+
 // Color de la franja izquierda de un ticket según prioridad.
 export const COLOR_PRIO = { urgente: "var(--red)", alta: "var(--amber)", normal: "transparent", baja: "transparent", on_hold: "transparent" };
 

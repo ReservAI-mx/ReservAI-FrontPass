@@ -370,20 +370,24 @@ h3 { font-size: .75rem; margin: 0; color: var(--muted); text-transform: uppercas
 @media (max-width: 760px) { .tabla .opcional { display: none; } }
 
 /* ---------- Tablero ---------- */
-.tablero { display: flex; gap: 14px; align-items: flex-start; overflow-x: auto; padding-bottom: 12px; }
+/* La barra de abajo para deslizar de lado se ve siempre y va a tono con el
+   fondo oscuro (en el teléfono se esconde: ahí se desliza con el dedo). */
+.tablero {
+  display: flex; gap: 14px; align-items: flex-start; overflow-x: auto; padding-bottom: 14px;
+  scrollbar-width: auto; scrollbar-color: rgba(255, 255, 255, .28) rgba(255, 255, 255, .05);
+}
 .columna {
   flex: 0 0 300px; background: rgba(22, 22, 22, .85); border: 1px solid var(--line); border-radius: var(--radio-lg);
-  display: flex; flex-direction: column; max-height: calc(100vh - 230px); transition: border-color .15s, background .15s;
+  display: flex; flex-direction: column; max-height: var(--alto-tablero, calc(100vh - 230px)); transition: border-color .15s, background .15s;
 }
-/* Tablero que llena el ancho (Mis tickets): las columnas con tickets se
-   llevan el doble de espacio que las vacías, que quedan compactas. */
-.tablero.ajustado { display: flex; align-items: flex-start; }
-.tablero.ajustado .columna { flex: 2 1 0; min-width: 190px; max-height: none; }
-.tablero.ajustado .columna.vacia { flex: 1 1 0; min-width: 104px; background: rgba(22, 22, 22, .45); }
-@media (min-width: 769px) and (max-width: 1200px) {
-  .tablero.ajustado { flex-wrap: wrap; overflow: visible; }
-  .tablero.ajustado .columna, .tablero.ajustado .columna.vacia { flex: 1 1 240px; }
-}
+/* Mis tickets: columnas anchas como las del área (tarjetas grandes); las
+   vacías, más angostas. Lo que no cabe se ve con la barra de abajo. */
+.tablero.ajustado .columna { flex: 0 0 300px; }
+.tablero.ajustado .columna.vacia { flex: 0 0 210px; background: rgba(22, 22, 22, .45); }
+.tablero::-webkit-scrollbar { height: 12px; }
+.tablero::-webkit-scrollbar-track { background: rgba(255, 255, 255, .05); border-radius: 8px; }
+.tablero::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .25); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+.tablero::-webkit-scrollbar-thumb:hover { background-color: rgba(9, 131, 214, .75); }
 .columna.vacia .columna-cab { padding: .8rem .7rem; gap: 6px; }
 .columna.vacia .columna-cuerpo { min-height: 0; }
 .columna.vacia .vacio { padding: .7rem .5rem; font-size: .8rem; }
